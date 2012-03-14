@@ -1,0 +1,7 @@
+tb.v
+../main.v
+../mem_tester/mem_tester.v
+../resetter/resetter.v
+../rnd_vec_gen/rnd_vec_gen.v
+../sram_control/sram_control.v
+

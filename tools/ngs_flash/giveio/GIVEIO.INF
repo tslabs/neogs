@@ -1,0 +1,52 @@
+[Version]
+Signature="$WINDOWS NT$"
+Class=Sample
+ClassGuid={78A1C341-4539-11d3-B88D-00C04FAD5171}
+Provider=%MSFT%
+DriverVer=06/16/1999,5.00.2072
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[ClassInstall32]
+Addreg=SampleClassReg     
+
+[SampleClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+[Manufacturer]
+%MSFT%=MSFT
+
+[SourceDisksFiles]
+giveio.sys=1
+
+[SourceDisksNames]
+1=%DISK_NAME%,
+
+[MSFT]
+%giveio.DRVDESC%=giveio_Inst,root\giveio
+
+[giveio_Inst.NT]
+CopyFiles=giveio.CopyFiles
+
+[giveio.CopyFiles]
+giveio.sys
+
+[giveio_Inst.NT.Services]
+AddService=giveio,0x00000002,giveio_Service 
+
+
+[giveio_Service]
+DisplayName    = %giveio.SVCDESC%                            
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\giveio.sys                            
+
+[Strings]
+MSFT = "Bsuir"
+ClassName = "I/O Service Driver"
+giveio.SVCDESC = "giveio Service"
+giveio.DRVDESC = "giveio Driver"
+DISK_NAME = "giveio Install Disk"

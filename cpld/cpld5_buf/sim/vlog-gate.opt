@@ -1,0 +1,4 @@
+tb.v
+gate/GS_cpld.vo
+gate/max_atoms.v
++incdir+gate

@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//RU">
+<html>
+	<head>
+		<title>Работаем с MMC</title>
+		<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=Windows-1251">
+		<LINK href="style.css"type=text/css rel=stylesheet>
+		<SCRIPT LANGUAGE="JavaScript" SRC="menu.js" TYPE="text/javascript"></SCRIPT>
+	</head>
+<body>
+<!-- onLog counter begin -->
+<script language="javascript"><!--
+var ref; ref = escape(document.referrer);
+var doc; doc = escape(window.location.href);
+document.write('<a href=http://www.onlog.ru><img src="http://www.onlog.ru/counter.php?id=1289&ref='+ref+'&doc='+doc+'" width=1 height=1 border=0 alt=""></a>')
+// --></script>
+<!-- onLog counter end -->
+<table border="0" cellspacing="20" cellpadding="0" width="100%">
+<tr>
+	<td rowspan="2" valign="top">
+		<script language="JavaScript" type="text/javascript">display_menu(5,2);</script>
+		<noscript>Меню на JavaScript</noscript>
+	</td>
+	<th>
+		<A NAME="beg"><h1 align="center">Дёшево и сердито!</h1></A>
+	</th>
+</tr>
+<tr>
+	<td valign="top">
+	<h2>Азы работы с MMC</h2>
+	<div align="justify">
+	&nbsp;&nbsp;&nbsp;&nbsp;MMC карты имеют достаточно простое управление. Память разбита на сектора по 512 байт. Карты форматируются так же, как обычные винчестеры под DOS: с 1 разделом, файловая система - FAT16. Чтение возможно как отдельными байтами, так и блоками.<br>&nbsp;&nbsp;&nbsp;&nbsp;Напряжение питания карты должно быть в пределах +2.7в...+3.6В, скорость обмена до 20 мбит/с. При простое более 5мс карточка переводится в sleep режим с малым энергопотреблением, и выходит из него автоматически при возобновлении обмена.<h4 align="center">Интерфейс карты</h4>&nbsp;&nbsp;&nbsp;&nbsp;MMC карты могут работать в двух режимах обмена - <I>MultiMediaCard protocol</I> и <I>SPI protocol</I>.Первый более скоростной, а в пользу второго говорит то, что много контроллеров имеют встроенный SPI интерфейс. Ниже приведена разводка MMC именно для работы в режиме SPI:<br><br><table class="p" align="center"><tr><td class="p" rowspan="8"><IMG src="pic/mmc_flash.png" alt="разводка MMC"></td><th>PIN</th><th>Имя</th><th>Функция</th></tr><tr><td class="p">1</td><td class="p">xCS</td><td class="p">Выбор кристалла</td></tr><tr><td class="p">2</td><td class="p">DI</td><td class="p">Входные данные</td></tr><tr><td class="p">3</td><td class="p">VSS</td><td class="p">Земля</td></tr><tr><td class="p">4</td><td class="p">VDD</td><td class="p">Питание +3.3в</td></tr><tr><td class="p">5</td><td class="p">SCLK</td><td class="p">Синхронизация</td></tr><tr><td class="p">6</td><td class="p">VSS2</td><td class="p">Земля</td></tr>	<tr><td class="p">7</td><td class="p">DO</td><td class="p">Выходные данные</td></tr></table><br>&nbsp;&nbsp;&nbsp;&nbsp;Cигнал выборки имеет "0" активный уровень. SPI порт в управляющем контроллере (далее МК) должен быть настроен так, чтобы активным был передний фронт SCLK:<br>	<div align="center"><IMG src="pic/spi_wave.png" alt="SPI обмен"></div><br>&nbsp;&nbsp;&nbsp;&nbsp;Сразу же напомню о том, что фактически передача байта из контроллера (DO) осуществляется параллельно с приёмом по другой линии (DI). Чтобы начать приём/передачу через SPI в PICе (в Master mode), в буффер приёмопередатчика SSPBUF нужно что-то записать, а после окончания пересылки из SSPBUF считать принятое. В простейшем случае обмен с картой имеет вид "команда - ответ":<br><div align="center"><IMG src="pic/spi_exch1.png" alt="команда-ответ"><br><font size="-1"><b class="rd">Обозначения:</b>1 клетка - 8 бит; X - произвольно, Z - третье состояние, H - 0xFF, L - 0x00; Тр = 1&#247;8 байт, Тотв = 1&#247;many байт.<br>Внимание! Рисунки поясняют принцип обмена, поэтому масштабы не соблюдены!</font></div><br>&nbsp;&nbsp;&nbsp;&nbsp;Обмен начинается с того, что МК выставляет сигнал 0 на xCS. Сначала посылаем 6 байт команды - последовательно пишем в вышеуказанный SSPBUF нужные байты, не забывая перед записью очередного дожидаться окончания передачи предыдущего (бит SSPSTAT,BF). Далее нужно дождаться ответа карты: пишем в SPI байт 0xFF и по окончании каждой передачи (контролируем SSPSTAT,BF) читаем принятое в SSPBUF. Первый байт, отличный от 0xFF, будет первым байтом ответа карточки (а для рассматриваемых ниже команд ответ всегда состоит из 1 байта).<br>&nbsp;&nbsp;&nbsp;&nbsp;Данные, если требуется, передаются после ответа блоком заданной ранее длины:<br><div align="center"><IMG src="pic/spi_exch2.png" alt="команда-ответ-данные"></div><br>Начало блока данных "ловится" так-же: его первый байт отличен от 0xff (см. ниже).После окончания обмена нужно подать 1 на xCS.<br><br><h4 align="center">Команды и ответы</h4>&nbsp;&nbsp;&nbsp;&nbsp; Команда имеет длину 6 байт, передача всегда начинается со старшего бита. Пакет команды имеет
+	следующий формат: 
+	<table class="p" align="center">
+		<tr><th>Позиция бита</th><td class="p">47</td><td class="p">46</td><td class="p">[45:40]</td><td class="p">[39:8]</td><td class="p">[7:1]</td><td class="p">0</td></tr>
+		<tr><th>Длина</th><td class="p">1</td><td class="p">1</td><td class="p">6</td><td class="p">32</td><td class="p">7</td><td class="p">1</td></tr>
+		<tr><th>Значение</th><td class="p">'0'</td><td class="p">'1'</td><td class="p">x</td><td class="p">x</td><td class="p">x</td><td class="p">'1'</td></tr>
+		<tr><th>Описание</th><td class="p">старт бит</td><td class="p">-</td><td class="p">№ команды</td><td class="p">аргумент</td><td class="p">CRC7</td><td class="p">стоп бит</td></tr>
+	</table>
+	<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;При работе MMC в режиме SPI доступно около 15 команд, позволяющих во-первых получить полную информацию
+	о типе и текущем состоянии карты, во-вторых производить запись и чтение данных. Рассмотрим всего лишь 4 команды, с помощью
+	которых	можно лишь читать данные с MMC блоками размером 1&#247;512 байт (мне для плеера вполне хватает): 
+	<table class="p" align="center">
+	<tr><th>Номер<br>комады</th><th>Аргумент</th><th>Описание</th></tr>
+	<tr><td class="p">CMD0</td><td class="p">нет</td><td class="p">go_idle_state<br>Сброс</td></tr>
+	<tr><td class="p">CMD1</td><td class="p">нет</td><td class="p">send_op_cond<br>Инициализация</td></tr>
+	<tr><td class="p">CMD16</td><td class="p">[31:0] длина блока</td><td class="p">set_blocklen<br>установить размер блока</td></tr>
+	<tr><td class="p">CMD17</td><td class="p">[31:0] адрес блока</td><td class="p">read_single_block<br>прочитать блок размером, указанным set_block_len</td></tr>
+	</table>
+	Обратите внимание: все числа, аргументы и т.п. передаются начиная со старшего бита, а адрес блока - адрес первого байта блока.<br><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;Ответ на любую из вышеприведённых команд состоит из одного байта, старший байт всегда равен 0. 
+	Другие биты - флаги ошибок:<br>
+	<div align="center"><IMG src="pic/resp1.png" alt="Ответ"></div><br>
+	<ol>
+	<li>В спящем режиме - карта находится в спящем режиме и выполняется процесс инициализации;
+	<li>Erase reset - стирание не выполнено, т.к операция прервана до исполнения;
+	<li>Недопустимая команда - обнаружен недопустимый номер команды;
+	<li>Ошибка CRC - последняя принятая команда не прошла проверку CRC;
+	<li>Erase_seq_error - ошибка в команде стирания;
+	<li>Ошибка адреса - блок пересекает границу физического сектора;
+	<li>Ошибка параметра - аргумент команды вне допустимых пределов для данной карты.</ol>
+	Ошибки №2,4,5 нам встречаться не должны. Для операции чтения CMD17 считываемый блок должен быть
+	в пределах одного физического сектора: его размер не должен превышать 512 байт, а начало и конец располагаться в одном
+	и том же секторе. Если это не выполнено, то появится ошибка №6<br>
+	&nbsp;&nbsp;&nbsp;&nbsp;Блок данных имеет длину от 4 до N+3 байт, где N - число, указанное в аргументе CMD16. Первый байт при передаче от MMC к МК равен 0xFE, далее следуют N байт запрашиваемой информации, а в конце - 2 байта CRC (их содержимое можно игнорировать, но прочесть нужно обязательно!). Если же при чтении произошёл сбой и карта не может предоставить данные, то вместо указанного блока передаётся 1 байт с флагом ошибки:<div align="center"><img src="pic/resp2.png" alt="Ошибка данных"></div><br>
+<ol>
+	<li>Неизвестная ошибка - сбой по неизвестной причине; 
+	<li>Ошибка СС - сбой внутреннего контроллера;
+	<li>Сбой ЕСС - алгоритм ЕСС не смог восстановить данные;
+	<li>Выход за границу - аргумент команды вне допустимых пределов;
+	<li>Карта блокирована - доступ не разрешён, т.к карта защищена паролем.
+</ol>
+<h4 align="center">Инициализация карты</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;Перед работой карту необходимо правильно проинициализировать. Спустя несколько мс после подачи питания по SPI нужно отправить 0xFF 74 раза и подождать ещё 1мс. Всё это время на xCS должна быть лог. "1". Теперь карта готова к приёму команд. После включения карта находится в режиме MultimediaCard protocol. Для перевода её в режим SPI надо отправить команду Сброс (CMD0) (не забывайте про xCS). В режиме SPI проверка CRC отключена по умолчанию, поэтому содержимое поля CRC7 игнорируется. Однако для CMD0 поле CRC7 нужно указать правильно. Поскольку команда не имеет меняющихся в процессе работы аргументов, то и специально вычислять это поле не обязательно: правильная CMD0 имеет вид: 0x40, 0x0, 0x0, 0x0, 0x0, 0x95. Далее карту необходимо проинициализировать. Для этого посылаем команду CMD1 до тех пор, пока в ответе карты бит0 (в спящем режиме) не сменится с 1 на 0. Это будет означать, что карта готова к работе. Теперь можно посылать прочие команды (у нас это CMD16 и CMD17).<br>
+	<h4 align="center">Файловая cистема</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;Самое интересное - это работа с файловой системой. Не буду сильно распространяться, т.к. в инете итак навалом информации о том, что такое FAT16 и с чем её едят. Кратенько расскажу о том, как использовать содержимое некоторых секторов в своих личных целях ;) <br>
+Структура диска:
+<table class="p" align="center"><tr><td class="p">MasterBootRecord</td></tr><tr><td class="p">резервировано</td></tr><tr><td class="p">PartitionBootRecord</td></tr><tr><td class="p">FAT1</td></tr><tr><td class="p">FAT2</td></tr><tr><td class="p">Корневой каталог</td></tr><tr><td class="p">кластер 002</td></tr><tr><td class="p">кластер 003</td></tr><tr><td class="p">***</td></tr></table><br>
+&nbsp;&nbsp;&nbsp;&nbsp;MBR находится в нулевом секторе диска, позиции остальных частей будем вычислять. Стоит отметить, что если карточка была переформатирована Windows, структура диска могла измениться: Windows стирает MBR, и в нулевом секторе сразу начинается PBR. Чтобы различить содержимое нулевого сектора нужно считать его первые неск. байт. Если байты нулевые - это MBR, иначе - PBR.<br> 
+Нулевой сектор, он же Master Boot Record диска, выглядит примерно так:
+	<table class="p" align="center">
+		<tr><th>Позиция байта</th><th>Длина(байт)</th><th>Описание</th><th>Содержимое</th></tr>
+		<tr><td class="p">0х0</td><td class="p">446</td><td class="p">-</td><td class="p">0x0</td></tr>
+		<tr><td class="p">0x1BE</td><td class="p">16</td><td class="p">описание раздела</td><td class="p">см.ниже</td></tr>
+		<tr><td class="p">0x1CE</td><td class="p">16</td><td class="p">описание раздела</td><td class="p">см.ниже</td></tr>
+		<tr><td class="p">0x1DE</td><td class="p">16</td><td class="p">описание раздела</td><td class="p">см.ниже</td></tr>
+		<tr><td class="p">0x1EE</td><td class="p">16</td><td class="p">описание раздела</td><td class="p">см.ниже</td></tr>
+		<tr><td class="p">0x1FE</td><td class="p">2</td><td class="p">подпись</td><td class="p">0x55,0xAA</td></tr>
+	</table><br>
+Нам нужно описание первого раздела (то, что по смещению 0x1BE).Что там есть:	
+	<table class="p" align="center">
+		<tr><th>Позиция байта</th><th>Длина(байт)</th><th>Описание</th><th>Содержимое</th></tr>
+		<tr><td class="p">0x4</td><td class="p">1</td><td class="p">тип файловой системы</td><td class="p">6=DOS 16-бит ФАТ<br>(возм. др. варианты)<br></td></tr>
+		<tr><td class="p">0x8</td><td class="p">4</td><td class="p">позиция 1 сектора раздела</td><td class="p">номер сектора</td></tr>
+		<tr><td class="p">0xС</td><td class="p">2</td><td class="p">число секторов в разделе</td><td class="p">от 1 до макс. числа<br>секторов диска</td></td></tr>
+	</table>
+	<br>Это, конечно, не всё, но этого вполне хватит. Как пример привожу то, что написано в моей карточке:<br>
+	<b class="aq"><font size="-1"><pre>Offset      0  1  2  3  4  5  6  7   8  9  A  B  C  D  E  F
+
+000001B0   00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 01   ................
+000001C0   01 00 06 07 E0 D3 20 00  00 00 E0 D3 03 00 00 00   ....аУ ...аУ....
+</pre></font></b>Здесь позиция PBR -  сектор номер 0x00000020, а число секторов 0x0003D3E0 (все длинные числа записаны с младшего байта), Offset - смещение байта от начала диска. Не стоит забывать, что физический адрес PBR равен pbr_adr = 0x00000020 * 0x200 =0x00004000 (0x200 - число байт на сектор).
+Идём в Partition Boot Record раздела:	
+  <table class="p" align="center">
+		<tr><th>Позиция байта</th><th>Длина(байт)</th><th>Описание</th><th>Содержимое</th></tr>
+		<tr><td class="p">0хD</td><td class="p">1</td><td class="p">секторов на кластер, Sectors_per_Cluster</td><td class="p">XX(1...64)</td></tr>
+		<tr><td class="p">0xE</td><td class="p">2</td><td class="p">число резервированных под PBR секторов, Rezerv</td><td class="p">X</td></tr>
+		<tr><td class="p">0x10</td><td class="p">1</td><td class="p">число таблиц FАТ, Number_of_Fat</td><td class="p">2</td></tr>
+		<tr><td class="p">0x11</td><td class="p">2</td><td class="p">число записей в корневом каталоге, Root_dir_entry</td><td class="p">512</td></tr>
+		<tr><td class="p">0x16</td><td class="p">2</td><td class="p">секторов на FАТ, Sectors_per_FAT</td><td class="p">XXX</td></tr>
+		<tr><td class="p">0x20</td><td class="p">4</td><td class="p">всего секторов</td><td class="p">XXX</td></tr>
+	</table>
+	Опять-же здесь в помощь моя карточка:
+	<b class="aq"><font size="-1"><pre>Offset      0  1  2  3  4  5  6  7   8  9  A  B  C  D  E  F
+
+00004000   EB 00 90 20 20 20 20 20  20 20 20 00 02 04 01 00   л.ђ        .....
+00004010   02 00 02 00 00 F8 F5 00  20 00 08 00 20 00 00 00   .....шх. ... ...
+00004020   E0 D3 03 00 80 00 29 A9  3D 30 FC 4E 4F 20 4E 41   аУ..Ђ.)©=0ьNO NA
+</pre></font></b>
+&nbsp;&nbsp;&nbsp;&nbsp;Мы видим 0x04 сектора на кластер, 0x00F5 секторов на каждую FAT, под PBR отведён 1 сектор, 512 записей в корневом каталоге. Этих четырёх чисел хватит, чтобы вычислить 3 важных смещения:<br>
+<ul>
+	<li>Fat_base = pbr_adr+0x200*Rezerv;  (0x4200)
+	<li>Root_base = Fat_base + Number_of_Fat * (Sectors_per_FAT * 0x200);  (0x41600)
+	<li>Cluster_base = Root_base + Root_dir_entry * root_entry_size - 2 * (Sectors_per_Cluster * 0x200); (0x44600)
+</ul>
+&nbsp;&nbsp;&nbsp;&nbsp;Fat_base - адрес нулевого байта FAT, Root_base - адрес нулевого байта корневого каталога, Cluster_base - адрес нулевого (не 002!!!) кластера (нулевого кластера нет, но так удобнее, см. ниже). В скобках - числа для моей MMC, root_entry_size - размер записи в корневом каталоге, равен 32 байта.<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;Все смещения есть, осталось совсем немного. Разберёмся с FAT. Во первых всё пространство диска (после Root Dir) поделено на т.н. кластеры по "Sectors_per_Cluster" секторов в каждом. Во вторых 2 копии FAT идентичны, поэтому будем работать с первой. А FAT состоит из последовательности 2-х байтных слов (МЛАДШИЙ байт впереди). N-ое слово соответствует N-ому кластеру (N>1), и может содержать следующую информацию:
+<table class="p" align="center"><tr><th>Число</th><th>Значение</th></tr><tr><td class="p">0002-FFEF</td><td class="p">номер следующего кластера в цепочке</td></tr><tr><td class="p">FFF7</td><td class="p">это дефектный кластер</td></tr><tr><td class="p">FFF8-FFFF</td><td class="p">это последний кластер цепочки</td></tr><tr><td class="p">0000,0001,FFF0-FFF6</td><td class="p">резервировано (и нам не интересно)</td></tr></table><br>
+Исходя из разбиения диска на кластеры файл, будь он больше размера одного кластера, естественно содержит их несколько штук. Последовательность номеров кластеров, в которых записан файл, образует цепочку кластеров. Цепочка строится так: номер первого читается из записи в каталоге; в соответствующем слове FAT при этом указан следующий кластер. В слове для следующего - номер третьего и т.д. пока не достигается конец цепочки.
+<br>&nbsp;&nbsp;&nbsp;&nbsp; Маленький организационный момент: первые 4 байта FAT  - обязательная подпись, означает, что это начало FAT. Поэтому Нет нулевого и первого слова, Нет нулевого и первого кластеров, сразу за RootDir сидит кластер номер 0002.
+<br>
+И снова от теории к практике - придуманное мной для примера начало FAT:
+<b class="aq"><font size="-1"><pre>Offset      0  1  2  3  4  5  6  7   8  9  A  B  C  D  E  F
+00004200   F8 FF FF FF 03 00 05 00  06 00 04 00 07 00 FF FF   шяяя..........яя
+</pre></font></b>
+&nbsp;&nbsp;&nbsp;&nbsp; Первые 4 байта  - подпись. Допустим, файл начинается со 2 кластера, Num = 2. Тогда адрес этого кластера adr = Cluster_base + Num * Sectors_per_cluster * 0x200. Кластер мы прочитали, а дальше читаем слово в FAT для этого кластера, 2 байта начиная с адреса adr = Fat_base + Num * 2 (0x4204). В нашем случае это 0003 - номер следующего кластера (см. таблицу). Расшифроывая таким образом содержимое Fat получим цепочку:<br>
+0002 - первый,0003,0005,0004,0006,0007 - последний.<br> Если разобраться - достаточно просто.<br><br>
+
+&nbsp;&nbsp;&nbsp;&nbsp; Наконец заглянем в корневой каталог - там кроме имени файла, даты, времени, атрибутов, указан первый кластер файла и его размер в байтах. Каждая запись в корневом каталоге состоит из 32 байт. Нам нужно прочитать байты со смещением 0x00,0x02,0x1A-0x1B,0x1C-0x1F. Если нулевой байт не равен 0xE5, второй не равен 0x00 или 0x04, то 0x1B:0x1A - первый кластер файла, а 0x1F:0x1E:0x1D:0x1C - его размер в байтах. Пока плеер без экрана, имя файла получать не обязательно... <br><br>
+	 
+
+	<a name="sd_ps"><b class="aq">P.S.:</b></a> Как выяснилось, SD карты полностью совместимы с карточками MMC, в т.ч. в режиме SPI. "Лишние" выводы в этом режиме не используются:
+	<br><br><table class="p" align="center"><tr><td class="p" rowspan="10"><IMG src="pic/sd_flash.png" alt="разводка SD"></td><th>PIN</th><th>Имя</th><th>Функция</th></tr><tr><td class="p">1</td><td class="p">xCS</td><td class="p">Выбор кристалла</td></tr><tr><td class="p">2</td><td class="p">DI</td><td class="p">Входные данные</td></tr><tr><td class="p">3</td><td class="p">VSS</td><td class="p">Земля</td></tr><tr><td class="p">4</td><td class="p">VDD</td><td class="p">Питание +3.3в</td></tr><tr><td class="p">5</td><td class="p">SCLK</td><td class="p">Синхронизация</td></tr><tr><td class="p">6</td><td class="p">VSS2</td><td class="p">Земля</td></tr><tr><td class="p">7</td><td class="p">DO</td><td class="p">Выходные данные</td></tr><tr><td class="p">8</td><td class="p">RSV</td><td class="p">Резерв</td></tr><tr><td class="p">9</td><td class="p">RSV</td><td class="p">Резерв</td></tr></table><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Единственно что стоит сделать - поставить подтягивающие сопротивления на выв. 8 и 9 (в р-не неск. деятков кОм).
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Основная часть составлена по материалам <a href="http://www.sandisk.com/pdf/oem/ProdManualMMCv5.2.pdf"target="_blank">"MultiMedia Card product manual v5.2"</a>, с сайта <a href="http://www.sandisk.com">SanDisk</a>. Тем, кто захочет поподробнее разобрать данный вопрос, рекомендую обратиться к означенному документу. Datasheet на SD взят с того-же сайта :<a href="http://www.sandisk.com/pdf/oem/ProdManualSDCardv1.9.pdf"target="_blank">"SanDisk SD card product manual v1.9"</a>. 
+	<br>О замеченных очепятках и неточностях прошу писать мне.
+
+ 	<br><div align="right"><i>&#169; Катичев А. 2004-2005г</i></div>
+	<hr><div align="center"><A HREF="#beg">В начало </a>|<A HREF="javascript:history.back(-1)"> Назад</a></div>
+	</div>
+	</td></tr>
+</table>
+
+</body></html>
+<div align="center">
+<br><br><br>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr valign="top">
+	<td>
+		<div align="center">
+		<table width="468" height="60" cellspacing="0" cellpadding="0" style="border: 1 solid #A3A5A8;">
+
+		<tr><td align="center">
+
+			<a href="http://www.nm.ru/users/reg.dhtml" target="_blank" style="display:block; margin:0px"><img src="http://newmail.ru/hosting/hosting_newmail.gif" width="468" height="60" border="0"></a>
+
+		</td></tr>
+
+		<FORM NAME="regform" ACTION="http://www.nm.ru/users/reg.dhtml" target="_blank" METHOD="GET" >
+		<tr><td align="center" valign="middle" width="468" height="40" style="background: url(http://newmail.ru/hosting/hosting_newmail_down.gif) repeat-x;">    
+				
+		<input type="hidden" name="rid" value="hosting">
+				<input type="text" name="login" id="login" value="" maxlength="20" size="21" style="border: 1px solid #A3A5A8; background-color: #FFFFFF; font-size: 12px; width: 150px; height:17px; margin-bottom:2px">
+			<select name="domain" style="border: 1px solid #A3A5A8; background-color: #FFFFFF; font-size: 12px; height:16px;" >
+					<option value="newmail.ru" >newmail.ru</option>
+					<option value="hotmail.ru" >hotmail.ru</option>
+					<option value="nm.ru" >nm.ru</option>
+					<option value="nightmail.ru" >nightmail.ru</option>
+				</select>
+				<input type="submit" value="&raquo;&raquo;&raquo;" style="border:white 1px solid; background: url(http://newmail.ru/hosting/hosting_newmail_button.gif) ; font:bold 14px arial; color:white; height:21px; width:120px; cursor:pointer">
+		   
+
+		</td></tr>
+		 </form>
+
+
+		</table>
+		</div>
+
+		<script language="javascript"><!--skip ();
+		u="count.rbc.ru/p429.gif";d=document;nv=navigator;na=nv.appName;p=0;j="N";
+		n=(na.substring(0,2)=="Mi")?0:1;y="";
+		y+="<img src='http://"+u+"?r="+d.referrer+"&width="+screen.width+"&height="+screen.height+"&hash="+d.location.hash.substr(1)+"&rf="+parent.document.referrer+"&rn="+Math.random();
+		y+="' border=0 width=1 height=1 alt='count'>";
+		d.write(y);if(!n) { d.write("<"+"!--"); }//--></script><noscript>
+		<img src="http://count.rbc.ru/p429.gif" alt='count' border=0 width=1 height=1 >
+		</noscript><script language="javascript1.2"><!--skip ();
+		if(!n) { d.write("--"+">"); }//--></script>
+		<a href="http://www.seall.ru/kino/"><img src="http://newmail.ru/forms/images/sp88_2.gif" width="88" height="2" border="0"></a>
+		<!--BEGIN Back -->
+		<script language="JavaScript">
+		<!--
+		var random = Math.floor(Math.random() * 1000000000);
+		document.write('<scr' + 'ipt language="JavaScript" src="http://engine.adland.ru/code?pid=34&gid=40&oin=0&rid=' + random
+		+'"></scr' + 'ipt>');
+		// -->
+		</script>
+		<!--END Back -->
+	</td>
+	<td width="15px">&nbsp;</td>
+	<td>
+		<!--BEGIN Media2 Podval 400x90 (400x90)-->
+		<script language="JavaScript">
+		<!--
+		var random = Math.floor(Math.random() * 1000000000), cdate = new Date();
+		document.write('<iframe src="http://engine.adland.ru/code?pid=69&gid=55&oin=0&rto=0&srb=&rid=' + random + '&dom=' + cdate.getDate() + '&dow=' + cdate.getDay() + '&hod=' + cdate.getHours() + '" frameborder="0" vspace="0" hspace="0" width="400" height="90" marginwidth="0" marginheight="0" scrolling="no">');
+		document.write('<a href="http://engine.adland.ru/default_reference?pid=69&gid=55" target="_top"><img src="http://engine.adland.ru/default_image?pid=69&gid=55" border="0"></a>');
+		document.write('</iframe>');
+		// -->
+		</script>
+		<noscript>
+		<iframe src="http://engine.adland.ru/code?pid=69&gid=55&oin=0&rto=0" frameborder="0" vspace="0" hspace="0" width="400" height="90" marginwidth="0" marginheight="0" scrolling="no"><a href="http://engine.adland.ru/default_reference?pid=69&gid=55" target="_top"><img src="http://engine.adland.ru/default_image?pid=69&gid=55" border="0"></a></iframe>
+		</noscript>
+		<!--END Media2 -->
+	</td>
+</tr>
+</table>
+</div>
+<script language="javascript">
+var t_rn = Math.random();
+var t_ref = encodeURIComponent(document.referrer);
+var t_pg = encodeURIComponent(window.location.href);
+var t_req = 'r='+t_ref+'&pg='+t_pg+'&'+t_rn;
+document.write("<img src=\"http://t.pusk.ru/?"+t_req+"\" border=\"0\" width=\"1\" height=\"1\">");
+</script>

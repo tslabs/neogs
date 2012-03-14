@@ -1,0 +1,4 @@
+tb.v
+clocker_sim.v
+../GS_cpld.v
+

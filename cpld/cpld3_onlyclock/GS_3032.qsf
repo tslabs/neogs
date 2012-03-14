@@ -1,0 +1,84 @@
+# Copyright (C) 1991-2006 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+
+
+# The default values for assignments are stored in the file
+#		GS_3032_assignment_defaults.qdf
+# If this file doesn't exist, and for assignments not listed, see file
+#		assignment_defaults.qdf
+
+# Altera recommends that you do not modify this file. This
+# file is updated automatically by the Quartus II software
+# and any changes you make may be lost or overwritten.
+
+
+set_global_assignment -name FAMILY MAX3000A
+set_global_assignment -name DEVICE "EPM3032ALC44-10"
+set_global_assignment -name TOP_LEVEL_ENTITY GS_3032
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "6.0 SP1"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "22:16:11  FEBRUARY 11, 2007"
+set_global_assignment -name LAST_QUARTUS_VERSION 6.1
+set_global_assignment -name DEVICE_FILTER_PACKAGE PLCC
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 44
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 10
+set_global_assignment -name OPTIMIZE_HOLD_TIMING OFF
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name MAX7000_OPTIMIZATION_TECHNIQUE AREA
+set_instance_assignment -name NOT_A_CLOCK ON -to init_done
+set_instance_assignment -name NOT_A_CLOCK ON -to a6
+set_instance_assignment -name NOT_A_CLOCK ON -to a7
+set_instance_assignment -name NOT_A_CLOCK ON -to iorq_n
+set_instance_assignment -name NOT_A_CLOCK ON -to wr_n
+set_global_assignment -name ANALYZE_LATCHES_AS_SYNCHRONOUS_ELEMENTS OFF
+set_instance_assignment -name CLOCK_SETTINGS "Input Clocks" -to clkin
+set_location_assignment PIN_16 -to clk20in
+set_location_assignment PIN_14 -to clk24in
+set_instance_assignment -name CUT ON -from "clocker:clk|inst36" -to "clocker:clk|inst37"
+set_instance_assignment -name CUT ON -from "clocker:clk|inst22" -to "clocker:clk|inst22"
+set_global_assignment -name FMAX_REQUIREMENT "24 MHz" -section_id "Input Clocks"
+set_instance_assignment -name CLOCK_SETTINGS "Input Clocks" -to clk20in
+set_instance_assignment -name CLOCK_SETTINGS "Input Clocks" -to clk24in
+set_location_assignment PIN_11 -to clksel0
+set_location_assignment PIN_12 -to clksel1
+set_location_assignment PIN_9 -to clkout
+set_location_assignment PIN_43 -to clkin
+set_location_assignment PIN_1 -to coldres_n
+set_location_assignment PIN_8 -to ramcs0_n
+set_location_assignment PIN_6 -to romcs_n
+set_location_assignment PIN_5 -to mema15
+set_location_assignment PIN_4 -to mema14
+set_location_assignment PIN_41 -to memoe_n
+set_location_assignment PIN_40 -to memwe_n
+set_location_assignment PIN_18 -to a6
+set_location_assignment PIN_19 -to a7
+set_location_assignment PIN_20 -to a14
+set_location_assignment PIN_21 -to a15
+set_location_assignment PIN_24 -to iorq_n
+set_location_assignment PIN_25 -to mreq_n
+set_location_assignment PIN_26 -to rd_n
+set_location_assignment PIN_27 -to wr_n
+set_location_assignment PIN_28 -to warmres_n
+set_location_assignment PIN_2 -to init_done
+set_location_assignment PIN_44 -to conf_done
+set_location_assignment PIN_39 -to d0
+set_location_assignment PIN_37 -to d7
+set_location_assignment PIN_34 -to cs
+set_location_assignment PIN_33 -to status_n
+set_location_assignment PIN_29 -to config_n
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
+set_global_assignment -name MAX7000_DEVICE_IO_STANDARD "3.3-V LVCMOS"
+set_global_assignment -name BDF_FILE clocker.bdf
+set_global_assignment -name VERILOG_FILE GS_3032.v
+set_global_assignment -name ADD_DEFAULT_PINS_TO_SIMULATION_OUTPUT_WAVEFORMS OFF
+set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE GS_3032.vwf

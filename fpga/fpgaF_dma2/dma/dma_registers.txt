@@ -1,0 +1,19 @@
+порты DMA:
+
+DMA_HAD ; address[16..20]
+DMA_MAD ; address[8..15]
+DMA_LAD ; address[7..0]
+DMA_CST ; control and status register
+
+DMA_MOD ; DMA module to work with
+
+
+DMA_CST: bit7 - dma on. (=1 - on, =0 - off)
+         bit6
+         bit5
+         bit4
+         bit3
+         bit2
+         bit1
+         bit0
+

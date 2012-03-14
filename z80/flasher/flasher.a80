@@ -1,0 +1,631 @@
+
+;LAST UPDATE: 30.01.2011 savelij
+
+		include macros.a80
+		include ports_ngs.a80
+
+DDMMYY		EQU "30.01.2011"
+
+DD		EQU 30				;—‘‹
+MM		EQU 1				;…‘–
+YY		EQU 11				;ƒ„
+DATA		EQU DD|MM<<5|YY<<9|0X8000	;‡€„‚€€ „€’€
+
+SM_LDT		EQU 0X54
+ADR_PROGR	EQU 0X5800
+
+BUFTSC		EQU 0XB800
+TXT_DEC		EQU BUFTSC+0X0180
+TXT_HEX		EQU TXT_DEC+0X10
+
+BUF_CRC16_TABL	EQU 0X9000			;200
+BUFFER_ZAG	EQU BUF_CRC16_TABL+0X200	;200
+SKLAD		EQU BUFFER_ZAG+0X200		;100
+DRV_VAR		EQU SKLAD+0X100
+
+;”€’ ”‹€ƒ‚ƒ €‰’€ €
+;X,Y,V,H,C,C
+;IX+8
+;7-1-†‰ ‡€ƒ‹‚
+;6-0-‘ €‰,1-…‡ €
+;5-1-‚…•‰ ‡€ƒ‹‚
+;4-0-’…‘’ €,1-…‡ ’…‘’€
+;3
+;2-0-FILE,1-*.TRD
+;1-0-MENU,1-FILES
+;0-0-TRDOS,1-MSDOS
+
+;BIT 4,(IY+55)
+;BIT 3,(IY+55) 1-…’ „‘€, 0-…‘’
+;BIT 2,(IY+55) 1-… €‰„…, 0-FAT …‘’
+
+;‘€’…‹ € (€„…‘ ‚ IX)
+;+00 X
+;+01 Y
+;+02 V
+;+03 H
+;+04 C
+;+05 C
+;+06 | €„…‘€
+;+07 | „ƒ€
+;+08 F
+;+09 X
+;+0A Y
+;+0B V
+;+0C H
+;+0D | €„…‘
+;+0E | ’…‘’€
+;+0F : … “’€ ‚ …
+;+10 : ‹—…‘’‚
+;+11 : “’‚ …
+;+12 "C" | ’…“™‰
+;+13 "B" | “’ …
+
+		ORG 0X6000
+START_		DI
+		LD A,0X10
+		LD BC,0X7FFD
+		OUT (C),A			;‚‹—‹ ‘’€–“ 0
+		CALL INITLOADER
+		PUSH AF
+		LD A,0X0A
+		OUT (GSCOM),A
+		SET 3,(IY+48)
+		LD HL,0X0110
+		LD (0X5C09),HL			;“‘’€‚‹ €€…’› ‘€ ‹€‚€’“›
+		LD A,0X28
+		CALL CLS			;—‘’€ €€
+		RES 5,(IY+1)
+		RES 7,(IY+48)
+		RES 3,(IY+55)			;“‘’€‚€ …™… …’›• €€…’‚
+		CALL ADRTSC			;”‚€… ’€‹–› €„…‘‚ €€
+		POP AF
+		JP NZ,NGSNOTFOUND
+RESTARTUPD	LD A,7
+		OUT (GSCOM),A
+		CALL WC
+		IN A,(GSDAT)
+		AND A
+		JR Z,PROD001
+		PUSH AF
+		LD IX,ERROR_UPDATE
+		CALL WINW
+		POP AF
+		LD HL,TXT_ERRUPD1
+		CP 0XAA
+		JR Z,ERRORRING
+		LD HL,TXT_ERRUPD2
+		CP 0XDD
+		JR Z,ERRORRING
+		LD HL,TXT_ERRUPD3
+ERRORRING	CALL NEXT
+		CALL KEYS
+		LD IX,ALLSCR
+		CALL WINW			;‚›‚„ ‘‚ƒ €
+PROD001		LD A,9
+		OUT (GSCOM),A
+		CALL WC
+		IN A,(GSDAT)			;ª®¤ ®θ¨΅ª¨
+		EX AF,AF'
+		CALL WN
+		IN A,(GSDAT)			;¬« ¤θ¨© ΅ ©β ®βΆ¥β 
+		LD L,A
+		CALL WN
+		IN A,(GSDAT)			;αβ ΰθ¨© ΅ ©β ®βΆ¥β 
+		LD H,A
+		EX AF,AF'
+		AND 3
+		JR Z,PROD000
+ 		LD IX,ERROR_UPDATE
+		CALL WINW
+		LD HL,TXT_CRC
+		CALL NEXT
+PROD000		LD IX,ALLSCR
+		CALL WINW
+		LD IX,HELPS
+		CALL WINW
+		LD IX,VERS_PAGESNGS
+		CALL WINW
+		CALL RD_VERS_NGS
+		LD IX,WEKS2
+		CALL WINW
+PROD01		CALL UPDOWN
+		CALL CP_KEYS
+		DB 0X0D
+		DW KENTER
+		DB 0
+		JR PROD01
+
+RD_VERS_NGS	LD IXL,"0"
+		LD DE,TEXT_VERSUS
+RVN2		LD HL,TXT_PAGES
+		LD BC,ETXT_PAGES-TXT_PAGES
+		LDIR
+		LD A,IXL
+		INC IXL
+		LD (DE),A
+		LD A," "
+		EX DE,HL
+		INC HL
+		LD (HL),":"
+		INC HL
+		LD (HL),A
+		INC HL
+		LD (HL),A
+		INC HL
+		LD A,IXL
+		SUB "1"
+		OUT (GSDAT),A
+		LD A,8
+		OUT (GSCOM),A
+		CALL WC
+		LD BC,GSDAT
+RVN1		CALL WN
+		IN A,(C)
+		LD (HL),A
+		INC HL
+		AND A
+		JR NZ,RVN1
+		DEC HL
+		EX DE,HL
+		LD A,IXL
+		CP "8"
+		JR C,RVN2
+		LD HL,TEXT_VERSUS
+		JP NEXT
+
+NGSNOTFOUND	LD IX,ERROR_UPDATE
+		CALL WINW
+		LD HL,TXT_NONGS
+		CALL NEXT
+		CALL KEYS
+		LD HL,0
+		PUSH HL
+		JP 0X3D2F
+
+;’€’€ …„€‹ ENTER
+KENTER		LD A,(IX+0X12)
+		AND A
+		JR Z,KENTER1		;……•„ „‹ “’€ 1-‡€ƒ“‡€ ‚‹…
+		JP KENTER4		;……•„ „‹ “’€ 3-‚›•„ ‚ TR-DOS
+
+;‚›  ‡€ƒ“‡€ ‚‹… ‡“
+KENTER1		LD IX,UPDATE_NGS
+		CALL WINW
+		LD A,7
+		OUT (GSCOM),A
+		CALL WC
+		IN A,(GSDAT)
+		AND A
+		JP NZ,RESTARTUPD
+		LD A,9
+		OUT (GSCOM),A
+		CALL WC
+		IN A,(GSDAT)			;ª®¤ ®θ¨΅ª¨
+		EX AF,AF'
+		CALL WN
+		IN A,(GSDAT)			;¬« ¤θ¨© ΅ ©β ®βΆ¥β 
+		LD L,A
+		CALL WN
+		IN A,(GSDAT)			;αβ ΰθ¨© ΅ ©β ®βΆ¥β 
+		LD H,A
+		EX AF,AF'
+		CP 0X80
+		JP NZ,RESTARTUPD
+
+		XOR A
+		OUT (GSDAT),A
+		LD A,6
+		OUT (GSCOM),A
+		CALL WC
+		XOR A
+		OUT (GSDAT),A
+		CALL WD
+		LD A,0X58
+		OUT (GSDAT),A
+		CALL WD
+		IN A,(GSDAT)
+		CP 0X99
+		JR NZ,$-4
+		EI
+		REPT 5
+		HALT
+		ENDM
+		DI
+		LD IX,ERROR_UPDATE
+		CALL WINW
+		LD HL,TXT_OKUPDATE
+		CALL NEXT
+		CALL KEYS
+		JP START_
+
+		LD A,0X0A
+		OUT (GSCOM),A
+		EI
+		HALT
+		HALT
+		HALT
+		DI
+		JP RESTARTUPD
+
+;‚›•„ ‡ ‚€‹™€
+KENTER4		LD HL,0
+		PUSH HL
+		JP 0X3D2F
+
+UPDOWN		LD C,(IX+0X12)
+		LD B,(IX+0X13)
+		CALL RVERT
+		SET 3,(IY+55)
+UPD04		BIT 3,(IY+55)
+		JR Z,UPD02
+		RES 3,(IY+55)
+UPD02		EI
+		HALT
+		DI
+		BIT 5,(IY+1)
+		JR Z,UPD04
+		LD A,(IY-0X32)
+		RES 5,(IY+1)
+		CP 0X0A
+		JR NZ,UPD01
+		CALL DOWN
+		SET 3,(IY+55)
+		JR UPD02
+
+UPD01		CP 0X0B
+		JR NZ,UPD03
+		CALL UP
+		SET 3,(IY+55)
+		JR UPD02
+
+UPD03		RES 7,(IY+48)
+		LD (IX+0X12),C
+		LD (IX+0X13),B
+		PUSH AF
+		LD A,(IX+4)
+		CALL WYDELK
+		POP AF
+		RET
+
+DOWN		LD L,(IX+0X10)
+		LD H,(IX+0X11)
+		LD A,H
+		OR L
+		RET Z
+		SCF
+		SBC HL,BC
+		RET Z
+		INC BC
+		LD A,(IX+2)
+		SUB 3
+		CP (IX+0X0F)
+		JR Z,DOWN1
+		INC (IX+0X0F)
+		LD A,(IX+4)
+		CALL WYDELK
+		LD DE,0X20
+		ADD HL,DE
+		LD (ADRAT+1),HL
+		LD A,(IX+5)
+		JP WYDELK
+
+DOWN1		LD A,(IX)
+		ADD A,A
+		ADD A,A
+		ADD A,A
+		INC A
+		LD H,A
+		LD A,(IX+1)
+		ADD A,(IX+2)
+		SUB 2
+		ADD A,A
+		ADD A,A
+		ADD A,A
+		LD L,A
+		LD (ADRSTR+1),HL
+		JP SCRUP
+
+UP		LD A,B
+		OR C
+		RET Z
+		DEC BC
+		LD A,(IX+0X0F)
+		AND A
+		JR Z,UP1
+		DEC (IX+0X0F)
+		LD A,(IX+4)
+		CALL WYDELK
+		AND A
+		LD DE,0X20
+		SBC HL,DE
+		LD (ADRAT+1),HL
+		LD A,(IX+5)
+		JR WYDELK
+
+UP1		LD A,(IX)
+		ADD A,A
+		ADD A,A
+		ADD A,A
+		INC A
+		LD H,A
+		LD A,(IX+1)
+		INC A
+		ADD A,A
+		ADD A,A
+		ADD A,A
+		LD L,A
+		LD (ADRSTR+1),HL
+		JP SCRDN
+
+RVERT		PUSH DE
+		LD H,(IX)
+		LD L,(IX+1)
+		LD A,(IX+0X0F)
+		ADD A,L
+		LD L,A
+		INC L
+		CALL ADRDIS
+		EX DE,HL
+		LD (ADRAT+1),HL
+		LD A,(IX+5)
+		POP DE
+WYDELK		PUSH BC
+ADRAT		LD HL,0
+		PUSH HL
+		LD B,(IX+3)
+		LD (HL),A
+		INC HL
+		DJNZ $-2
+		POP HL
+		POP BC
+		RET
+
+FINDNGS		LD A,0X80
+		OUT (GSCTR),A
+
+;DS 3:LD A,0X55:OUT (GSDAT),A
+;OUT (GSCOM),A:CALL WC:LD A,0XAA
+;OUT (GSDAT),A,(GSCOM),A:XOR A
+;OUT (GSDAT),A:LD A,0X1D
+;OUT (GSCOM),A:CALL WC
+;IN A,(GSDAT)
+
+		EI
+		HALT
+		HALT
+		DI
+		LD A,0XF3
+		OUT (GSCOM),A
+		EI
+		HALT
+		HALT
+		DI
+		LD B,0X30
+FNDNGS1		EI
+		HALT
+		DI
+		DEC B
+		JR Z,FNDNGS2
+		IN A,(GSCOM)
+		RRA
+		JR C,FNDNGS1
+		LD E,GSCFG0
+		CALL INPORT
+		INC A
+		JR Z,NONGS
+		XOR A
+		RET
+
+NONGS		XOR A
+		INC A
+		RET
+
+FNDNGS2		XOR A
+		DEC A
+		RET
+
+INPORT		LD A,E
+		OUT (GSDAT),A
+		LD A,0X11
+		OUT (GSCOM),A
+		CALL WC
+		IN A,(GSDAT)
+		RET
+
+INITLOADER	CALL FINDNGS
+		AND A
+		RET NZ
+		LD BC,GSDAT
+		LD HL,0X5800
+		LD DE,MINILDE-MINILD
+		OUT (C),E
+		LD A,0X14
+		OUT (GSCOM),A
+		CALL WC
+		OUT (C),D
+		CALL WD
+		OUT (C),L
+		CALL WD
+		OUT (C),H
+		CALL WD
+		LD HL,MINISTR
+OUTCOD		OUTI
+		CALL WD
+		DEC DE
+		LD A,D
+		OR E
+		JR NZ,OUTCOD
+		LD HL,0X5800
+		OUT (C),L
+		LD A,0X13
+		OUT (GSCOM),A
+		CALL WC
+		OUT (C),H
+		CALL WD
+		LD DE,NGS_LOADERE-NGS_LOADER
+		OUT (C),E
+		CALL WD
+		OUT (C),D
+		CALL WD
+		LD HL,NGS_LOADER
+OUTCOD1		OUTI
+		CALL WD
+		DEC DE
+		LD A,D
+		OR E
+		JR NZ,OUTCOD1
+		EI
+		HALT
+		HALT
+		HALT
+		DI
+		XOR A
+		RET
+
+WC		IN A,(GSCOM)
+		RRA
+		JR C,$-3
+		RET
+
+WD		IN A,(GSCOM)
+		RLA
+		JR C,$-3
+		RET
+
+WN		IN A,(GSCOM)
+		RLA
+		JR NC,$-3
+		RET
+
+MINISTR
+		PHASE ADR_PROGR
+MINILD		DI
+		IN A,(ZXDATRD)
+		OUT (CLRCBIT),A
+		LD A,0X11
+		OUT (GSCFG0),A			;’‹—‹ ‡“  ‚‹—‹ —€‘’’– 12ƒ–
+		LD HL,0				;€„…‘ ‡€ƒ“‡ „€ ‘ ‘…€
+		XOR A
+		OUT (MPAG),A			;‘’€–€ 0
+		LD BC,ZXDATRD
+		IN A,(ZXSTAT)
+		RLA
+		JR NC,$-3
+		IN E,(C)
+		IN A,(ZXSTAT)
+		RLA
+		JR NC,$-3
+		IN D,(C)			;DE=„‹€ „€ „‹ ‡€ƒ“‡ ‚ ƒ‘
+MINILD1		IN A,(ZXSTAT)
+		RLA
+		JR NC,$-3
+		INI
+		DEC DE
+		LD A,D
+		OR E
+		JR NZ,MINILD1
+		LD HL,MINILD
+		LD (HL),0XC3
+		INC HL
+		LD (HL),LOW (PROGR)
+		INC HL
+		LD (HL),HIGH (PROGR)
+		LD A,0X11
+		OUT (GSCFG0),A
+		LD SP,0X4080
+		XOR A
+		JP 0X0045
+
+PROGR		DI
+		LD A,2
+		OUT (MPAG),A
+		LD A,0X11
+		OUT (GSCFG0),A
+		LD HL,0X8000
+		LD A,(HL)
+		RRCA
+		RRCA
+		RRCA
+		RRCA
+		AND 7
+		LD B,A
+		LD DE,8
+		ADD HL,DE
+PROG0		LD A,2
+		OUT (MPAG),A
+		PUSH BC
+		LD DE,MINILD+0X10
+		LD BC,0X10
+		LDIR
+		PUSH HL
+		CALL PROGR0
+		POP HL
+		POP BC
+		DJNZ PROG0
+		LD A,0X99
+		OUT (ZXDATWR),A
+		DJNZ $
+		XOR A
+		OUT (MPAG),A
+		LD A,0X31
+		LD HL,0X80D3
+		OUT (GSCFG0),A
+		LD (0XFFFE),HL
+		XOR A
+		JP 0XFFFE
+
+PROGR0		LD HL,(MINILD+0X12)
+		LD A,L
+		AND 0X7F
+		LD DE,(MINILD+0X11)
+		LD D,A
+		ADD HL,HL
+		LD A,2
+		ADD A,H
+		LD IYH,A;HY,A
+		LD HL,0
+		LD A,(MINILD+0X10)
+		AND 7
+		LD IX,0X8000
+		ADD IX,DE
+		CALL SET_ADR
+		CALL ERA_BLK
+		LD DE,(MINILD+0X14)
+		CALL PROGR1
+		LD A,(MINILD+0X10)
+		AND 7
+		LD HL,0XFFF8
+		CALL SET_ADR
+		LD IX,MINILD+0X18
+		LD DE,8
+
+PROGR1		LD A,IYH
+		OUT (MPAG),A
+		LD A,(IX)
+		INC IX
+		PUSH DE
+		CALL WR_BYTE
+		LD A,IXH
+		OR IXL
+		JR NZ,PROGR2
+		INC IYH
+		LD IX,0X8000
+PROGR2		POP DE
+		DEC DE
+		LD A,D
+		OR E
+		JR NZ,PROGR1
+		RET
+
+		include flasher_ngs.a80
+MINILDE
+		DEPHASE
+
+NGS_LOADER	binclude ../loader_ngs/loader_ngs.rom
+NGS_LOADERE
+		include window.a80
+		include flasher_data.a80
+CHARS		binclude altstd.bin
+
+TEXT_VERSUS

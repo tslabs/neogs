@@ -1,0 +1,2076 @@
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 1 - 1/17/2011 21:29:35
+
+
+       1/       0 :                     
+       2/       0 :                     ;LAST UPDATE: 17.01.2011 savelij
+       3/       0 :                     
+       4/       0 :                     		include macros.a80
+(1)    1/       0 :                     
+(1)    2/       0 :                     		RELAXED ON
+(1)    3/       0 :                     		CPU Z80UNDOC
+(1)    4/       0 :                     
+(1)    5/       0 :                     DZ		MACRO DEFZ
+(1)    6/       0 :                     		DB DEFZ,0
+(1)    7/       0 :                     		ENDM 
+(1)    8/       0 :                     
+(1)    9/       0 :                     DC		MACRO DEFC
+(1)   10/       0 :                     		IF STRLEN(DEFC)>1
+(1)   11/       0 :                     		DB SUBSTR(DEFC,0,STRLEN(DEFC)-1)
+(1)   12/       0 :                     		ENDIF
+(1)   13/       0 :                     		IF STRLEN(DEFC)>0
+(1)   14/       0 :                     		DB CHARFROMSTR(DEFC,STRLEN(DEFC)-1)|80H
+(1)   15/       0 :                     		ENDIF
+(1)   16/       0 :                     		ENDM
+(1)   17/       0 :                     
+(1)   18/       0 :                     SUM_HOB		MACRO STR,AA,BB,CC
+(1)   19/       0 :                     		DB STR
+(1)   20/       0 :                     		DW AA
+(1)   21/       0 :                     		DW BB
+(1)   22/       0 :                     		DW CC
+(1)   23/       0 :                     $$I := 0
+(1)   24/       0 :                     $$S := 0
+(1)   25/       0 :                     		REPT 9
+(1)   26/       0 :                     $$N := CHARFROMSTR (STR,STRLEN(STR)+$$S-9)
+(1)   27/       0 :                     $$I := $$I+$$N+($$N*256)
+(1)   28/       0 :                     $$S := $$S+1
+(1)   29/       0 :                     		ENDM
+(1)   30/       0 :                     $$I := ($$I+(AA&0XFF)+((AA&0XFF)*256)+(AA>>8)+((AA>>8)*256))&0XFFFF
+(1)   31/       0 :                     $$I := ($$I+(BB&0XFF)+((BB&0XFF)*256)+(BB>>8)+((BB>>8)*256))&0XFFFF
+(1)   32/       0 :                     $$I := ($$I+(CC&0XFF)+((CC&0XFF)*256)+(CC>>8)+((CC>>8)*256))&0XFFFF
+(1)   33/       0 :                     $$I := ($$I+105)&0XFFFF
+(1)   34/       0 :                     		DW $$I
+(1)   35/       0 :                     		ENDM
+(1)   36/       0 :                     
+(1)   37/       0 :                     DUPL		MACRO LEN,FILL
+(1)   38/       0 :                     DUPL:
+(1)   39/       0 :                     $$N		EQU (LEN) / 1024
+(1)   40/       0 :                     $$M		EQU (LEN) # 1024
+(1)   41/       0 :                     		REPT $$N
+(1)   42/       0 :                     		DB 1024 DUP(FILL)
+(1)   43/       0 :                     		ENDM
+(1)   44/       0 :                     		IF $$M <> 0
+(1)   45/       0 :                     		DB $$M DUP(FILL)
+(1)   46/       0 :                     		ENDIF
+(1)   47/       0 :                     		ENDM
+(1)   48/       0 :                     
+(1)   49/       0 :                     HIGH		FUNCTION X,((X >> 8) & 0XFF)
+(1)   50/       0 :                     LOW		FUNCTION X,(X & 0XFF)
+(1)   51/       0 :                     
+       5/       0 :                     		include ports_ngs.a80
+(1)    1/       0 :                     
+(1)    2/       0 :                     ; ports description and include file for
+(1)    3/       0 :                     ; NeoGS software projects, v0.3
+(1)    4/       0 :                     ;
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80(ports_ngs.a80) - page 2 - 1/17/2011 21:29:35
+
+
+(1)    5/       0 :                     ;
+(1)    6/       0 :                     ; bits degisnation:
+(1)    7/       0 :                     ; B_* -bit position (0,1,2,3,4,5,6,7)
+(1)    8/       0 :                     ; M_* -bit mask (1,2,4,8,0X10,
+(1)    9/       0 :                     ;                           0X20,0X40,0X80)
+(1)   10/       0 :                     ;
+(1)   11/       0 :                     ; C_* - constants to be used
+(1)   12/       0 :                     ;
+(1)   13/       0 :                     ;
+(1)   14/       0 :                     ; part of NeoGS project
+(1)   15/       0 :                     ;
+(1)   16/       0 :                     ; (c) 2008 NedoPC
+(1)   17/       0 :                     
+(1)   18/       0 :                     ;---------------------------------------
+(1)   19/       0 :                     
+(1)   20/       0 :                     ;ZX-side ports
+(1)   21/       0 :                     
+(1)   22/       0 : =BBH                GSCOM		EQU 0XBB	; write-only, command for NGS
+(1)   23/       0 :                     
+(1)   24/       0 : =BBH                GSSTAT		EQU 0XBB	; read-only, command and data bits
+(1)   25/       0 :                     				; (positions given immediately below)
+(1)   26/       0 :                     
+(1)   27/       0 : =0H                 B_CBIT		EQU 0		; Command position
+(1)   28/       0 : =1H                 M_CBIT		EQU 1		; BIT:AND Mask
+(1)   29/       0 :                     
+(1)   30/       0 : =7H                 B_DBIT		EQU 7		; Data position
+(1)   31/       0 : =80H                M_DBIT		EQU 0X80	; BIT and mask
+(1)   32/       0 :                     
+(1)   33/       0 : =B3H                GSDAT		EQU 0XB3	; read-write
+(1)   34/       0 :                     				; data transfer register for NGS
+(1)   35/       0 :                     
+(1)   36/       0 : =33H                GSCTR		EQU 0X33	; write-only, control register for NGS:
+(1)   37/       0 :                     				; constants available given immediately below
+(1)   38/       0 :                     
+(1)   39/       0 : =80H                C_GRST		EQU 0X80	; reset constant to be written into
+(1)   40/       0 :                     
+(1)   41/       0 : =40H                C_GNMI		EQU 0X40	; NMI constant to be written into GSCTR
+(1)   42/       0 :                     
+(1)   43/       0 : =20H                C_GLED		EQU 0X20	; LED toggle constant
+(1)   44/       0 :                     
+(1)   45/       0 :                     ;---------------------------------------
+(1)   46/       0 :                     
+(1)   47/       0 :                     ;GS-side ports
+(1)   48/       0 :                     
+(1)   49/       0 : =0H                 MPAG		EQU 0X00	; write-only, Memory PAGe ;port (big
+(1)   50/       0 :                     				; pages at 8000-FFFF or small at 8000-BFFF)
+(1)   51/       0 :                     
+(1)   52/       0 : =10H                MPAGEX		EQU 0X10	; write-only, Memory PAGe EXtended
+(1)   53/       0 :                     				; (only small pages at C000-FFFF)
+(1)   54/       0 :                     
+(1)   55/       0 : =1H                 ZXCMD		EQU 0X01	; read-only, ZX CoMmanD port: here is
+(1)   56/       0 :                     				; the byte written by ZX into GSCOM
+(1)   57/       0 :                     
+(1)   58/       0 : =2H                 ZXDATRD		EQU 0X02	; read-only, ZX DATa ReaD: a byte
+(1)   59/       0 :                     				; written by ZX into GSDAT appears here
+(1)   60/       0 :                     				; upon reading this port, data bit is cleared
+(1)   61/       0 :                     
+(1)   62/       0 : =3H                 ZXDATWR		EQU 0X03	; write-only, ZX DATa WRite: a byte
+(1)   63/       0 :                     				; written here is available for ZX in
+(1)   64/       0 :                     				; GSDAT upon writing here, data bit is set
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80(ports_ngs.a80) - page 3 - 1/17/2011 21:29:35
+
+
+(1)   65/       0 :                     
+(1)   66/       0 : =4H                 ZXSTAT		EQU 0X04	; read-only, read ZX STATus: command and
+(1)   67/       0 :                     				; data bits. positions are defined by
+(1)   68/       0 :                     				; *_CBIT and *_DBIT above
+(1)   69/       0 :                     
+(1)   70/       0 : =5H                 CLRCBIT		EQU 0X05	; read-write, upon either reading or
+(1)   71/       0 :                     				; writing this port, the Command BIT is CLeaRed
+(1)   72/       0 : =6H                 VOL1		EQU 0X06
+(1)   73/       0 : =7H                 VOL2		EQU 0X07
+(1)   74/       0 : =8H                 VOL3		EQU 0X08
+(1)   75/       0 : =9H                 VOL4		EQU 0X09
+(1)   76/       0 : =16H                VOL5		EQU 0X16
+(1)   77/       0 : =17H                VOL6		EQU 0X17
+(1)   78/       0 : =18H                VOL7		EQU 0X18
+(1)   79/       0 : =19H                VOL8		EQU 0X19	; write-only, volumes for sound channels 1-8
+(1)   80/       0 :                     
+(1)   81/       0 :                     ; following two ports are useless and
+(1)   82/       0 :                     ; very odd. They have been made just
+(1)   83/       0 :                     ; because they were on the original GS
+(1)   84/       0 :                     ; and for that strange case when
+(1)   85/       0 :                     ; somebody too crazy have used them.
+(1)   86/       0 :                     ; Nevertheless, DO NOT USE THEM! They
+(1)   87/       0 :                     ; can disappear or even radically change
+(1)   88/       0 :                     ; functionality in future firmware
+(1)   89/       0 :                     ; releases.
+(1)   90/       0 :                     
+(1)   91/       0 : =AH                 DPORT1		EQU 0X0A	; DAMNPORT1
+(1)   92/       0 :                     				; writing or reading this port sets data
+(1)   93/       0 :                     				; bit to the inverse of bit 0 into MPAG
+(1)   94/       0 :                     				; port
+(1)   95/       0 :                     
+(1)   96/       0 : =BH                 DPORT2		EQU 0X0B	; DAMNPORT2
+(1)   97/       0 :                     				; the same as DAMNPORT1, but instead
+(1)   98/       0 :                     				; command bit involved, which is made
+(1)   99/       0 :                     				; equal to 5th bit of VOL4
+(1)  100/       0 :                     
+(1)  101/       0 : =1H                 LEDCTR		EQU 0X01	; write-only, controls on-board LED.
+(1)  102/       0 :                     				; D0=0 - LED is on, D0=1 - LED is off
+(1)  103/       0 :                     				; reset state is LED on.
+(1)  104/       0 :                     
+(1)  105/       0 : =FH                 GSCFG0		EQU 0X0F	; read-write, GS ConFiG port 0: acts as
+(1)  106/       0 :                     				; memory cell, reads previously written
+(1)  107/       0 :                     				; value. Bits and fields follow:
+(1)  108/       0 :                     
+(1)  109/       0 : =0H                 B_NOROM		EQU 0		; =0 - there is ROM everywhere except 0X4000-7FFF,
+(1)  110/       0 :                     				; =1 - the RAM is all around
+(1)  111/       0 : =1H                 M_NOROM		EQU 1
+(1)  112/       0 :                     
+(1)  113/       0 : =1H                 B_RAMRO		EQU 1		; =1 - ram absolute adresses 0X0000-7FFF
+(1)  114/       0 :                     				; (zeroth big page) are write-protected
+(1)  115/       0 : =2H                 M_RAMRO		EQU 2
+(1)  116/       0 :                     
+(1)  117/       0 : =2H                 B_8CHAN		EQU 2		; B_8CHANS
+(1)  118/       0 :                     				; =1 - 8 channels mode
+(1)  119/       0 : =4H                 M_8CHAN		EQU 4		; M_8CHANS
+(1)  120/       0 :                     
+(1)  121/       0 : =3H                 B_EXPAG		EQU 3		; =1 - extended paging: both MPAG and
+(1)  122/       0 :                     				; MPAGEX are used to switch two memory windows
+(1)  123/       0 : =8H                 M_EXPAG		EQU 8
+(1)  124/       0 :                     
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80(ports_ngs.a80) - page 4 - 1/17/2011 21:29:35
+
+
+(1)  125/       0 : =4H                 B_CKSL0		EQU 4		; B_CKSEL0
+(1)  126/       0 :                     				; these bits should be set according to
+(1)  127/       0 :                     				; the C_**MHZ constants below
+(1)  128/       0 : =10H                M_CKSL0		EQU 0X10	; M_CKSEL0
+(1)  129/       0 :                     
+(1)  130/       0 : =5H                 B_CKSL1		EQU 5		; B_CKSEL1
+(1)  131/       0 : =20H                M_CKSL1		EQU 0X20	; M_CKSEL1
+(1)  132/       0 :                     
+(1)  133/       0 : =30H                C_10MHZ		EQU 0X30
+(1)  134/       0 : =10H                C_12MHZ		EQU 0X10
+(1)  135/       0 : =20H                C_20MHZ		EQU 0X20
+(1)  136/       0 : =0H                 C_24MHZ		EQU 0X00
+(1)  137/       0 :                     
+(1)  138/       0 : =6H                 B_PAN4C		EQU 6		; B_PAN4CH
+(1)  139/       0 :                     				; =1 - 4 channels, panning (every
+(1)  140/       0 :                     				; channel is on left and right with two volumes)
+(1)  141/       0 : =40H                M_PAN4C		EQU 0X40	; M_PAN4CH
+(1)  142/       0 :                     
+(1)  143/       0 : =7H                 B_INV7B		EQU 7		;B_INV7B
+(1)  144/       0 :                     				; =1 - invert 7th bit of sample before
+(1)  145/       0 :                     				; putting them to MUL/DAC
+(1)  146/       0 : =80H                M_INV7B		EQU 0X80
+(1)  147/       0 :                     
+(1)  148/       0 : =7H                 B_SNCLR		EQU 7		; B_SETNCLR
+(1)  149/       0 : =80H                M_SNCLR		EQU 0X80	; M_SETNCLR
+(1)  150/       0 :                     
+(1)  151/       0 : =11H                SCTRL		EQU 0X11	; Serial ConTRoL: read-write, read:
+(1)  152/       0 :                     				; current state of below bits, write - see GS_info
+(1)  153/       0 :                     
+(1)  154/       0 : =0H                 B_SDNCS		EQU 0
+(1)  155/       0 : =1H                 M_SDNCS		EQU 1
+(1)  156/       0 :                     
+(1)  157/       0 : =1H                 B_MCNCS		EQU 1
+(1)  158/       0 : =2H                 M_MCNCS		EQU 2
+(1)  159/       0 :                     
+(1)  160/       0 : =2H                 B_MPXRS		EQU 2
+(1)  161/       0 : =4H                 M_MPXRS		EQU 4
+(1)  162/       0 :                     
+(1)  163/       0 : =3H                 B_MCSP0		EQU 3		; B_MCSPD0
+(1)  164/       0 : =8H                 M_MCSP0		EQU 8		; M_MCSPD0
+(1)  165/       0 :                     
+(1)  166/       0 : =4H                 B_MDHLF		EQU 4
+(1)  167/       0 : =10H                M_MDHLF		EQU 0X10
+(1)  168/       0 :                     
+(1)  169/       0 : =5H                 B_MCSP1		EQU 5		; B_MCSPD1
+(1)  170/       0 : =20H                M_MCSP1		EQU 0X20	; M_MCSPD1
+(1)  171/       0 :                     
+(1)  172/       0 : =12H                SSTAT		EQU 0X12	; Serial STATus: read-only, reads state of below bits
+(1)  173/       0 :                     
+(1)  174/       0 : =0H                 B_MDDRQ		EQU 0
+(1)  175/       0 : =1H                 M_MDDRQ		EQU 1
+(1)  176/       0 :                     
+(1)  177/       0 : =1H                 B_SDDET		EQU 1
+(1)  178/       0 : =2H                 M_SDDET		EQU 2
+(1)  179/       0 :                     
+(1)  180/       0 : =2H                 B_SDWP		EQU 2
+(1)  181/       0 : =4H                 M_SDWP		EQU 4
+(1)  182/       0 :                     
+(1)  183/       0 : =3H                 B_MCRDY		EQU 3
+(1)  184/       0 : =8H                 M_MCRDY		EQU 8
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80(ports_ngs.a80) - page 5 - 1/17/2011 21:29:35
+
+
+(1)  185/       0 :                     
+(1)  186/       0 : =13H                SD_SEND		EQU 0X13	; SD card SEND, write-only, when
+(1)  187/       0 :                     				; written, byte transfer starts with
+(1)  188/       0 :                     				; written byte
+(1)  189/       0 :                     
+(1)  190/       0 : =13H                SD_READ		EQU 0X13	; SD card READ, read-only, reads byte
+(1)  191/       0 :                     				; received in previous byte transfer
+(1)  192/       0 :                     
+(1)  193/       0 : =14H                SD_RSTR		EQU 0X14	; SD card Read and STaRt, read-only,
+(1)  194/       0 :                     				; reads previously received byte and
+(1)  195/       0 :                     				; starts new byte transfer with 0XFF
+(1)  196/       0 :                     
+(1)  197/       0 : =14H                MD_SEND		EQU 0X14	; Mp3 Data SEND, write-only, sends byte
+(1)  198/       0 :                     				; to the mp3 data interface
+(1)  199/       0 :                     
+(1)  200/       0 : =15H                MC_SEND		EQU 0X15	; Mp3 Control SEND, write-only, sends
+(1)  201/       0 :                     				; byte to the mp3 control interface
+(1)  202/       0 :                     
+(1)  203/       0 : =15H                MC_READ		EQU 0X15	; Mp3 Control READ, read-only, reads
+(1)  204/       0 :                     				; byte that was received during
+(1)  205/       0 :                     				; previous sending of byte
+(1)  206/       0 :                     
+(1)  207/       0 : =1BH                DMA_MOD		EQU 0X1B	; DMA MODULE
+(1)  208/       0 :                     
+(1)  209/       0 : =1CH                DMA_HAD		EQU 0X1C	; DMA High ADdress
+(1)  210/       0 :                     
+(1)  211/       0 : =1DH                DMA_MAD		EQU 0X1D	; DMA Middle ADdress
+(1)  212/       0 :                     
+(1)  213/       0 : =1EH                DMA_LAD		EQU 0X1E	; DMA Low ADdress
+(1)  214/       0 :                     
+(1)  215/       0 : =1FH                DMA_CST		EQU 0X1F	; DMA Control and STate
+(1)  216/       0 :                     
+       6/       0 :                     		include sdcomand.a80
+(1)    1/       0 :                     
+(1)    2/       0 : =57H                P_DATA		EQU 0X57
+(1)    3/       0 : =77H                P_CONF		EQU 0X77
+(1)    4/       0 :                     
+(1)    5/       0 : =49H                CMD_09		EQU 0X49		;SEND_CSD
+(1)    6/       0 : =4AH                CMD_10		EQU 0X4A		;SEND_CID
+(1)    7/       0 : =4CH                CMD_12		EQU 0X4C		;STOP_TRANSMISSION
+(1)    8/       0 : =51H                CMD_17		EQU 0X51		;READ_SINGLE_BLOCK
+(1)    9/       0 : =52H                CMD_18		EQU 0X52		;READ_MULTIPLE_BLOCK
+(1)   10/       0 : =58H                CMD_24		EQU 0X58		;WRITE_BLOCK
+(1)   11/       0 : =59H                CMD_25		EQU 0X59		;WRITE_MULTIPLE_BLOCK
+(1)   12/       0 : =77H                CMD_55		EQU 0X77		;APP_CMD
+(1)   13/       0 : =7AH                CMD_58		EQU 0X7A		;READ_OCR
+(1)   14/       0 : =7BH                CMD_59		EQU 0X7B		;CRC_ON_OFF
+(1)   15/       0 : =69H                ACMD_41		EQU 0X69		;SD_SEND_OP_COND
+(1)   16/       0 :                     
+       7/       0 :                     
+       8/       0 : =11H                DD		EQU 17				;ÑÄíÄ
+       9/       0 : =1H                 MM		EQU 1				;åÖëüñ
+      10/       0 : =BH                 YY		EQU 11				;ÉéÑ
+      11/       0 : =9631H              DATA		EQU DD|MM<<5|YY<<9|0X8000	;ìèÄäéÇÄãà Ç 16 Åàí
+      12/       0 :                     
+      13/       0 :                     ;ÄÑêÖë áÄÉêìáäà çÄâÑÖççéâ èêéòàÇäà
+      14/       0 : =8000H              ADRLOAD		EQU 0X8000
+      15/       0 :                     
+      16/       0 : =4080H              RAMCOD		EQU 0X4080			;ÄÑêÖë êÄÅéíõ éëçéÇçéÉé äéÑÄ
+      17/       0 : =6000H              RAM8KB		EQU 0X6000			;ÄÑêÖë ÅìîÖêÄ Ñãü èÖêÖÅêéëäà äéÑÄ
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 6 - 1/17/2011 21:29:35
+
+
+      18/       0 : =8000H              STRPAG		EQU 0X8000			;ÄÑêÖë äìÑÄ áÄÉêìáäà
+      19/       0 :                     
+      20/       0 :                     		ORG 0
+      21/       0 : F3                  		DI
+      22/       1 : 31 80 40            		LD SP,RAMCOD
+      23/       4 : AF                  		XOR A
+      24/       5 : D3 06               		OUT (VOL1),A
+      25/       7 : D3 07               		OUT (VOL2),A
+      26/       9 : D3 08               		OUT (VOL3),A
+      27/       B : D3 09               		OUT (VOL4),A
+      28/       D : D3 16               		OUT (VOL5),A
+      29/       F : D3 17               		OUT (VOL6),A
+      30/      11 : D3 18               		OUT (VOL7),A
+      31/      13 : D3 19               		OUT (VOL8),A			;áÄÉãìòàãà åéÑ èéêíõ Ñãü àëèéãúáéÇÄçàü ÅìîÖêÄ
+      32/      15 :                     
+      33/      15 :                     ;	JP RDBYT03-2	éíãÄÑéóçÄü îàÉçü
+      34/      15 :                     
+      35/      15 :                     ;éÜàÑÄçàÖ áÄÉêìáäà èêéòàÇäà ëé ëèÖäÄ
+      36/      15 : 06 00               		LD B,0				;óàíÄÖå 256 èéêí ëíÄíìëÄ
+      37/      17 : DB 04               		IN A,(ZXSTAT)			;çÄ èêÖÑåÖí àáåÖçÖçàü ëéëíéüçàü 
+      38/      19 : 1F                  		RRA
+      39/      1A : 38 05               		JR C,RDBYT01
+      40/      1C : 10 F9               		DJNZ $-5
+      41/      1E : 05                  		DEC B				;ëóÖíóàä éÅçìãàãëü, ëéëíéüçàÖ èéêíÄ çÖ àáåÖçàãéëú
+      42/      1F : 18 24               		JR RDBYT03			;Éêìáàå ëíÄçÑÄêíçìû èêéòàÇäì
+      43/      21 :                     
+      44/      21 : DB 01               RDBYT01		IN A,(ZXCMD)			;óàíÖå èêàòÖÑòàâ ÅÄâí àá èéêíÄ äéåÄçÑ
+      45/      23 : 4F                  		LD C,A				;ëéïêÄçàãà Ñãü èêéÇÖêäà
+      46/      24 : DB 02               		IN A,(ZXDATRD)			;óàíÖå ÅÄâí àá èéêíÄ ÑÄççõï
+      47/      26 : D3 05               		OUT (CLRCBIT),A			;ëÅêéëàãà äéåÄçÑ Åàí
+      48/      28 : B9                  		CP C				;ëêÄÇçàÇÄÖå èêàòÖÑòàÖ ÅÄâíõ
+      49/      29 : 20 1A               		JR NZ,RDBYT03			;çÖ ëéÇèÄãà, Éêìáàå ëíÄçÑÄêíçìû èêéòàÇäì
+      50/      2B : FE 55               		CP 0X55				;èêàòÖã ÅÄâí 0X55?
+      51/      2D : 20 16               		JR NZ,RDBYT03			;Öëãà çÖí, Éêìáàå ëíÄçÑÄêíçìû èêéòàÇäì
+      52/      2F : 06 00               		LD B,0				;óàíÄÖå 256 êÄá àáåÖçÖçàÖ èéêíÄ äéåÄçÑ
+      53/      31 : DB 04               		IN A,(ZXSTAT)
+      54/      33 : 1F                  		RRA
+      55/      34 : 38 05               		JR C,RDBYT02
+      56/      36 : 10 F9               		DJNZ $-5
+      57/      38 : 05                  		DEC B
+      58/      39 : 18 0A               		JR RDBYT03			;çÖ ÑéÜÑÄãàëú, Éêìáàå ëíÄçÑÄêíçìû èêéòàÇäì
+      59/      3B :                     
+      60/      3B : DB 01               RDBYT02		IN A,(ZXCMD)			;áÄÅêÄãà ÅÄâí àá èéêíÄ äéåÄçÑ
+      61/      3D : 4F                  		LD C,A				;ëéïêÄçàãà Ñãü èêéÇÖêäà
+      62/      3E : DB 02               		IN A,(ZXDATRD)			;áÄÅêÄãà ÅÄâí àá èéêíÄ ÑÄççõï
+      63/      40 : B9                  		CP C				;ëêÄÇçàãà
+      64/      41 : 20 02               		JR NZ,RDBYT03			;Öëãà çÖ ëéÇèÄÑÄûí, Éêìáàå ëíÄçÑÄêíçìû èêéòàÇäì
+      65/      43 : FE AA               		CP 0XAA				;ùíé 0XAA?
+      66/      45 : 08                  RDBYT03		EX AF,AF'			;ÇêÖåÖççé ëèêüíÄãà îãÄÉà èêéñÖëëéêÄ
+      67/      46 : 21 5A 00            		LD HL,GRUZILA
+      68/      49 : 11 80 40            		LD DE,RAMCOD
+      69/      4C : 01 B0 08            		LD BC,RAMCEND-VERLOAD
+      70/      4F : ED B0               		LDIR				;èÖêÖçÖëãà éëçéÇçéâ äéÑ Ç ÄÑêÖë êÄÅéíõ
+      71/      51 : D3 05               		OUT (CLRCBIT),A			;ëÅêéëàãà äéåÄçÑ Åàí
+      72/      53 : 08                  		EX AF,AF'			;ÇÖêçìãà ëèêüíÄççõÖ îãÄÉà
+      73/      54 : CA B4 40            		JP Z,GRUZIM2			;Öëãà ÇëÖ ìëãéÇàü ëéÇèÄãà, áÄèìëäÄÖå áÄÉêìáóàä
+      74/      57 : C3 AE 40            		JP GRUZIM0			;àçÄóÖ Éêìáàå ëíÄçÑÄêíçìû èêéòàÇäì àá èáì
+      75/      5A :                     
+      76/      5A :                     GRUZILA
+      77/    4080 :                     		PHASE RAMCOD
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 7 - 1/17/2011 21:29:35
+
+
+      78/    4080 :                     
+      79/    4080 : 4C 6F 61 64 65 72   VERLOAD		DB "Loader"
+      80/    4086 : 31 96               		DW DATA
+      81/    4088 :                     
+      82/    4088 :                     ;èìíú Ñé îÄâãÄ èêéòàÇäà GS
+      83/    4088 : 4E 45 4F 47 53 2E   F_PATH		DB "NEOGS.ROM",0
+                    52 4F 4D 00 
+      84/    4092 :                     
+      85/    4092 : 4E 47 53 5F 52 4F   UPDATENAME	DB "NGS_ROM.UPD",0
+                    4D 2E 55 50 44 00 
+      86/    409E :                     
+      87/    409E : 6E 6F 74 20 66 6F   TXT1		DB "not found",0
+                    75 6E 64 00 
+      88/    40A8 :                     TXT1E
+      89/    40A8 : 62 65 74 61 00      TXT2		DB "beta",0
+      90/    40AD :                     TXT2E
+      91/    40AD : 00                  TXT3		DB 0;"stable",0
+      92/    40AE :                     TXT3E
+      93/    40AE :                     
+      94/    40AE : CD F7 41            GRUZIM0		CALL RROMSD			;áÄÉêìÜÄÖå à áÄèìëäÄÖå èêéòàÇäì ë SD äÄêíõ, Öëãà éçÄ íÄå Öëíú
+      95/    40B1 : C3 50 42            		JP GS105			;àçÄóÖ áÄÉêìÜÄÖå èêéòàÇäì àá èáì à áÄèìëäÄÖå
+      96/    40B4 :                     
+      97/    40B4 : 3E 11               GRUZIM2		LD A,0X11			;äéçîàÉìêàå çÉë
+      98/    40B6 : D3 0F               		OUT (GSCFG0),A			;éíêìÅÄÖå èáì à ÇêìÅÄÖå óÄëíéíì 12åÉñ
+      99/    40B8 : AF                  		XOR A
+     100/    40B9 : D3 00               		OUT (MPAG),A			;ÇäãûóÄÖå ëíêÄçàñì 0
+     101/    40BB : DB 04               GRUZIM		IN A,(ZXSTAT)			;èéëíéüççé ÜÑÖå äéåÄçÑ éí ëèÖäÄ
+     102/    40BD : 1F                  		RRA
+     103/    40BE : 30 FB               		JR NC,$-3
+     104/    40C0 : DB 01               		IN A,(ZXCMD)			;èéâåÄãà äéåÄçÑì
+     105/    40C2 : FE 1D               		CP 0X1D				;ùíé äéåÄçÑÄ èêéÇÖêäà? 
+     106/    40C4 : 20 08               		JR NZ,GRUZIM1
+     107/    40C6 : 3E 76               		LD A,0X76
+     108/    40C8 : D3 03               		OUT (ZXDATWR),A			;éíÑÄÖå ÅÄâí àÑÖçíàîàäÄñàà áÄÉêìáóàäÄ
+     109/    40CA : D3 05               		OUT (CLRCBIT),A
+     110/    40CC : 18 ED               		JR GRUZIM			;à èêéÑéãÜÄÖå ÜÑÄíú äéåÄçÑ
+     111/    40CE :                     
+     112/    40CE : FE F3               GRUZIM1		CP 0XF3
+     113/    40D0 : CA 50 42            		JP Z,GS105			;èêà èéëíìèãÖçàà äéåÄçÑ 0XF3 à
+     114/    40D3 : FE F4               		CP 0XF4
+     115/    40D5 : CA 50 42            		JP Z,GS105			;0XF4 áÄÉêìÜÄÖå à áÄèìëäÄÖå èêéòàÇäì àá èáì
+     116/    40D8 : FE 0C               		CP LOW (FLOADE-FLOADER)/2+1
+     117/    40DA : D2 50 42            		JP NC,GS105			;ÄçÄãéÉàóçé çÖ äéåÄçÑÄ áÄÉêìáóàäÄ èÖêÖïéÑàå çÄ éëçéÇçéÖ èáì
+     118/    40DD : 87                  		ADD A,A
+     119/    40DE : 6F                  		LD L,A
+     120/    40DF : 26 00               		LD H,0
+     121/    40E1 : 11 B4 40            		LD DE,GRUZIM2
+     122/    40E4 : D5                  		PUSH DE				;çÄ ëíÖäÖ ÄÑêÖë ÇéáÇêÄíÄ èéëãÖ àëèéãçÖçàü äéåÄçÑõ
+     123/    40E5 : 11 EE 40            		LD DE,FLOADER
+     124/    40E8 : 19                  		ADD HL,DE
+     125/    40E9 : 5E                  		LD E,(HL)
+     126/    40EA : 23                  		INC HL
+     127/    40EB : 56                  		LD D,(HL)			;áÄÅêÄãà ÄÑêÖë àëèéãçÖçàü äéåÄçÑõ
+     128/    40EC : EB                  		EX DE,HL
+     129/    40ED : E9                  		JP (HL)				;èéÖïÄãà çÄ àëèéãçÖçàÖ
+     130/    40EE :                     
+     131/    40EE : 3B 42               FLOADER		DW LOADROM			;00 áÄÉêìáäÄ ROM ëé ëèÖäÄ ÇåÖëíé ëäéèàêéÇÄççéâ àá ROM
+     132/    40F0 : 7C 42               		DW JPLDROM			;01 áÄèìëä áÄÉêìÜÖççéâ èêéòàÇäà 
+     133/    40F2 : 50 42               		DW GS105			;02 äéèàêéÇÄçàÖ àá ROM à áÄèìëä
+     134/    40F4 : F7 41               		DW RROMSD			;03 áÄÉêìáäÄ à áÄèìëä ROM ë SD äÄêíõ
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 8 - 1/17/2011 21:29:35
+
+
+     135/    40F6 : 17 42               		DW LOADCOD			;04 áÄÉêìáäÄ äéÑÄ ëé ëèÖäÄ
+     136/    40F8 : CA 41               		DW LDINSD			;05 áÄÉêìáäÄ îÄâãÄ ë SD äÄêíõ
+     137/    40FA : 03 42               		DW RUNCOD			;06 áÄèìëä äéÑÄ ë ãûÅéÉé ÄÑêÖëÄ à Ç ãûÅéâ ëíêÄçàñÖ
+     138/    40FC : EF 41               		DW STATSD			;07 ëíÄíìë áÄÉêìÜÖççéÉé îÄâãÄ
+     139/    40FE : 04 41               		DW VERPAGE			;08 ÇÖêëàü Ç íÖäëíéÇéå ÇàÑÖ Ñãü ìäÄáÄççéâ ëíêÄçàñÖ
+     140/    4100 : 92 42               		DW GET_CRC			;09 èéãìóàíú CRC16
+     141/    4102 : E5 41               		DW LOADUPDATE			;0A áÄÉêìáäÄ îÄâãÄ ë éÅçéÇãÖçàÖå
+     142/    4104 :                     FLOADE
+     143/    4104 :                     
+     144/    4104 :                     ;èÖêÖÑÄóÄ çÄ ëèÖä ÇÖêëàà Ç TXT ÇàÑÖ
+     145/    4104 : DB 02               VERPAGE		IN A,(ZXDATRD)			;áÄÅêÄãà ÅÄâí çéåÖêÄ áÄèêéòÖççéâ ëíêÄçàñõ èáì
+     146/    4106 : E6 07               		AND 7				;ëíÄêòàÖ 5 Åàí Ç àÉçéêÖ
+     147/    4108 : 08                  		EX AF,AF'			;ÇêÖåÖççé ëèêüíÄãà îãÄÉà èêéñÄ
+     148/    4109 : 3E 30               		LD A,0X30
+     149/    410B : D3 0F               		OUT (GSCFG0),A			;Çäãûóàãà 10 åÉñ à ÇÖêçìãà èáì
+     150/    410D : 08                  		EX AF,AF'			;ÇÖêçìãà îãÄÉà
+     151/    410E : 87                  		ADD A,A				;çÄå çìÜçÄ ÇíéêõÖ 32ä ëíêÄçàñõ èáì
+     152/    410F :                     ;		AND A				;ÇõÅêÄçÄ ëíêÄçàñÄ 0?
+     153/    410F :                     ;		JR NZ,VERPAG1			;Öëãà çÖí, íé àÑÖå çÄ àáÇãÖóÖçàÖ èéëãÖÑçàï 8 ÅÄâí
+     154/    410F :                     ;		LD HL,VERLOAD			;Ñãü áÄÉêìáóàäÄ ÅÖêÖå àá ÑêìÉéÉé ÄÑêÖëÄ
+     155/    410F :                     ;		LD DE,RAMCEND
+     156/    410F :                     ;		LD BC,8
+     157/    410F :                     ;		PUSH DE
+     158/    410F :                     ;		LDIR
+     159/    410F :                     ;		POP DE
+     160/    410F :                     ;		JR VERPAG2			;èéòãà çÄ èÖêÖÇéÑóàä Ç íÖäëíéÇõâ ÇàÑ
+     161/    410F :                     
+     162/    410F : 3C                  VERPAG1		INC A
+     163/    4110 : D3 00               		OUT (MPAG),A			;Çäãûóàãà èéëãÖÑçàà 16ä ÇõÅêÄççéâ ëíêÄçàñõ èáì
+     164/    4112 : 21 F8 FF            		LD HL,0XFFF8
+     165/    4115 : 01 08 00            		LD BC,8
+     166/    4118 : 11 30 49            		LD DE,RAMCEND
+     167/    411B : D5                  		PUSH DE
+     168/    411C : ED B0               		LDIR				;èÖêÖçÖëãà 8 ÅÄâí àá ïÇéëíÄ èáì
+     169/    411E : D1                  		POP DE
+     170/    411F : 3E 11               VERPAG2		LD A,0X11
+     171/    4121 : D3 0F               		OUT (GSCFG0),A			;éíêìÅàãà èáì à ÇÖêçìãà 12åÉñ
+     172/    4123 : AF                  		XOR A
+     173/    4124 : D3 00               		OUT (MPAG),A			;ÇÖêçìãà ëíêÄçàñì 0 éáì
+     174/    4126 : 06 08               		LD B,8				;èêéÇÖêüå èÖêÖçÖëÖççõÖ 8 ÅÄâí, Ä çÖ 0XFF ãà íÄå?
+     175/    4128 : 1A                  		LD A,(DE)
+     176/    4129 : 13                  		INC DE
+     177/    412A : 3C                  		INC A
+     178/    412B : 20 0F               		JR NZ,VFPGA1			;çÖ 0XFF, èêéÑéãÜÄÖå
+     179/    412D : 10 F9               		DJNZ $-5
+     180/    412F : 3B                  		DEC SP				;íÄäà ÇëÖ 8 ÅÄâí 0XFF, ÇÖêëàà ì èáì ëíêÄçàñõ çÖíì
+     181/    4130 : 3B                  		DEC SP
+     182/    4131 : D1                  		POP DE
+     183/    4132 : 21 9E 40            		LD HL,TXT1
+     184/    4135 : 01 0A 00            		LD BC,TXT1E-TXT1
+     185/    4138 : ED B0               		LDIR				;éíÑÄíú íÖäëí éÅ ùíéå
+     186/    413A : 18 06               		JR VFPGA0
+     187/    413C :                     
+     188/    413C : 3B                  VFPGA1		DEC SP
+     189/    413D : 3B                  		DEC SP
+     190/    413E : D1                  		POP DE
+     191/    413F : CD 56 41            		CALL UNVERS			;êÄëèÄäéÇäÄ èéãìóÖççõï 8 ÅÄâí Ç íÖäëí
+     192/    4142 : D3 05               VFPGA0		OUT (CLRCBIT),A			;ëÅêéëàãà äéåÄçÑ Åàí
+     193/    4144 : 21 30 49            		LD HL,RAMCEND
+     194/    4147 : 01 03 00            		LD BC,ZXDATWR
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 9 - 1/17/2011 21:29:35
+
+
+     195/    414A : 7E                  VFPGA2		LD A,(HL)
+     196/    414B : ED A3               		OUTI
+     197/    414D : 08                  		EX AF,AF'
+     198/    414E : CD 8C 42            		CALL WDN
+     199/    4151 : 08                  		EX AF,AF'
+     200/    4152 : A7                  		AND A
+     201/    4153 : 20 F5               		JR NZ,VFPGA2			;éíÑÄÖå íÖäëí ÇÖêëàà èéäÄ çÖ ÇëíêÖíàíëü ÅÄâí 0, äéíéêõâ íéÜÖ éíÑÄÖå
+     202/    4155 : C9                  		RET
+     203/    4156 :                     
+     204/    4156 :                     ;êÄëèÄäéÇôàä ÑÄíõ
+     205/    4156 : 21 06 00            UNVERS		LD HL,6
+     206/    4159 : 19                  		ADD HL,DE			;èêéèìëíàãà 6 ÅÄâí íÖäëíÄ ÇÖêëàà
+     207/    415A : 4E                  		LD C,(HL)			;áÄÅêÄãà åãÄÑòàâ ÅÄâí ÇÖêëàà
+     208/    415B : 36 20               		LD (HL)," ";0X20		;çÄ ÖÉé åÖëíé èêéÅÖã
+     209/    415D : 23                  		INC HL
+     210/    415E : 46                  		LD B,(HL)			;áÄÅêÄãà ëíÄêòàâ ÅÄâí
+     211/    415F : 79                  		LD A,C				;Çáüãà åãÄÑòàâ ÅÄâí ÇÖêëàà
+     212/    4160 : E6 1F               		AND 0X1F			;çÄë àçíÖêÖëìûí åãÄÑòàÖ 5 Åàí (ÑÖçú åÖëüñÄ)
+     213/    4162 : 20 02               		JR NZ,$+4
+     214/    4164 : CB B8               		RES 7,B				;Öëãà èéãìóàãëü 0, ÇéáåéÜçé ùíé ÅÖíÄ ÇÖêëàü
+     215/    4166 : FE 20               		CP 32
+     216/    4168 : 38 02               		JR C,$+4			;Ç åÖëüñÖ çÖ åéÜÖí Åõíú ÅéãÖÖ 31 Ñçü
+     217/    416A : CB B8               		RES 7,B				;àçÄóÖ ùíé ÅÖíÄ ÇÖêëàü
+     218/    416C : CD AF 41            		CALL A2TXT			;èÖêÖÇéÑàå èéãìóÖççéÖ óàëãé Ç íÖäëí
+     219/    416F : CB 38               		SRL B				;ëÑàçìãà ÇÖêëàû çÄ 1 Åàí ÇãÖÇé óíéÅõ çéåÖê åÖëüñÄ
+     220/    4171 : CB 19               		RR C				;éäÄáÄãëü Ç éÑçéå ÅÄâíÖ
+     221/    4173 : 79                  		LD A,C				;áÄÅêÄãà ùíéí ÅÄâí
+     222/    4174 : 0F                  		RRCA
+     223/    4175 : 0F                  		RRCA
+     224/    4176 : 0F                  		RRCA
+     225/    4177 : 0F                  		RRCA				;ëÑÇàçìãà çìÜçõÖ Åàíõ Ç åãÄÑòàÖ êÄáêÄÑõ ÅÄâíÄ
+     226/    4178 : E6 0F               		AND 0X0F			;éëíÄÇàãà çìÜçõÖ 4 ÅàíÄ (çéåÖê åÖëüñÄ)
+     227/    417A : 20 02               		JR NZ,$+4			;çéåÖê åÖëüñÄ çÖåéÜÖí Åõíú 0
+     228/    417C : CB B0               		RES 6,B				;àçÄóÖ ùíé ÅÖíÄ ÇÖêëàü
+     229/    417E : FE 0D               		CP 13				;à çéåÖê åÖëüñÄ çÖ åéÜÖí Åõíú ÅéãúòÖ 12
+     230/    4180 : 38 02               		JR C,$+4
+     231/    4182 : CB B0               		RES 6,B				;àçÄóÖ ÅÖíÄ ÇÖêëàü
+     232/    4184 : 36 2E               		LD (HL),".";0X2E		;éíÑÖãàãà çéåÖê Ñçü åÖëüñÄ íéóäéâ
+     233/    4186 : 23                  		INC HL
+     234/    4187 : CD AF 41            		CALL A2TXT			;äéçÇÖêíàêéÇÄãà çéåÖê åÖëüñÄ
+     235/    418A : 36 2E               		LD (HL),".";0X2E		;íÄä ÜÖ éíÑÖãàãà íéóäéâ
+     236/    418C : 23                  		INC HL
+     237/    418D : 78                  		LD A,B				;Çáüãà éëíÄÇòàÖëü Åàíõ
+     238/    418E : E6 3F               		AND 0X3F			;çÄå çìÜçõ 6 Åàí çéåÖêÄ ÉéÑÄ
+     239/    4190 : CD AF 41            		CALL A2TXT			;äéçÇÖêíçìãà Ç íÖäëí
+     240/    4193 : CB 70               		BIT 6,B				;ÅÖíÄ àãà õíÄÅã ÇÖêëàü?
+     241/    4195 : 20 08               		JR NZ,UNVERS1
+     242/    4197 : 11 A8 40            		LD DE,TXT2			;ÇëÖ-íÄäà ÅÖíÄ, é óÖå à ÑéÅÄÇãüÖå íÖäëí ä ÇÖêëàà
+     243/    419A : 01 05 00            		LD BC,TXT2E-TXT2
+     244/    419D : 18 06               		JR UNVERS2
+     245/    419F :                     
+     246/    419F : 11 AD 40            UNVERS1		LD DE,TXT3			;ÇÖêëàü ëíÄÅã
+     247/    41A2 : 01 01 00            		LD BC,TXT3E-TXT3
+     248/    41A5 : 36 20               UNVERS2		LD (HL)," ";0X20		;èÖêÖÑ íÖäëíéå (ÅÖíÄ àãà ëíÄÅã) ÇëíÄÇãüÖå èêéÅÖã
+     249/    41A7 : 23                  		INC HL
+     250/    41A8 : EB                  		EX DE,HL
+     251/    41A9 : ED B0               		LDIR				;èÖêÖíÄôàãà íÖäëí
+     252/    41AB : EB                  		EX DE,HL
+     253/    41AC : 36 00               		LD (HL),0			;áÄÇÖêòàãà ëíêéäì çìãÖå
+     254/    41AE : C9                  		RET
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 10 - 1/17/2011 21:29:35
+
+
+     255/    41AF :                     
+     256/    41AF :                     ;èÖêÖÇéÑ "A" Ç ÑÖëüíàóçõâ ÇàÑ à Ç íÖäëí. Ñãü óàëÖã éí 0 Ñé 99
+     257/    41AF : E5                  A2TXT		PUSH HL				;ëéïêÄçàãà ÄÑêÖë äìÑÄ ãéÜàíú ëäéçÇÖêóÖççéÖ
+     258/    41B0 : 6F                  		LD L,A
+     259/    41B1 : 26 00               		LD H,0
+     260/    41B3 : 11 0A 00            		LD DE,10
+     261/    41B6 : AF                  		XOR A
+     262/    41B7 : 3D                  		DEC A
+     263/    41B8 : 3C                  		INC A
+     264/    41B9 : ED 52               		SBC HL,DE
+     265/    41BB : 30 FB               		JR NC,$-3			;ëóàíÄÖå äéãàóÖëíÇé ÑÖëüíäéÇ Ç óàëãÖ
+     266/    41BD : 19                  		ADD HL,DE			;ÇÖêçìãà èÖêÖÅéê ÇõóàíÄçàü
+     267/    41BE : C6 30               		ADD A,"0"			;èÖêÖÇÖãà Ç íÖëäíéÇõâ ÇàÑ èéãìóÖççéÖ óàëãé
+     268/    41C0 : 57                  		LD D,A				;èéäÄ ëéïêÄçàãà
+     269/    41C1 : 7D                  		LD A,L				;Çáüãà éëíÄÇòàÖëü ÖÑàçàñõ óàëãÄ
+     270/    41C2 : C6 30               		ADD A,"0"			;äéçÇÖêíìãà Ç íÖäëí
+     271/    41C4 : E1                  		POP HL				;ÇÖêçìãà ÄÑêÖë äìÑÄ ãéÜàíú
+     272/    41C5 : 72                  		LD (HL),D			;èéãéÜàãà ÑÖëüíäà áÄÑÄççéÉé óàëãÄ
+     273/    41C6 : 23                  		INC HL
+     274/    41C7 : 77                  		LD (HL),A			;èéãéÜàãà ÖÑàçàñõ íéÉé ÜÖ óàëãÄ
+     275/    41C8 : 23                  		INC HL
+     276/    41C9 : C9                  		RET
+     277/    41CA :                     
+     278/    41CA :                     ;áÄÉêìáäÄ ë SD äÄêíõ èé ìäÄáÄççéåì èìíà
+     279/    41CA :                     ;èÖêÇõâ ÅÄâí-çéåÖê ëíêÄçàñõ éáì äìÑÄ çÄóàçÄíú Éêìáàíú 
+     280/    41CA :                     ;ÑÄãÖÖ ÅÄâíõ íÖäëíéÇéâ ëíêéäÄ èìíà à àåÖçà îÄâãÄ
+     281/    41CA :                     ;äéçÖñ ëíêéäà ÅÄâí 0, éç ÜÖ ëíéè ÅÄâí
+     282/    41CA : 01 02 00            LDINSD		LD BC,ZXDATRD			;ÄÑêÖë èéêíÄ ÑÄççõï
+     283/    41CD : 21 30 49            		LD HL,RAMCEND			;ÄÑêÖë äìÑÄ ëíêéäì èìíà ëäãÄÑàêéÇÄíú
+     284/    41D0 : E5                  		PUSH HL
+     285/    41D1 : ED 78               		IN A,(C)			;èêàçüãà çéåÖê ëíêÄçàñõ éíäìÑÄ çÄóàçÄíú áÄÉêìáäì
+     286/    41D3 : D3 05               		OUT (CLRCBIT),A			;ëÅêéëàãà äéåÄçÑ Åàí
+     287/    41D5 : 08                  		EX AF,AF'
+     288/    41D6 : CD 86 42            LDINSD1		CALL WDY
+     289/    41D9 : ED 78               		IN A,(C)
+     290/    41DB : 77                  		LD (HL),A
+     291/    41DC : 23                  		INC HL
+     292/    41DD : A7                  		AND A
+     293/    41DE : 20 F6               		JR NZ,LDINSD1			;èêàçàåÄÖå ëíêéäì èéäÄ çÖ ÇëíêÖíàëü ÅÄâí 0
+     294/    41E0 : 08                  		EX AF,AF'
+     295/    41E1 : E1                  		POP HL
+     296/    41E2 : C3 47 43            		JP LOAD_SD			;ÑÄãÖÖ áÄèìëäÄÖå áÄÉêìáäì ë SD äÄêíõ
+     297/    41E5 :                     
+     298/    41E5 :                     ;áÄÉêìáäÄ îÄâãÄ ë éÅçéÇãÖçàüåà
+     299/    41E5 : 21 92 40            LOADUPDATE	LD HL,UPDATENAME		;àåü îÄâãÄ éÅçéÇãÖçàü
+     300/    41E8 : 3E 02               		LD A,2				;Éêìáàíú çÄóàçÄü ëé 2 ëíêÄçàñõ
+     301/    41EA : D3 05               		OUT (CLRCBIT),A
+     302/    41EC : C3 47 43            		JP LOAD_SD
+     303/    41EF :                     
+     304/    41EF :                     ;ëíÄíìë áÄÉêìáäà îÄâãÄ ë SD äÄêíõ
+     305/    41EF : 3A 24 56            STATSD		LD A,(STATUS)
+     306/    41F2 : D3 03               		OUT (ZXDATWR),A
+     307/    41F4 : D3 05               		OUT (CLRCBIT),A
+     308/    41F6 : C9                  		RET
+     309/    41F7 :                     
+     310/    41F7 :                     ;áÄÉêìáäÄ à áÄèìëä èêéòàÇäà ë SD äÄêíõ
+     311/    41F7 :                     ;àåü, èìíú à ÄÑêÖë îàäëàêéÇÄç
+     312/    41F7 : 21 88 40            RROMSD		LD HL,F_PATH			;ÄÑêÖë ëíêéäà îàäëàêéÇÄççéÉé èìíà Ñãü áÄÉêìáäà 
+     313/    41FA : AF                  		XOR A
+     314/    41FB : CD 47 43            		CALL LOAD_SD			;áÄÉêìÜÄÖå
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 11 - 1/17/2011 21:29:35
+
+
+     315/    41FE : A7                  		AND A
+     316/    41FF : C0                  		RET NZ				;Öëãà éòàÅäÄ, íé Éêìáàå àá èáì
+     317/    4200 : C3 7C 42            		JP JPLDROM
+     318/    4203 :                     
+     319/    4203 :                     ;áÄèìëä äéÑÄ Ç ãûÅéâ ëíêÄçàñÖ
+     320/    4203 :                     ;0-çéåÖê ëíêÄçàñõ éáì
+     321/    4203 :                     ;1-åãÄÑòàâ ÅÄâí ÄÑêÖëÄ áÄèìëäÄ
+     322/    4203 :                     ;2-ëíÄêòàâ ÅÄâí ÄÑêÖëÄ áÄèìëäÄ
+     323/    4203 : 01 02 00            RUNCOD		LD BC,ZXDATRD			;ÄÑêÖë èéêíÄ ÑÄççõï
+     324/    4206 : ED 78               		IN A,(C)			;èêàçüãà çéåÖê ë íêÄçàñõ éáì
+     325/    4208 : D3 05               		OUT (CLRCBIT),A			;ëÅêéëàãà äéåÄçÑ Åàí
+     326/    420A : D3 00               		OUT (MPAG),A
+     327/    420C : CD 86 42            		CALL WDY
+     328/    420F : ED 68               		IN L,(C)			;èêàçüãà åãÄÑòàâ ÅÄâí ÄÑêÖëÄ áÄèìëäÄ
+     329/    4211 : CD 86 42            		CALL WDY
+     330/    4214 : ED 60               		IN H,(C)			;èêàçüãà ëíÄêòàâ ÅÄâí ÄÑêÖëÄ áÄèìëäÄ
+     331/    4216 : E9                  		JP (HL)				;áÄèìëäÄÖå
+     332/    4217 :                     
+     333/    4217 :                     ;0-çéåÖê ëíêÄçàñõ éáì
+     334/    4217 :                     ;1-åãÄÑòàâ ÅÄâí Ñãàçõ áÄÉêìáäà
+     335/    4217 :                     ;2-ëíÄêòàâ ÅÄâí Ñãàçõ áÄÉêìáäà
+     336/    4217 :                     ;áÄÉêìáäÄ çÖ ÅéãÖÖ 32äÅ
+     337/    4217 : 01 02 00            LOADCOD		LD BC,ZXDATRD			;ÄÑêÖë èéêíÄ ÑÄççõï
+     338/    421A : 21 00 80            		LD HL,0X8000			;ÄÑêÖë çÄóÄãÄ áÉêìáäà
+     339/    421D : ED 78               		IN A,(C)			;èêàçüãà çéåÖê ëíêÄçàñõ éáì
+     340/    421F : D3 05               		OUT (CLRCBIT),A			;ëÅêéëàãà äéåÄçÑ Åàí
+     341/    4221 : D3 00               		OUT (MPAG),A			;Çäãûóàãà áÄÑÄççìû ëíêÄçàñì éáì
+     342/    4223 : CD 86 42            		CALL WDY
+     343/    4226 : ED 58               		IN E,(C)			;èêàçüãà åãÄÑòàâ ÅÄâí Ñãàçõ áÄÉêìáäà
+     344/    4228 : CD 86 42            		CALL WDY
+     345/    422B : ED 50               		IN D,(C)			;èêàçüãà ëíÄêòàâ ÅÄâí Ñãàçõ áÉÄêìáäà
+     346/    422D : CD 86 42            LOADCO1		CALL WDY
+     347/    4230 : ED A2               		INI
+     348/    4232 : 7C                  		LD A,H
+     349/    4233 : A7                  		AND A
+     350/    4234 : C8                  		RET Z				;Öëãà éáì äéçóàãéëú, ÇõïéÑàå
+     351/    4235 : 1B                  		DEC DE
+     352/    4236 : 7A                  		LD A,D
+     353/    4237 : B3                  		OR E
+     354/    4238 : 20 F3               		JR NZ,LOADCO1			;Éêìáàå ëäéäÄ ìäÄáÄçé
+     355/    423A : C9                  		RET
+     356/    423B :                     
+     357/    423B :                     ;áÄÉêìáäÄ èêéòàÇäà 32äÅ ëé ëèÖäÄ
+     358/    423B : AF                  LOADROM		XOR A
+     359/    423C : D3 00               		OUT (MPAG),A			;ÇäãûóÄÖå ëíêÄçàñì
+     360/    423E : 21 00 80            		LD HL,0X8000			;ÄÑêÖë áÄÉêìáäà
+     361/    4241 : D3 05               		OUT (CLRCBIT),A			;ëÅêéë äéåÄçÑ ÅàíÄ
+     362/    4243 : 01 02 00            		LD BC,ZXDATRD			;ÄÑêÖë èéêíÄ ÑÄççõï
+     363/    4246 : CD 86 42            		CALL WDY
+     364/    4249 : ED A2               		INI
+     365/    424B : 7C                  		LD A,H
+     366/    424C : A7                  		AND A
+     367/    424D : 20 F7               		JR NZ,$-7			;Éêìáàå èéäÄ èÄåüíú çÖ äéçóàíëü
+     368/    424F : C9                  		RET
+     369/    4250 :                     
+     370/    4250 :                     ;ÉêìáàãäÄ ëíÄçÑÄêíçéâ èêéòàÇäà àá ROM
+     371/    4250 : 21 00 80            GS105		LD HL,STRPAG			;ÄÑêÖë äìÑÄ èÖêÖçéëàíú
+     372/    4253 : 3E 04               		LD A,4				;èÖêÖçéëàíú 4 äìëäÄ èé 8 äàãéÅÄâí
+     373/    4255 : 08                  MOV1		EX AF,AF'			;èêüóÖå ëóÖíóàä
+     374/    4256 : 3E 30               		LD A,0X30
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 12 - 1/17/2011 21:29:35
+
+
+     375/    4258 : D3 0F               		OUT (GSCFG0),A			;Çäãûóàãà èáì
+     376/    425A : 3E 02               		LD A,2
+     377/    425C : D3 00               		OUT (MPAG),A			;ëíêÄçàñì 2 ëé ëíÄçÑÄêíçéâ èêéòàÇäéâ 
+     378/    425E : E5                  		PUSH HL
+     379/    425F : 11 00 60            		LD DE,RAM8KB
+     380/    4262 : 01 00 20            		LD BC,0X2000
+     381/    4265 : ED B0               		LDIR				;èÖêÖçÖëãà Ç ÅìîÖê 8 äàãéÅÄâí
+     382/    4267 : 3E 31               		LD A,0X31
+     383/    4269 : D3 0F               		OUT (GSCFG0),A			;èÖêÖäãûóàãà èáì
+     384/    426B : AF                  		XOR A
+     385/    426C : D3 00               		OUT (MPAG),A			;Çäãûóàãà ëíêÄçàñì 0 éáì
+     386/    426E : D1                  		POP DE
+     387/    426F : 21 00 60            		LD HL,RAM8KB
+     388/    4272 : 01 00 20            		LD BC,0X2000
+     389/    4275 : ED B0               		LDIR				;èÖêÖçÖëãà àá ÅìîÖêÄ 8 äàãéÅÄâí
+     390/    4277 : EB                  		EX DE,HL
+     391/    4278 : 08                  		EX AF,AF'
+     392/    4279 : 3D                  		DEC A
+     393/    427A : 20 D9               		JR NZ,MOV1			;à íÄä 4 êÄáÄ
+     394/    427C :                     
+     395/    427C :                     ;áÄèìëä áÄÉêìÜÖççéâ èêéòàÇäà
+     396/    427C : AF                  JPLDROM		XOR A
+     397/    427D : D3 00               		OUT (MPAG),A			;Çäãûóàãà ëíêÄçàñì 0 éáì
+     398/    427F : 3E 13               		LD A,0X13
+     399/    4281 : D3 0F               		OUT (GSCFG0),A			;Çäãûóàãà óÄëíéíì 12åÉñ, éíäãûóàãà èáì à áÄôàíàãà éáì éí áÄèàëà
+     400/    4283 : C3 00 00            		JP 0				;ëíÄêíìÖå ëíÄçÑÄêíçìû èêéòàÇäì
+     401/    4286 :                     
+     402/    4286 :                     ;ÜÑÖå èéäÄ ëèÖä ÑÄëí ÅÄâí
+     403/    4286 : DB 04               WDY		IN A,(ZXSTAT)
+     404/    4288 : 17                  		RLA
+     405/    4289 : 30 FB               		JR NC,WDY
+     406/    428B : C9                  		RET
+     407/    428C :                     
+     408/    428C :                     ;ÜÑÖå èéäÄ ëèÖä áÄÅÖêÖí ÅÄâí àá èéêíÄ
+     409/    428C : DB 04               WDN		IN A,(ZXSTAT)
+     410/    428E : 17                  		RLA
+     411/    428F : 38 FB               		JR C,WDN
+     412/    4291 : C9                  		RET
+     413/    4292 :                     
+     414/    4292 :                     ;èéÑëóÖí CRC16
+     415/    4292 : 3E 02               GET_CRC		LD A,2
+     416/    4294 : D3 00               		OUT (MPAG),A
+     417/    4296 : 3D                  		DEC A
+     418/    4297 : D3 0F               		OUT (GSCFG0),A
+     419/    4299 : 2A 00 80            		LD HL,(0X8000)
+     420/    429C : CB 3C               		SRL H
+     421/    429E : CB 1D               		RR L
+     422/    42A0 : CB 3C               		SRL H
+     423/    42A2 : CB 1D               		RR L
+     424/    42A4 : CB 3C               		SRL H
+     425/    42A6 : CB 1D               		RR L
+     426/    42A8 : CB 3C               		SRL H
+     427/    42AA : CB 1D               		RR L
+     428/    42AC : 7D                  		LD A,L
+     429/    42AD : FD 67               		LD IYH,A
+     430/    42AF :                     ;		LD IX,0X8000
+     431/    42AF :                     ;		LD C,(IX+0)
+     432/    42AF :                     ;		LD B,(IX+1)
+     433/    42AF :                     ;		CALL CRC16
+     434/    42AF :                     ;		LD C,(IX+0)
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 13 - 1/17/2011 21:29:35
+
+
+     435/    42AF :                     ;		LD B,(IX+1)
+     436/    42AF :                     ;		LD A,0X81
+     437/    42AF :                     ;		AND A
+     438/    42AF :                     ;		SBC HL,BC
+     439/    42AF :                     ;		JR NZ,OUT_ERR			;CRC16 áÄÉéãéÇäÄ ERROR
+     440/    42AF : DD 21 F8 7F         		LD IX,0X8000+8-0X10
+     441/    42B3 : 11 10 00            SCHET		LD DE,0X10
+     442/    42B6 : DD 19               		ADD IX,DE			;Ç IX ÄÑêÖë ÇõÅêÄççéÉé ÅãéäÄ
+     443/    42B8 : DD 4E 04            		LD C,(IX+4)
+     444/    42BB : DD 46 05            		LD B,(IX+5)			;Ç BC ÑãàçÄ ÅãéäÄ
+     445/    42BE : DD 5E 01            		LD E,(IX+1)
+     446/    42C1 : DD 6E 02            		LD L,(IX+2)
+     447/    42C4 : DD 66 03            		LD H,(IX+3)
+     448/    42C7 : 7D                  		LD A,L
+     449/    42C8 : E6 7F               		AND 0X7F
+     450/    42CA : 57                  		LD D,A				;Ç DE ëåÖôÖçàÖ Ç ëíêÄçàñÖ
+     451/    42CB : 29                  		ADD HL,HL
+     452/    42CC : 3E 02               		LD A,2
+     453/    42CE : 84                  		ADD A,H
+     454/    42CF : FD 6F               		LD IYL,A
+     455/    42D1 : D3 00               		OUT (MPAG),A			;çéåÖê ëíêÄçàñõ
+     456/    42D3 : DD E5               		PUSH IX
+     457/    42D5 : DD 21 00 80         		LD IX,0X8000
+     458/    42D9 : DD 19               		ADD IX,DE			;Ç IX ÄÑêÖë çÄóÄãÄ ÅãéäÄ
+     459/    42DB : CD 04 43            		CALL CRC16
+     460/    42DE : DD E1               		POP IX
+     461/    42E0 : DD 4E 06            		LD C,(IX+6)
+     462/    42E3 : DD 46 07            		LD B,(IX+7)
+     463/    42E6 : 3E 82               		LD A,0X82
+     464/    42E8 : A7                  		AND A
+     465/    42E9 : ED 42               		SBC HL,BC
+     466/    42EB : 20 06               		JR NZ,OUT_ERR
+     467/    42ED : FD 25               		DEC IYH
+     468/    42EF : 20 C2               		JR NZ,SCHET
+     469/    42F1 : 3E 80               ERR_OK		LD A,0X80
+     470/    42F3 :                     
+     471/    42F3 :                     ;CRC16 ERROR
+     472/    42F3 :                     ;0X80-CRC16 ÅãéäÄ OK
+     473/    42F3 :                     ;0X81-CRC16 áÄÉéãéÇäÄ ERROR
+     474/    42F3 :                     ;0X82-CRC16 ÅãéäÄ ERROR
+     475/    42F3 : D3 05               OUT_ERR		OUT (CLRCBIT),A
+     476/    42F5 : D3 03               		OUT (ZXDATWR),A
+     477/    42F7 : CD 8C 42            		CALL WDN
+     478/    42FA : 7D                  		LD A,L
+     479/    42FB : D3 03               		OUT (ZXDATWR),A
+     480/    42FD : CD 8C 42            		CALL WDN
+     481/    4300 : 7C                  		LD A,H
+     482/    4301 : D3 03               		OUT (ZXDATWR),A
+     483/    4303 : C9                  		RET
+     484/    4304 :                     
+     485/    4304 : 21 FF FF            CRC16		LD HL,0XFFFF
+     486/    4307 : 11 21 10            		LD DE,0X1021
+     487/    430A : DD 7E 00            CRC_0		LD A,(IX)
+     488/    430D : DD 23               		INC IX
+     489/    430F : 08                  		EX AF,AF'
+     490/    4310 : DD 7D               		LD A,IXL
+     491/    4312 : DD B4               		OR IXH
+     492/    4314 : 20 0A               		JR NZ,CRC_3
+     493/    4316 : FD 2C               		INC IYL
+     494/    4318 : FD 7D               		LD A,IYL
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 14 - 1/17/2011 21:29:35
+
+
+     495/    431A : D3 00               		OUT (MPAG),A
+     496/    431C : DD 21 00 80         		LD IX,0X8000
+     497/    4320 : 08                  CRC_3		EX AF,AF'
+     498/    4321 : AC                  		XOR H
+     499/    4322 : 67                  		LD H,A
+     500/    4323 : 3E 08               		LD A,8
+     501/    4325 : 29                  CRC_1		ADD HL,HL
+     502/    4326 : 30 08               		JR NC,CRC_2
+     503/    4328 : 08                  		EX AF,AF'
+     504/    4329 : 7D                  		LD A,L
+     505/    432A : AB                  		XOR E
+     506/    432B : 6F                  		LD L,A
+     507/    432C : 7C                  		LD A,H
+     508/    432D : AA                  		XOR D
+     509/    432E : 67                  		LD H,A
+     510/    432F : 08                  		EX AF,AF'
+     511/    4330 : 3D                  CRC_2		DEC A
+     512/    4331 : 20 F2               		JR NZ,CRC_1
+     513/    4333 : 0B                  		DEC BC
+     514/    4334 : 78                  		LD A,B
+     515/    4335 : B1                  		OR C
+     516/    4336 : 20 D2               		JR NZ,CRC_0
+     517/    4338 : 3E 02               		LD A,2
+     518/    433A : D3 00               		OUT (MPAG),A
+     519/    433C : C9                  		RET
+     520/    433D :                     
+     521/    433D :                     ;---------------------------------
+     522/    433D :                     ;ÉêìáàãäÄ îÄâãÄ èé ìäÄáÄççéåì èìíà
+     523/    433D :                     
+     524/    433D : =5000H              BUF_512		EQU 0X5000			;0X200 ÅìîÖê ëÖäíéêÄ
+     525/    433D : =5200H              TDIRCLS		EQU BUF_512+0X0200		;0X400 ÅìîÖê äãÄëíÖêéÇ ROOT ÑàêÖäíéêàà
+     526/    433D : =5600H              CAL_FAT		EQU TDIRCLS+0X0400		;1 äÄãàÅê FAT
+     527/    433D : =5601H              BYTSSEC		EQU CAL_FAT+1			;1 äéãàóÖëíÇé ëÖäíéêéÇ Ç äãÄëíÖêÖ
+     528/    433D : =5602H              ROOTCLS		EQU BYTSSEC+1			;4 äãÄëíÖê çÄóÄãÄ ROOT ÑàêÖäíéêàà
+     529/    433D : =5606H              ROOTSEC		EQU ROOTCLS+4			;2 êÄáåÖê Ç ëÖäíéêÄï ROOT ÑàêÖäíéêàà
+     530/    433D : =5608H              SEC_FAT		EQU ROOTSEC+2			;4 äéãàóÖëíÇé ëÖäíéêéÇ éÑçéâ FAT
+     531/    433D : =560CH              RSVDSEC		EQU SEC_FAT+4			;2 êÄáåÖê êÖáÖêÇçéâ éÅãÄëíà
+     532/    433D : =560EH              STARTRZ		EQU RSVDSEC+2			;4 çÄóÄãé ÑàëäÄ/êÄáÑÖãÄ
+     533/    433D : =5612H              FRSTDAT		EQU STARTRZ+4			;4 ÄÑêÖë èÖêÇéÉé ëÖäíéêÄ ÑÄççõï éí BPB
+     534/    433D : =5616H              SEC_DSC		EQU FRSTDAT+4			;4 äéãàóÖëíÇé ëÖäíéêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+     535/    433D : =561AH              CLS_DSC		EQU SEC_DSC+4			;4 äéãàóÖëíÇé äãÄëíÖêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+     536/    433D : =561EH              FATSTR		EQU CLS_DSC+4			;4 çÄóÄãé èÖêÇéâ FAT íÄÅãàñõ
+     537/    433D : =5622H              ADRPATH		EQU FATSTR+4			;2 ÄÑêÖë íÖäëíÄ èìíà îÄâãÄ
+     538/    433D : =5624H              STATUS		EQU ADRPATH+2			;1 ëíÄíìë èéëãÖ ÇõáéÇÄ LOAD_SD
+     539/    433D : =5625H              OLD_SP		EQU STATUS+1			;2 ëíÖä Ñãü ÇõïéÑÄ
+     540/    433D : =5627H              FB_EXT		EQU OLD_SP+2			;B ÅìîÖê 8.3 Ñãü èéàëäÄ àåÖçà
+     541/    433D :                     
+     542/    433D :                     ;SD äÄêíÄ çÖ çÄâÑÖçÄ
+     543/    433D : 3E EE               ZAW003		LD A,0XEE
+     544/    433F : ED 7B 25 56         WR_STAT		LD SP,(OLD_SP)
+     545/    4343 : 32 24 56            		LD (STATUS),A
+     546/    4346 : C9                  		RET
+     547/    4347 :                     
+     548/    4347 :                     ;áÄÉêìáäÄ îÄâãÄ
+     549/    4347 :                     ;çÄ ÇïéÑÖ:A-ëíêÄçàñÄ çÄóÄãÄ áÄÉêìáäà
+     550/    4347 :                     ;HL-ÄÑêÖë íÖäëíéÇéâ ëíêéäà
+     551/    4347 :                     ;èìíà ä îÄâãì ÇåÖëíÖ ë àåÖçÖå à êÄëòàêÖçàÖå îÄâãÄ. èìíú èéãçéëíúû éí ROOT 
+     552/    4347 :                     ;áÄÉêìÜÄÖíëü îÄâã èé êÄáåÖêì ÑéèéãçÖçéåì Ñé èéãçõï ëÖäíéêéÇ (ëÖäíéê 512 ÅÄâí)
+     553/    4347 :                     ;èêàåÖê: êÄáåÖê îÄâãÄ =0X80-èéëãÖ ÑéèéãçÖçàü ÅìÑÖí áÄÉêìÜÖç 1 ëÖäíéê
+     554/    4347 :                     ;=0X401-ÅìÑÖí áÄÉêìÜÖçé 3 ëÖäíéêÄ
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 15 - 1/17/2011 21:29:35
+
+
+     555/    4347 :                     ;çÄ ÇõïéÑÖ: A=
+     556/    4347 :                     		;0X00-îÄâã áÄÉêìÜÖç
+     557/    4347 :                     		;0XAA-îÄâã çÖ çÄâÑÖç
+     558/    4347 :                     		;0XDD-FAT çÖ éÅçÄêìÜÖç
+     559/    4347 :                     		;0XEE-SD äÄêíÄ çÖ éÅçÄêìÜÖçÄ
+     560/    4347 : FD 6F               LOAD_SD		LD IYL,A;LY,A			;ëéïêÄçàãà çéåÖê ëíêÄçàñõ äìÑÄ Éêìáàíú
+     561/    4349 : 22 22 56            		LD (ADRPATH),HL			;ëéïêÄçàãà ÄÑêÖë ëíêéäà èìíà
+     562/    434C : ED 73 25 56         		LD (OLD_SP),SP			;ëéïêÄçàãà ëíÖä
+     563/    4350 : 3E 01               		LD A,1
+     564/    4352 : D3 0F               		OUT (GSCFG0),A			;éíäãûóàãà èáì, ÇëÖ ëíêÄçàñÄ éáì
+     565/    4354 : 3E 9B               		LD A,%10011011
+     566/    4356 : D3 11               		OUT (SCTRL),A			;ëäéçîàÉìêàãà çÉë ë CS=1 Ñãü SD äÄêíõ		
+     567/    4358 : 06 10               		LD B,0X10
+     568/    435A : 3E FF               		LD A,0XFF
+     569/    435C : D3 13               		OUT (SD_SEND),A			;èàòÖå 0X80 ÅÄâí 0XFF Ç èéêí äÄêíéóäà
+     570/    435E : 10 FA               		DJNZ $-4
+     571/    4360 : AF                  		XOR A				;256 èéèõíéä çÄâíà SD äÄêíì
+     572/    4361 : 08                  		EX AF,AF'
+     573/    4362 : 3E 01               		LD A,1
+     574/    4364 : D3 11               		OUT (SCTRL),A			;ÇõÅêÄãà SD äÄêíì CS=0
+     575/    4366 :                     
+     576/    4366 : 21 A3 48            ZAW001		LD HL,CMD00
+     577/    4369 : CD 37 48            		CALL OUTCOM			;èÖêÖÇéÑàå äÄêíéóäì Ç êÖÜàå SPI äéåÄçÑéâ 0
+     578/    436C : CD 95 48            		CALL IN_OOUT			;ÜÑÖå éíÇÖíÄ
+     579/    436F : 08                  		EX AF,AF'
+     580/    4370 : 3D                  		DEC A
+     581/    4371 : 28 CA               		JR Z,ZAW003			;ÜÑÖå èé ëóÖèíóàäì 256 êÄá
+     582/    4373 : 08                  		EX AF,AF'
+     583/    4374 : 3D                  		DEC A
+     584/    4375 : 20 EF               		JR NZ,ZAW001			;ÜÑÖå èéäÄ äÄêíÄ éíÇÖíàí ÅÄâíéå 1
+     585/    4377 : 01 14 00            		LD BC,SD_RSTR
+     586/    437A : 21 A9 48            		LD HL,CMD08
+     587/    437D : CD 37 48            		CALL OUTCOM			;éèêÖÑÖãüÖå ëèÖñàîàäÄñàû äÄêíõ
+     588/    4380 : CD 95 48            		CALL IN_OOUT			;Ç "A" éíÇÖí äÄêíõ R1
+     589/    4383 : ED 60               		IN H,(C)
+     590/    4385 : 00                  		NOP
+     591/    4386 : ED 60               		IN H,(C)	
+     592/    4388 : 00                  		NOP
+     593/    4389 : ED 60               		IN H,(C)
+     594/    438B : 00                  		NOP
+     595/    438C : ED 60               		IN H,(C)			;èêéóàíÄãà éëíÄãúçõÖ ÅÄâíõ Ç çàäìÑÄ
+     596/    438E : CB 57               		BIT 2,A				;Öëãà éòàÅäÄ, íé
+     597/    4390 : 21 00 00            		LD HL,0				;äÄêíÄ ëèÖñàîàäÄñàà 1.0
+     598/    4393 : 20 02               		JR NZ,ZAW006			;àçÄóÖ 
+     599/    4395 : 26 40               		LD H,0X40			;äÄêíÄ ëèÖñàîàäÄñàà 2.0
+     600/    4397 : 3E 77               ZAW006		LD A,CMD_55
+     601/    4399 : CD 3F 48            		CALL OUT_COM			;áÄèìëäÄÖå ÇçìíêÖççûû àçàñàÄãàáÄñàû äÄêíõ
+     602/    439C : CD 95 48            		CALL IN_OOUT
+     603/    439F : 01 13 00            		LD BC,SD_SEND
+     604/    43A2 : 3E 69               		LD A,ACMD_41
+     605/    43A4 : ED 79               		OUT (C),A
+     606/    43A6 : 7C                  		LD A,H
+     607/    43A7 : ED 79               		OUT (C),A
+     608/    43A9 : AF                  		XOR A
+     609/    43AA : ED 79               		OUT (C),A
+     610/    43AC : 00                  		NOP
+     611/    43AD : ED 79               		OUT (C),A
+     612/    43AF : 00                  		NOP
+     613/    43B0 : ED 79               		OUT (C),A
+     614/    43B2 : 3D                  		DEC A
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 16 - 1/17/2011 21:29:35
+
+
+     615/    43B3 : ED 79               		OUT (C),A
+     616/    43B5 : CD 95 48            		CALL IN_OOUT
+     617/    43B8 : A7                  		AND A
+     618/    43B9 : 20 DC               		JR NZ,ZAW006			;ÜÑÖå èéäÄ äÄêíõ èÖêÖâÑÖí Ç êÖÜàå ÉéíéÇçéëíà
+     619/    43BB : 3E 7B               ZAW004		LD A,CMD_59
+     620/    43BD : CD 3F 48            		CALL OUT_COM			;èêàçìÑàíÖãúçé éíäãûóÄÖå CRC16
+     621/    43C0 : CD 95 48            		CALL IN_OOUT
+     622/    43C3 : A7                  		AND A
+     623/    43C4 : 20 F5               		JR NZ,ZAW004
+     624/    43C6 : 21 AF 48            ZAW005		LD HL,CMD16
+     625/    43C9 : CD 37 48            		CALL OUTCOM			;èêàçìÑàíÖãúçõâ êÄáåÖê ëÖäíéêÄ 512 ÅÄâí
+     626/    43CC : CD 95 48            		CALL IN_OOUT
+     627/    43CF : A7                  		AND A
+     628/    43D0 : 20 F4               		JR NZ,ZAW005
+     629/    43D2 :                     
+     630/    43D2 :                     ;àçàñàÄãàáÄñàü èÖêÖåÖççõï FAT
+     631/    43D2 : 11 00 00            WC_FAT		LD DE,0
+     632/    43D5 : 42                  		LD B,D
+     633/    43D6 : 4B                  		LD C,E
+     634/    43D7 : CD 2C 48            		CALL LOADLST			;óàíÄÖå ëÖäíéê 0 äÄêíéóäà
+     635/    43DA : E5                  		PUSH HL
+     636/    43DB : DD E1               		POP IX
+     637/    43DD : 11 BE 01            		LD DE,0X01BE
+     638/    43E0 : 19                  		ADD HL,DE			;èÖêÖïéÑàå çÄ ëåÖôÖçàÖ Ñãüó èêéÇÖêéä
+     639/    43E1 : 7E                  		LD A,(HL)			;èêéÇÖêüå óíéÅõ Åõã 0, äÄêíéóäà çÖ åéÉìí Åõíú áÄÉêìáéóçõåà
+     640/    43E2 : A7                  		AND A
+     641/    43E3 : 20 2D               		JR NZ,RDFAT05			;Öëãà çÖ 0, èêéÇÖêàíú ÑêìÉéÖ
+     642/    43E5 : 11 04 00            		LD DE,4
+     643/    43E8 : 19                  		ADD HL,DE			;èÖêÖïéÑàå ä èêéÇÖêäÖ íàèÄ êÄáÑÖãÄ
+     644/    43E9 : 7E                  		LD A,(HL)
+     645/    43EA : 06 00               		LD B,0
+     646/    43EC : FE 01               		CP 1				;FAT12?
+     647/    43EE : 28 18               		JR Z,RDFAT06
+     648/    43F0 : 06 02               		LD B,2
+     649/    43F2 : FE 0B               		CP 0X0B				;FAT32?
+     650/    43F4 : 28 12               		JR Z,RDFAT06
+     651/    43F6 : FE 0C               		CP 0X0C				;FAT32?
+     652/    43F8 : 28 0E               		JR Z,RDFAT06
+     653/    43FA : 06 01               		LD B,1
+     654/    43FC : FE 06               		CP 6				;FAT16?
+     655/    43FE : 28 08               		JR Z,RDFAT06
+     656/    4400 : FE 04               		CP 4				;FAT16?
+     657/    4402 : 28 04               		JR Z,RDFAT06
+     658/    4404 : FE 0E               		CP 0X0E				;FAT16?
+     659/    4406 : 20 0A               		JR NZ,RDFAT05		
+     660/    4408 : 78                  RDFAT06		LD A,B				;ÅÖêÖå àá "B" íàè êÄáÑÖãÄ
+     661/    4409 : 32 00 56            		LD (CAL_FAT),A			;ëéïêÄçàãà
+     662/    440C : 19                  		ADD HL,DE
+     663/    440D : CD B5 46            		CALL LOADZP			;ÅÖêÖå çéåÖê ëÖäíéêÄ çÄóÄãÄ éëçéÇçéÉé êÄáÑÖãÄ
+     664/    4410 : 18 4E               		JR RDFAT00			;èÖêÖïéÑàå ä àçàñàÄãàáÄñàà èÖêÖåÖççõï Ñãü êÄÅéíõ ë îÄíéå
+     665/    4412 :                     
+     666/    4412 :                     ;MBR çÖ éÅçÄêìÜÖç, èêéÇÖêüÖå ëÖäíéê 0 äÄêíõ äÄä éèàëÄíÖãú
+     667/    4412 : DD 4E 0D            RDFAT05		LD C,(IX+0X0D)			;C=äéãàóÖëíÇé ëÖäíéêéÇ Ç äãÄëíÖêÖ
+     668/    4415 : AF                  		XOR A
+     669/    4416 : 5F                  		LD E,A
+     670/    4417 : 06 08               		LD B,8
+     671/    4419 : CB 19               		RR C
+     672/    441B : CE 00               		ADC A,0
+     673/    441D : 10 FA               		DJNZ $-4			;äéãàóÖëíÇé ëÖäíéêéÇ Ç äãÄëíÖêÖ ÑéãÜçé Åõíú ëíÖèÖçúû 2
+     674/    441F : 3D                  		DEC A
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 17 - 1/17/2011 21:29:35
+
+
+     675/    4420 : 20 01               		JR NZ,$+3			;èêéÇÖêàãà äéãàóÖëíÇé Åàí
+     676/    4422 : 1C                  		INC E				;+1, Öëíú íÄäéÖ
+     677/    4423 : DD 7E 0E            		LD A,(IX+0X0E)
+     678/    4426 : DD B6 0F            		OR (IX+0X0F)
+     679/    4429 : 28 01               		JR Z,$+3			;äéãàóÖëíÇé áÄêÖáÖêÇàêéÇÄççõï ëÖäíéêéÇ ÑéãÜçé Åõíú >0
+     680/    442B : 1C                  		INC E				;+1, Öëíú íÄäéÖ
+     681/    442C : DD 7E 13            		LD A,(IX+0X13)
+     682/    442F : DD B6 14            		OR (IX+0X14)
+     683/    4432 : 20 01               		JR NZ,$+3			;äéãàóÖëíÇé ëÖäíéêéÇ çÄ êÄáÑÖãÖ Ñãü îÄí16?
+     684/    4434 : 1C                  		INC E
+     685/    4435 : DD 7E 20            		LD A,(IX+0X20)
+     686/    4438 : DD B6 21            		OR (IX+0X21)
+     687/    443B : DD B6 22            		OR (IX+0X22)
+     688/    443E : DD B6 23            		OR (IX+0X23)
+     689/    4441 : 20 01               		JR NZ,$+3			;äéãàóÖëíÇé ëÖäíéêéÇ çÄ êÄáÑÖãÖ Ñãü îÄí32?
+     690/    4443 : 1C                  		INC E				;éÑçé àá çàï ÑéãÜçé Åõíú =0, ÑêìÉéÖ >0
+     691/    4444 : DD 7E 15            		LD A,(IX+0X15)
+     692/    4447 : E6 F0               		AND 0XF0
+     693/    4449 : FE F0               		CP 0XF0
+     694/    444B : 20 01               		JR NZ,$+3			;ëíÄêòàÖ Åàíõ ÑéãÜçõ Åõíú Ç 1
+     695/    444D : 1C                  		INC E
+     696/    444E : 7B                  		LD A,E
+     697/    444F : FE 04               		CP 4				;ìëãéÇàü ëéÇèÄãà?
+     698/    4451 : 3E DD               		LD A,0XDD			;FAT çÖ çÄâÑÖç
+     699/    4453 : C2 3F 43            		JP NZ,WR_STAT
+     700/    4456 : 3E FF               		LD A,0XFF
+     701/    4458 : 32 00 56            		LD (CAL_FAT),A			;íàè îÄí èéäÄ çÖ éèêÖÑÖãÖç
+     702/    445B : 11 00 00            		LD DE,0
+     703/    445E : 42                  		LD B,D
+     704/    445F : 4B                  		LD C,E
+     705/    4460 :                     
+     706/    4460 : ED 53 0E 56         RDFAT00		LD (STARTRZ),DE
+     707/    4464 : ED 43 10 56         		LD (STARTRZ+2),BC		;èéãéÜàãà çéåÖê ëíÄêíéÇéÉé ëÖäíéêÄ êÄáÑÖãÄ
+     708/    4468 : CD 2C 48            		CALL LOADLST			;áÄÉêìáàãà ÖÉé
+     709/    446B : 21 00 00            		LD HL,0
+     710/    446E : ED 5B 16 50         		LD DE,(BUF_512+0X16)		;BPB_FATSZ16
+     711/    4472 : 7A                  		LD A,D
+     712/    4473 : B3                  		OR E
+     713/    4474 : 20 07               		JR NZ,RDFAT01			;Öëãà çÖ FAT12/16 (BPB_FATSZ16=0)
+     714/    4476 : ED 5B 24 50         		LD DE,(BUF_512+0X24)
+     715/    447A : 2A 26 50            		LD HL,(BUF_512+0X26)		;BPB_FATSZ32
+     716/    447D :                     						;íé ÅÖêÖå àá ëåÖôÖçàü +36
+     717/    447D : 22 0A 56            RDFAT01		LD (SEC_FAT+2),HL
+     718/    4480 : ED 53 08 56         		LD (SEC_FAT),DE			;óàëãé ëÖäíéêéÇ çÄ FAT-íÄÅãàñì
+     719/    4484 : 21 00 00            		LD HL,0
+     720/    4487 : ED 5B 13 50         		LD DE,(BUF_512+0X13)		;BPB_TOTSEC16
+     721/    448B : 7A                  		LD A,D
+     722/    448C : B3                  		OR E
+     723/    448D : 20 07               		JR NZ,RDFAT02			;Öëãà çÖ FAT12/16 (BPB_TOTSEC16=0)
+     724/    448F : ED 5B 20 50         		LD DE,(BUF_512+0X20)
+     725/    4493 : 2A 22 50            		LD HL,(BUF_512+0X22)		;BPB_TOTSEC32
+     726/    4496 :                     						;íé ÅÖêÖå àá ëåÖôÖçàü +32
+     727/    4496 : 22 18 56            RDFAT02		LD (SEC_DSC+2),HL
+     728/    4499 : ED 53 16 56         		LD (SEC_DSC),DE			;ä-Çé ëÖäíéêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+     729/    449D :                     
+     730/    449D :                     ;ÇõóàëãüÖå ROOTDIRSECTORS
+     731/    449D : ED 4B 0B 50         		LD BC,(BUF_512+0X0B)		;BPB_BYTSPERSEC
+     732/    44A1 : ED 5B 11 50         		LD DE,(BUF_512+0X11)		;BPB_ROOTENTCNT
+     733/    44A5 : 21 00 00            		LD HL,0
+     734/    44A8 : 7A                  		LD A,D
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 18 - 1/17/2011 21:29:35
+
+
+     735/    44A9 : B3                  		OR E
+     736/    44AA : 28 08               		JR Z,RDFAT03
+     737/    44AC : 44                  		LD B,H
+     738/    44AD : 4D                  		LD C,L
+     739/    44AE : 3E 10               		LD A,0X10
+     740/    44B0 : CD EF 47            		CALL BCDE_A
+     741/    44B3 : EB                  		EX DE,HL
+     742/    44B4 :                     
+     743/    44B4 :                     ;ùíé êÖÄãàáéÇÄçÄ îéêåìãÄ
+     744/    44B4 :                     ;ROOTDIRSECTORS=((BPB_ROOTENTCNT*32)+(BPB_BYTSPERSEC-1))/BPB_BYTSPERSEC
+     745/    44B4 :                     ;Ç HL=ROOTDIRSECTORS. Öëãà FAT32, íé HL=0 ÇëÖÉÑÄ
+     746/    44B4 :                     
+     747/    44B4 : E5                  RDFAT03		PUSH HL				;ROOTDIRSECTORS
+     748/    44B5 : 22 06 56            		LD (ROOTSEC),HL
+     749/    44B8 : 3A 10 50            		LD A,(BUF_512+0X10)
+     750/    44BB : ED 5B 08 56         		LD DE,(SEC_FAT)
+     751/    44BF : 2A 0A 56            		LD HL,(SEC_FAT+2)
+     752/    44C2 : 3D                  		DEC A
+     753/    44C3 : EB                  		EX DE,HL
+     754/    44C4 : 29                  		ADD HL,HL
+     755/    44C5 : EB                  		EX DE,HL
+     756/    44C6 : ED 6A               		ADC HL,HL
+     757/    44C8 : 3D                  		DEC A
+     758/    44C9 : 20 F8               		JR NZ,$-6
+     759/    44CB : C1                  		POP BC				;èéãçõâ êÄáåÖê FAT-éÅãÄëíà Ç ëÖäíéêÄï
+     760/    44CC : CD 13 48            		CALL HLDEPBC			;èêàÅÄÇàãà ROOTDIRSECTORS
+     761/    44CF : ED 4B 0E 50         		LD BC,(BUF_512+0X0E)		;BPB_RSVDSECCNT
+     762/    44D3 : ED 43 0C 56         		LD (RSVDSEC),BC
+     763/    44D7 : CD 13 48            		CALL HLDEPBC			;èêàÅÄÇàãà BPB_RESVDSECCNT
+     764/    44DA : ED 53 12 56         		LD (FRSTDAT),DE
+     765/    44DE : 22 14 56            		LD (FRSTDAT+2),HL		;èéãéÜàãà çéåÖê èÖêÇéÉé ëÖäíéêÄ ÑÄççõï
+     766/    44E1 : 44                  		LD B,H
+     767/    44E2 : 4D                  		LD C,L
+     768/    44E3 : 21 16 56            		LD HL,SEC_DSC			;BCDE+32-Æ• óàëãé èé ÄÑêÖëì HL
+     769/    44E6 : CD F3 47            		CALL BCDEHLM			;Çõóãà àá èéãçéÉé ä-ÇÄ ëÖäíéêéÇ êÄáÑÖãÄ
+     770/    44E9 : 3A 0D 50            		LD A,(BUF_512+0X0D)
+     771/    44EC : 32 01 56            		LD (BYTSSEC),A
+     772/    44EF : CD EF 47            		CALL BCDE_A			;êÄáÑÖãàãà çÄ ä-Çé ëÖäíéêéÇ Ç äãÄëíÖêÖ
+     773/    44F2 : ED 53 1A 56         		LD (CLS_DSC),DE
+     774/    44F6 : ED 43 1C 56         		LD (CLS_DSC+2),BC		;èéãéÜàãà äéã-Çé äãÄëíÖêéÇ çÄ êÄáÑÖãÖ
+     775/    44FA :                     
+     776/    44FA :                     ;		LD A,(CAL_FAT)
+     777/    44FA :                     ;		CP 0XFF
+     778/    44FA :                     ;		JR NZ,RDFAT04
+     779/    44FA :                     ;éèêÖÑÖãÖçàÖ  êÄáêüÑçéëíà FAT
+     780/    44FA : 2A 1A 56            		LD HL,(CLS_DSC)
+     781/    44FD : ED 5B 1C 56         		LD DE,(CLS_DSC+2)		;Çáüãà äéãàóÖëíÇé äãÄëíÖêéÇ çÄ êÄáÑÖãÖ
+     782/    4501 : E5                  		PUSH HL
+     783/    4502 : D5                  		PUSH DE
+     784/    4503 : 29                  		ADD HL,HL
+     785/    4504 : EB                  		EX DE,HL
+     786/    4505 : ED 6A               		ADC HL,HL
+     787/    4507 : 44                  		LD B,H
+     788/    4508 : 4D                  		LD C,L
+     789/    4509 : CD 1C 48            		CALL RASCHET			;ëóàíÄÖå, Öëãà èéãìóàãà 0, íé îÄí16
+     790/    450C : 3E 01               		LD A,1
+     791/    450E : D1                  		POP DE
+     792/    450F : E1                  		POP HL
+     793/    4510 : 28 13               		JR Z,RDFAT04
+     794/    4512 : 29                  		ADD HL,HL
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 19 - 1/17/2011 21:29:35
+
+
+     795/    4513 : EB                  		EX DE,HL
+     796/    4514 : ED 6A               		ADC HL,HL
+     797/    4516 : EB                  		EX DE,HL
+     798/    4517 : 29                  		ADD HL,HL
+     799/    4518 : EB                  		EX DE,HL
+     800/    4519 : ED 6A               		ADC HL,HL
+     801/    451B : 44                  		LD B,H
+     802/    451C : 4D                  		LD C,L
+     803/    451D : CD 1C 48            		CALL RASCHET			;ëóàíÄÖå, Öëãà èéãìóàãà 0, íé îÄí32
+     804/    4520 : 3E 02               		LD A,2
+     805/    4522 : 28 01               		JR Z,RDFAT04
+     806/    4524 : AF                  		XOR A				;àçÄóÖ îÄí12
+     807/    4525 :                     
+     808/    4525 :                     ;Ñãü FAT12/16 ÇõóàëãüÖå ÄÑêÖë èÖêÇéÉé ëÖäíéêÄ ÑàêÖäíéêàà
+     809/    4525 :                     ;Ñãü FAT32 ÅÖêÖå èé ëåÖôÖåàû +44, çÄ ÇõïéÑÖ BCDE-ëÖäíéê ROOTDIR
+     810/    4525 : F5                  RDFAT04		PUSH AF
+     811/    4526 : ED 5B 0C 56         		LD DE,(RSVDSEC)
+     812/    452A : 01 00 00            		LD BC,0
+     813/    452D : 21 0E 56            		LD HL,STARTRZ
+     814/    4530 : CD 03 48            		CALL BCDEHLP
+     815/    4533 : ED 53 1E 56         		LD (FATSTR),DE
+     816/    4537 : ED 43 20 56         		LD (FATSTR+2),BC		;Çõóàëãàãà à èéãéÜàãà çéåÖê ëÖäíéêÄ çÄóÄãÄ FAT-ÖÄÅãàñ
+     817/    453B : F1                  		POP AF
+     818/    453C : 32 00 56            		LD (CAL_FAT),A			;ìíéóçàãà íàè îÄíÄ
+     819/    453F : A7                  		AND A
+     820/    4540 : 11 00 00            		LD DE,0
+     821/    4543 : 42                  		LD B,D
+     822/    4544 : 4B                  		LD C,E
+     823/    4545 : 28 0B               		JR Z,FSRROO2			;FAT12-NONE
+     824/    4547 : 3D                  		DEC A
+     825/    4548 : 28 08               		JR Z,FSRROO2			;FAT16
+     826/    454A : ED 5B 2C 50         		LD DE,(BUF_512+0X2C)
+     827/    454E : ED 4B 2E 50         		LD BC,(BUF_512+0X2E)		;FAT32
+     828/    4552 : ED 53 02 56         FSRROO2		LD (ROOTCLS),DE
+     829/    4556 : ED 43 04 56         		LD (ROOTCLS+2),BC		;èéãéÜàãà çéåÖê äãÄëíÖê ROOT ÑàêÖäíéêàà
+     830/    455A :                     
+     831/    455A : 2A 22 56            		LD HL,(ADRPATH)			;ÇÖêçìãà ÄÑêÖë ëíêéäà èìíà Ñé îÄâãÄ
+     832/    455D : C5                  FINDFL1		PUSH BC
+     833/    455E : D5                  		PUSH DE				;ëéïêÄçàãà çéåÖê äãÄëíÖêÄ
+     834/    455F : CD FD 48            		CALL FNDBUF			;êÄëèÄäéÇäÄ óÄëíà íÖäëíéÇéâ ëíêéäà Ñãü ëéáÑÄçàü åÄëäà èéàëäÄ
+     835/    4562 : D1                  		POP DE
+     836/    4563 : C1                  		POP BC				;ÇéëëíÄçéÇàãà çéåÖê äãÄëíÖêÄ
+     837/    4564 : E5                  		PUSH HL				;ëéïêÄçàãà íÖäìôàâ ÄÑêÖë íÖäëíéÇéâ ëíêéäà
+     838/    4565 :                     
+     839/    4565 : 21 00 52            		LD HL,TDIRCLS			;ÄÑêÖë íÄÅãàñõ äãÄëíÖêéÇ íÖäìôÖâ ÑàêÖäíéêàà
+     840/    4568 : 7A                  		LD A,D
+     841/    4569 : B3                  		OR E
+     842/    456A : B0                  		OR B
+     843/    456B : B1                  		OR C
+     844/    456C : CD AC 46            		CALL SAVEZP			;ëéïêÄçàãà Ç íÄÅãàñì çéåÖê íÖäìôÖÉé äãÄëíÖêÄ
+     845/    456F : 28 0F               		JR Z,LASTCLS			;Öëãà çéåÖê äãÄëíÖêÄ 0, íé ùíé ROOT ÑàêÄ (Ñãü îÄí12/16)
+     846/    4571 : E5                  NEXTCLS		PUSH HL
+     847/    4572 : CD 12 47            		CALL RDFATZP			;óàíÄÖå ëãÖÑìôàâ çéåÖê äãÄëíÖêÄ àá ñÖèéóäà ÑàêÖäíéêàà
+     848/    4575 : CD F5 46            		CALL LST_CLS			;èêéÇÖêüÖå çÄ äéçÖñ ñÖèéóäà
+     849/    4578 : E1                  		POP HL
+     850/    4579 : 38 05               		JR C,LASTCLS
+     851/    457B : CD AC 46            		CALL SAVEZP			;Öëãà çÖèéëãÖÑçàâ ëéïêÄçüÖå Ç íÄÅãàñì
+     852/    457E : 18 F1               		JR NEXTCLS			;ëãÖÑìûôàâ çéåÖê äãÄëíÖêÄ
+     853/    4580 :                     
+     854/    4580 : 01 FF FF            LASTCLS		LD BC,0XFFFF
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 20 - 1/17/2011 21:29:35
+
+
+     855/    4583 : CD AC 46            		CALL SAVEZP			;äãÄÑÖå åÄêäÖê äéçñÄ ñÖèéóäà
+     856/    4586 :                     
+     857/    4586 : 03                  FINDFL		INC BC				;àôÖå èé áÄÑÄççéâ åÄëäÖ çÄóàçÄü ë 0
+     858/    4587 : CD BE 46            		CALL RDDIRSC			;Éêìáàå èé çéåÖêì éèàëÄíÖãü ëÖäíéê ÑàêÖäíéêàà
+     859/    458A : 79                  		LD A,C
+     860/    458B : E6 0F               		AND 0X0F			;Ç ëÖäíéêÖ åÄäëàåìå 16 éèàëÄíÖãÖâ
+     861/    458D : 5F                  		LD E,A
+     862/    458E : 16 00               		LD D,0
+     863/    4590 : EB                  		EX DE,HL
+     864/    4591 : 29                  		ADD HL,HL
+     865/    4592 : 29                  		ADD HL,HL
+     866/    4593 : 29                  		ADD HL,HL
+     867/    4594 : 29                  		ADD HL,HL
+     868/    4595 : 29                  		ADD HL,HL
+     869/    4596 : 19                  		ADD HL,DE			;èéãìóàãà ÄÑêÖë çìÜçéÉé éèàëÄíÖãü
+     870/    4597 : 7E                  		LD A,(HL)			;èêéÇÖêüÖå èÖêÇõâ ÅÄâí àåÖçà éèàëÄíÖãü
+     871/    4598 : A7                  		AND A
+     872/    4599 : 3E AA               		LD A,0XAA			;Öëãà ÅÄâí =0, íé
+     873/    459B : CA 3F 43            		JP Z,WR_STAT			;èÖêÖïéÑ èé éòàÅäÖ = îÄâã çÖ çÄâÑÖç
+     874/    459E : E5                  		PUSH HL
+     875/    459F : C5                  		PUSH BC
+     876/    45A0 : CD F0 48            		CALL COMPARE			;ëêÄÇçàÇÄÖå ë áÄÑÄççéâ åÄëäéâ
+     877/    45A3 : C1                  		POP BC
+     878/    45A4 : D1                  		POP DE
+     879/    45A5 : D5                  		PUSH DE
+     880/    45A6 : DD E1               		POP IX				;ëéÑÖêÜàåéÖ IX=ÄÑêÖë éèàëÄíÖãü
+     881/    45A8 : 20 DC               		JR NZ,FINDFL			;çÖ ëéÇèÄÑÄÖí, èÖêÖïéÑàå ä ëãÖÑìûôÖåì éèàëÄíÖãû
+     882/    45AA : CD E0 48            		CALL RD_CLAS			;áÄÅàêÄÖå çéåÖê äãÄëíÖêÄ àá çÄâÑÖççéÉé éèàëÄíÖãü
+     883/    45AD : E3                  		EX (SP),HL			;ÇéëëíÄçéÇàãà íÖäìôàâ ÄÑêÖë Ç ëíêéäÖ èìíà Ñé îÄâãÄ
+     884/    45AE : 33                  		INC SP
+     885/    45AF : 33                  		INC SP				;åÄëäàêéÇäÄ çÄ ëíÖäÖ ÄÑêÖëÄ êÄáåÖêÄ Ç ÅÄâíÄï íÖäìôÖÉé îÄâãÄ
+     886/    45B0 : 7E                  		LD A,(HL)
+     887/    45B1 : A7                  		AND A				;íÖäëíéÇÄü ëíêéäÄ äéçóàãÄëú?
+     888/    45B2 : 20 A9               		JR NZ,FINDFL1			;Öëãà çÖí, íé àôÖå ÑÄãúòÖ
+     889/    45B4 : DD 7E 0B            		LD A,(IX+0X0B)			;èêéÇÖêüÖå ùíé ÑàêÄ àãà îÄâã?
+     890/    45B7 : E6 10               		AND 0X10
+     891/    45B9 : 3E AA               		LD A,0XAA			;Öëãà ÑàêÄ, íé éòàÅäÄ
+     892/    45BB : C2 3F 43            		JP NZ,WR_STAT			;íÖäëíéÇÄü ëíêéäÄ ÑéãÜçÄ ìäÄáõÇÄíú çÄ îÄâã
+     893/    45BE : 3B                  		DEC SP
+     894/    45BF : 3B                  		DEC SP
+     895/    45C0 : E1                  		POP HL				;ÇéëëíÄçéÇàãà Ç HL ÄÑêÖë éíäìÑÄ Çáüíú êÄáåÖê îÄâãÄ Ç ÅÄâíÄï
+     896/    45C1 : C5                  		PUSH BC
+     897/    45C2 : D5                  		PUSH DE
+     898/    45C3 : CD B5 46            		CALL LOADZP			;áÄÅàêÄÖå êÄáåÖê îÄâãÄ (Ç ÅÄâíÄï)
+     899/    45C6 : 7B                  		LD A,E
+     900/    45C7 : A7                  		AND A
+     901/    45C8 : 28 01               		JR Z,$+3			;åãÄÑòàâ ÅÄâí êÄáåÖêÄ îÄâãÄ =0?
+     902/    45CA : 14                  		INC D				;ìÇÖãàóàÇÄÖå êÄáåÖê çÄ 256 ÅÄâí ÅÖá ìóÖíÄ åãÄÑòÖÉé ÅÄâíÄ
+     903/    45CB : CB 42               		BIT 0,D				;èêéÇÖêüÖå óÖí/çÖóÖí
+     904/    45CD : 28 01               		JR Z,$+3			;Öëãà çÖóÖí, íé
+     905/    45CF : 14                  		INC D				;ìÇÖãàóàÇÄÖå êÄáåÖê ÖôÖ çÄ 256 ÅÄâí
+     906/    45D0 : CD DE 47            		CALL BCDE200			;ÑÖãàå çÄ 512 (çÄ êÄáåÖê ëÖäíéê)
+     907/    45D3 : D5                  		PUSH DE
+     908/    45D4 : D9                  		EXX
+     909/    45D5 : E1                  		POP HL
+     910/    45D6 : D9                  		EXX
+     911/    45D7 : 3A 01 56            		LD A,(BYTSSEC)			;Çáüãà êÄáåÖê äãÄëíÖêÄ Ç ëÖäíéêÄï
+     912/    45DA : DD 67               		LD IXH,A;HX,A			;ëéïêÄçàãà
+     913/    45DC : D1                  		POP DE
+     914/    45DD : C1                  		POP BC
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 21 - 1/17/2011 21:29:35
+
+
+     915/    45DE : 21 00 80            		LD HL,0X8000			;ÄÑêÖë áÄÉêìáäà
+     916/    45E1 :                     
+     917/    45E1 :                     ;HX-êÄáåÖê äãÄëíÖêÄ
+     918/    45E1 :                     ;HL'-äéã-Çé ëÖäíéêéÇ îÄâãÄ
+     919/    45E1 :                     ;BCDE-çéåÖê ëíÄêíéÇéÉé äãÄëíÖêÄ
+     920/    45E1 :                     ;LY-ëíÄêíéÇÄü ëíêÄçàñÄ áÄÉêìáäà
+     921/    45E1 :                     
+     922/    45E1 : FD 7D               		LD A,IYL;LY			;ÇéëëíÄçéÇàãà ëíêÄçàñì áÄÉêìáäà
+     923/    45E3 : A7                  		AND A
+     924/    45E4 : 20 11               		JR NZ,CP_PAGE			;èêéÇÖêäÄ Ñãü áÄÉêìáäà Ç ëíêÄçàñì 0
+     925/    45E6 : D3 00               		OUT (MPAG),A			;ÇäãûóÄÖå ëíêÄçàñì 0
+     926/    45E8 : D9                  		EXX
+     927/    45E9 : 7D                  		LD A,L
+     928/    45EA : 11 41 00            		LD DE,0X41
+     929/    45ED : ED 52               		SBC HL,DE
+     930/    45EF : 38 02               		JR C,$+4			;Öëãà îÄâã 0X41 à ÅéãÖÖ ëÖäíéêéÇ
+     931/    45F1 : 3E 40               		LD A,0X40			;íé Éêìáàå íéãúäé 0X40 èÖêÇõï ëÖäíéêéÇ
+     932/    45F3 : D9                  		EXX
+     933/    45F4 : C3 7F 46            		JP LDMINI			;èÖêÖïéÑàå çÄ áÄÉêìáäì
+     934/    45F7 :                     
+     935/    45F7 :                     ;áÄÉêìáäÄ Ç ëíêÄçàñì 1 áÄèêÖôÖçÄ
+     936/    45F7 : 3D                  CP_PAGE		DEC A
+     937/    45F8 : 3E AA               		LD A,0XAA
+     938/    45FA : CA 3F 43            		JP Z,WR_STAT
+     939/    45FD : FD 7D               		LD A,IYL;LY
+     940/    45FF :                     
+     941/    45FF :                     ;ÇäãûóÄÖå ëíêÄçàñì áÄÉêìáäà
+     942/    45FF : D3 00               LDFILE0		OUT (MPAG),A			;ÇäãûóÄÖå áÄÑÄççìû ëíêÄçàñì Ñãü áÄÉêìáäà
+     943/    4601 :                     
+     944/    4601 :                     ;áÄÉêìáäÄ Ç ëíêÄçàñõ 02...7F
+     945/    4601 : D9                  LD_FILE		EXX
+     946/    4602 : DD 5C               		LD E,IXH;HX
+     947/    4604 : 16 00               		LD D,0				;DE=êÄáåÖê äãÄëíÖêÄ Ç ëÖäíéêÄï
+     948/    4606 : A7                  		AND A
+     949/    4607 : ED 52               		SBC HL,DE			;ëÇÖêüÖå ë äéãàóÖëíÇéå ëÖäíéêéÇ Ñãü áÄÉêìáäà
+     950/    4609 : DD 6C               		LD IXL,IXH;LX,HX		;LX=äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+     951/    460B : D9                  		EXX
+     952/    460C : 30 06               		JR NC,LDFILE1
+     953/    460E : D9                  		EXX				;ëÖäíéêéÇ Ñãü áÄÉêìáäà åÖçúòÖ êÄáåÖêÄ äãÄëíÖêÄ
+     954/    460F : 19                  		ADD HL,DE	
+     955/    4610 : 7D                  		LD A,L
+     956/    4611 : DD 6F               		LD IXL,A;LX,A			;LX=äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà
+     957/    4613 : D9                  		EXX
+     958/    4614 :                     
+     959/    4614 : C5                  LDFILE1		PUSH BC
+     960/    4615 : D5                  		PUSH DE
+     961/    4616 : E5                  		PUSH HL
+     962/    4617 : CD 9E 47            		CALL REALSEC			;èÖêÖÇÖãà çéåÖê äãÄëíÖêÄ Ç çéåÖê êÖÄãúçéÉé ëÖäíéêÄ
+     963/    461A : DD 7D               		LD A,IXL;LX
+     964/    461C : FE 41               		CP 0X41				;äéãàóÖëíÇé ëÖäíéêéÇ Ñãü áÄÉêìáäà ÅéãúòÖ 0X40?
+     965/    461E : 38 02               		JR C,$+4
+     966/    4620 : 3E 40               		LD A,0X40			;ÅìÑÖå Éêìáàíú 0X40 ëÖäíéêéÇ
+     967/    4622 : E1                  		POP HL
+     968/    4623 : FD 67               		LD IYH,A;HY,A
+     969/    4625 : CD B5 48            		CALL RDMULTI			;áÄÉêìÜÄÖå ëÖäíéêÄ
+     970/    4628 : DD 7C               		LD A,IXH;HX
+     971/    462A : E6 80               		AND 0X80
+     972/    462C : 28 2C               		JR Z,LDFILE2
+     973/    462E : DD 7D               		LD A,IXL;LX
+     974/    4630 : FD 94               		SUB IYH;HY
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 22 - 1/17/2011 21:29:35
+
+
+     975/    4632 : 28 17               		JR Z,LDFILE4
+     976/    4634 : 38 15               		JR C,LDFILE4
+     977/    4636 : 21 40 00            		LD HL,0X40
+     978/    4639 : 19                  		ADD HL,DE
+     979/    463A : EB                  		EX DE,HL
+     980/    463B : 21 00 00            		LD HL,0
+     981/    463E : ED 4A               		ADC HL,BC
+     982/    4640 : 44                  		LD B,H
+     983/    4641 : 4D                  		LD C,L
+     984/    4642 : 6F                  		LD L,A
+     985/    4643 : FD 2C               		INC IYL;LY
+     986/    4645 : FD 7D               		LD A,IYL;LY
+     987/    4647 : FE 40               		CP 0X40
+     988/    4649 : 38 06               		JR C,LDFILE3
+     989/    464B : 33                  LDFILE4		INC SP
+     990/    464C : 33                  		INC SP
+     991/    464D : 33                  		INC SP
+     992/    464E : 33                  		INC SP
+     993/    464F : 18 2A               		JR LDEFILE
+     994/    4651 :                     
+     995/    4651 : D3 00               LDFILE3		OUT (MPAG),A			;ëãÖÑìûôÄü ëíêÄçàñÄ
+     996/    4653 : 7D                  		LD A,L
+     997/    4654 : 21 00 80            		LD HL,0X8000
+     998/    4657 : CD B5 48            		CALL RDMULTI
+     999/    465A : D1                  LDFILE2		POP DE
+    1000/    465B : C1                  		POP BC
+    1001/    465C : E5                  		PUSH HL
+    1002/    465D : CD 12 47            		CALL RDFATZP
+    1003/    4660 : CD F5 46            		CALL LST_CLS
+    1004/    4663 : E1                  		POP HL
+    1005/    4664 : 38 15               		JR C,LDEFILE
+    1006/    4666 : DD 7D               		LD A,IXL;LX
+    1007/    4668 : DD BC               		CP IXH;HX
+    1008/    466A : 38 0F               		JR C,LDEFILE
+    1009/    466C : 7C                  		LD A,H
+    1010/    466D : A7                  		AND A
+    1011/    466E : 20 91               		JR NZ,LD_FILE
+    1012/    4670 : 21 00 80            		LD HL,0X8000
+    1013/    4673 : FD 2C               		INC IYL;LY
+    1014/    4675 : FD 7D               		LD A,IYL;LY
+    1015/    4677 : FE 40               		CP 0X40
+    1016/    4679 : 38 84               		JR C,LDFILE0
+    1017/    467B : AF                  LDEFILE		XOR A
+    1018/    467C : C3 3F 43            		JP WR_STAT
+    1019/    467F :                     
+    1020/    467F : D9                  LDMINI		EXX
+    1021/    4680 : 6F                  		LD L,A
+    1022/    4681 : DD 7C               		LD A,IXH;HX
+    1023/    4683 : 67                  		LD H,A
+    1024/    4684 : BD                  		CP L
+    1025/    4685 : 38 01               		JR C,$+3
+    1026/    4687 : 7D                  		LD A,L
+    1027/    4688 : D9                  		EXX
+    1028/    4689 : C5                  		PUSH BC
+    1029/    468A : D5                  		PUSH DE
+    1030/    468B : F5                  		PUSH AF
+    1031/    468C : E5                  		PUSH HL
+    1032/    468D : CD 9E 47            		CALL REALSEC
+    1033/    4690 : E1                  		POP HL
+    1034/    4691 : F1                  		POP AF
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 23 - 1/17/2011 21:29:35
+
+
+    1035/    4692 : CD B5 48            		CALL RDMULTI
+    1036/    4695 : D1                  		POP DE
+    1037/    4696 : C1                  		POP BC
+    1038/    4697 : 7C                  		LD A,H
+    1039/    4698 : A7                  		AND A
+    1040/    4699 : C8                  		RET Z
+    1041/    469A : E5                  		PUSH HL
+    1042/    469B : CD 12 47            		CALL RDFATZP
+    1043/    469E : CD F5 46            		CALL LST_CLS
+    1044/    46A1 : E1                  		POP HL
+    1045/    46A2 : 38 D7               		JR C,LDEFILE
+    1046/    46A4 : D9                  		EXX
+    1047/    46A5 : 7D                  		LD A,L
+    1048/    46A6 : 94                  		SUB H
+    1049/    46A7 : D9                  		EXX
+    1050/    46A8 : 30 D5               		JR NC,LDMINI
+    1051/    46AA : 18 CF               		JR LDEFILE
+    1052/    46AC :                     
+    1053/    46AC : 73                  SAVEZP		LD (HL),E
+    1054/    46AD : 23                  		INC HL
+    1055/    46AE : 72                  		LD (HL),D
+    1056/    46AF : 23                  		INC HL
+    1057/    46B0 : 71                  		LD (HL),C
+    1058/    46B1 : 23                  		INC HL
+    1059/    46B2 : 70                  		LD (HL),B
+    1060/    46B3 : 23                  		INC HL
+    1061/    46B4 : C9                  		RET
+    1062/    46B5 :                     
+    1063/    46B5 : 5E                  LOADZP		LD E,(HL)
+    1064/    46B6 : 23                  		INC HL
+    1065/    46B7 : 56                  		LD D,(HL)
+    1066/    46B8 : 23                  		INC HL
+    1067/    46B9 : 4E                  		LD C,(HL)
+    1068/    46BA : 23                  		INC HL
+    1069/    46BB : 46                  		LD B,(HL)
+    1070/    46BC : 23                  		INC HL
+    1071/    46BD : C9                  		RET
+    1072/    46BE :                     
+    1073/    46BE :                     ;óíÖçàÖ ëÖäíéêÄ DIR èé çéåÖêì BC
+    1074/    46BE : C5                  RDDIRSC		PUSH BC
+    1075/    46BF : 50                  		LD D,B
+    1076/    46C0 : 59                  		LD E,C
+    1077/    46C1 : 01 00 00            		LD BC,0
+    1078/    46C4 : 3E 10               		LD A,0X10
+    1079/    46C6 : CD EF 47            		CALL BCDE_A
+    1080/    46C9 : 7B                  		LD A,E
+    1081/    46CA : F5                  		PUSH AF
+    1082/    46CB : 3A 01 56            		LD A,(BYTSSEC)
+    1083/    46CE : F5                  		PUSH AF
+    1084/    46CF : CD EF 47            		CALL BCDE_A
+    1085/    46D2 : 21 00 52            		LD HL,TDIRCLS
+    1086/    46D5 : EB                  		EX DE,HL
+    1087/    46D6 : 29                  		ADD HL,HL
+    1088/    46D7 : 29                  		ADD HL,HL
+    1089/    46D8 : 19                  		ADD HL,DE
+    1090/    46D9 : CD B5 46            		CALL LOADZP
+    1091/    46DC : CD 9E 47            		CALL REALSEC
+    1092/    46DF : F1                  		POP AF
+    1093/    46E0 : 3D                  		DEC A
+    1094/    46E1 : 6F                  		LD L,A
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 24 - 1/17/2011 21:29:35
+
+
+    1095/    46E2 : F1                  		POP AF
+    1096/    46E3 : A5                  		AND L
+    1097/    46E4 : 6F                  		LD L,A
+    1098/    46E5 : 26 00               		LD H,0
+    1099/    46E7 : 19                  		ADD HL,DE
+    1100/    46E8 : EB                  		EX DE,HL
+    1101/    46E9 : 21 00 00            		LD HL,0
+    1102/    46EC : ED 4A               		ADC HL,BC
+    1103/    46EE : 44                  		LD B,H
+    1104/    46EF : 4D                  		LD C,L
+    1105/    46F0 : CD 2C 48            		CALL LOADLST
+    1106/    46F3 : C1                  		POP BC
+    1107/    46F4 : C9                  		RET
+    1108/    46F5 :                     
+    1109/    46F5 :                     ;èêéÇÖêäÄ çÄ èéëãÖÑçàâ äãÄëíÖê Ç ñÖèéóäÖ
+    1110/    46F5 : 3A 00 56            LST_CLS		LD A,(CAL_FAT)			;áÄÇàëàí éí êÄáêüÑçéëíà îÄíÄ
+    1111/    46F8 : A7                  		AND A
+    1112/    46F9 : 20 06               		JR NZ,LST_CL1
+    1113/    46FB : 21 F7 0F            		LD HL,0X0FF7			;èêéÇÖêäÄ Ñãü îÄí12
+    1114/    46FE : ED 52               		SBC HL,DE
+    1115/    4700 : C9                  		RET
+    1116/    4701 :                     
+    1117/    4701 : 3D                  LST_CL1		DEC A
+    1118/    4702 : 20 06               		JR NZ,LST_CL2
+    1119/    4704 : 21 F7 FF            LST_CL3		LD HL,0XFFF7			;èêéÇÖêäÄå Ñãü îÄí16 à åãÄÑòàï Åàí îÄí32
+    1120/    4707 : ED 52               		SBC HL,DE
+    1121/    4709 : C9                  		RET
+    1122/    470A :                     
+    1123/    470A : 21 FF 0F            LST_CL2		LD HL,0X0FFF			;èêéÇÖêäÄ Ñãü ëíÄêòàï Åàí îÄí32
+    1124/    470D : ED 42               		SBC HL,BC
+    1125/    470F : C0                  		RET NZ
+    1126/    4710 : 18 F2               		JR LST_CL3
+    1127/    4712 :                     
+    1128/    4712 :                     ;óíÖçàÖ ëãÖÑìûôÖÉé çéåÖêÄ äãÄëíÖêÄ Ç ñÖèéóäÖ
+    1129/    4712 : 3A 00 56            RDFATZP		LD A,(CAL_FAT)			;óíÖçàÖ áÄÇàëàí éí êÄáêÄÑçéëíà îÄíÄ
+    1130/    4715 : A7                  		AND A
+    1131/    4716 : 28 37               		JR Z,RDFATS0			;èÖêÖïéÑ ÇèÖêÖÑ Ñãü îÄí12
+    1132/    4718 : 3D                  		DEC A
+    1133/    4719 : 28 18               		JR Z,RDFATS1			;èÖêÖïéÑ ÇèÖêÖÑ Ñãü îÄí16
+    1134/    471B : EB                  		EX DE,HL			;áÑÖëú óíÖçàÖ Ñãü îÄí32
+    1135/    471C : 29                  		ADD HL,HL
+    1136/    471D : EB                  		EX DE,HL
+    1137/    471E : 21 00 00            		LD HL,0
+    1138/    4721 : ED 4A               		ADC HL,BC
+    1139/    4723 : ED 4A               		ADC HL,BC			;ìåçéÜàãà çéåÖê äãÄëíÖêÄ çÄ 2
+    1140/    4725 : 7B                  		LD A,E
+    1141/    4726 : 5A                  		LD E,D
+    1142/    4727 : 55                  		LD D,L
+    1143/    4728 : 4C                  		LD C,H
+    1144/    4729 : 06 00               		LD B,0				;êÄáÑÖãàãà çéåÖê äãÄëíÖêÄ çÄ 256
+    1145/    472B : CD 39 47            		CALL RDFATS2			;óàíÄÖå åãÄÑòàÖ 16 Åàí àëèéãúáìü óíÖçàÖ Ñãü îÄí16
+    1146/    472E : 23                  		INC HL
+    1147/    472F : 4E                  		LD C,(HL)
+    1148/    4730 : 23                  		INC HL
+    1149/    4731 : 46                  		LD B,(HL)			;èêéóàíÄãà èéëãÖÑìûôàÖ ëíÄêòàÖ 16 Åàí
+    1150/    4732 : C9                  		RET
+    1151/    4733 :                     
+    1152/    4733 :                     ;óíÖçàÖ 16 ÅàíçéÉé çéåÖêÄ äãÄëíÖêÄ àá ñÖèéóäà Ñãü îÄí16
+    1153/    4733 : 01 00 00            RDFATS1		LD BC,0
+    1154/    4736 : 7B                  		LD A,E
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 25 - 1/17/2011 21:29:35
+
+
+    1155/    4737 : 5A                  		LD E,D
+    1156/    4738 : 51                  		LD D,C				;êÄáÑÖãàãà çéåÖê äãÄëíÖêÄ çÄ 256, ëíÄêòàÖ 16 Åàí =0
+    1157/    4739 : F5                  RDFATS2		PUSH AF				;éÅôÖÖ óíÖçàÖ 16 ÅàíçéÉé çéåÖêÄ äãÄëíÖêÄ Ñãü îÄí16/32
+    1158/    473A : C5                  		PUSH BC
+    1159/    473B : 21 1E 56            		LD HL,FATSTR
+    1160/    473E : CD 03 48            		CALL BCDEHLP			;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ îÄí íÄÅãàñõ
+    1161/    4741 : CD 2C 48            		CALL LOADLST			;áÄÉêìáàãà ÇõóàëãÖççõâ çéåÖê ëÖäíéêÄ
+    1162/    4744 : C1                  		POP BC
+    1163/    4745 : F1                  		POP AF
+    1164/    4746 : 5F                  		LD E,A
+    1165/    4747 : 16 00               		LD D,0
+    1166/    4749 : 19                  		ADD HL,DE
+    1167/    474A : 19                  		ADD HL,DE			;Çõóàëãàãà ëåÖôÖçàÖ Ñé çìÜçéÉé çéåÖêÄ Ç áÄÉêìÜÖççéå ëÖäíéêÖ
+    1168/    474B : 5E                  		LD E,(HL)
+    1169/    474C : 23                  		INC HL
+    1170/    474D : 56                  		LD D,(HL)			;èéãìóàãà 16 Åàí çéåÖêÄ äãÄëíÖêÄ
+    1171/    474E : C9                  		RET
+    1172/    474F :                     
+    1173/    474F :                     ;óíÖçàÖ 12 ÅàíçéÉé çéåÖêÄ äãÄëíÖêÄ àá ñÖèéóäà Ñãü îÄí12
+    1174/    474F : 62                  RDFATS0		LD H,D
+    1175/    4750 : 6B                  		LD L,E
+    1176/    4751 : 29                  		ADD HL,HL
+    1177/    4752 : 19                  		ADD HL,DE			;HL=HL*3
+    1178/    4753 : CB 3C               		SRL H
+    1179/    4755 : CB 1D               		RR L				;HL=HL/2 - Ç àíéÉÖ ìåçéÜàãà çéåÖê äãÄëíÖêÄ çÄ 1,5
+    1180/    4757 : 7B                  		LD A,E				;A-çÄå àçíÖêÖëÖç íéãúäé Åàí çéåÖê ëíÄêéÉé çéåÖêÄ äãÄëíÖêÄ
+    1181/    4758 : 5C                  		LD E,H
+    1182/    4759 : 16 00               		LD D,0
+    1183/    475B : 42                  		LD B,D
+    1184/    475C : 4A                  		LD C,D				;êÄáÑÖãàãà çéåÖê äãÄëíÖêÄ çÄ 256
+    1185/    475D : CB 3B               		SRL E
+    1186/    475F : F5                  		PUSH AF
+    1187/    4760 : E5                  		PUSH HL
+    1188/    4761 : 21 1E 56            		LD HL,FATSTR
+    1189/    4764 : CD 03 48            		CALL BCDEHLP			;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ îÄí íÄÅãàñõ
+    1190/    4767 : CD 2C 48            		CALL LOADLST			;áÄÉêìáàãà ÇõÇóàëãÖççõâ ëÖäíéê
+    1191/    476A : C1                  		POP BC
+    1192/    476B : 78                  		LD A,B
+    1193/    476C : E6 01               		AND 1
+    1194/    476E : 47                  		LD B,A				;BC=ëåÖôÖçàÖ Ç áÄÉêìÜÖççéå ëÖäíéêÖ
+    1195/    476F : 09                  		ADD HL,BC			;HL=ÄÑêÖë éíäìÑÄ óàíÄíú ÅÄâíõ çéåÖêÄ äãÄëíÖêÄ
+    1196/    4770 : 46                  		LD B,(HL)			;èêéóàíÄãà åãÄÑòìû óÄëíú çéåÖêÄ äãÄëíÖêÄ
+    1197/    4771 : 23                  		INC HL				;ÄÑêÖë ëãÖÑìûôÖÉé ÅÄâíÄ
+    1198/    4772 : 7C                  		LD A,H
+    1199/    4773 : FE 52               		CP HIGH (BUF_512)+2		;èêéÇÖêäÄ çÄ èÖêÖïéÑ ÉêÄçàñõ áÄÉêìÜÖççéÉé ëÖäíéêÄ
+    1200/    4775 : 20 09               		JR NZ,RDFATS4
+    1201/    4777 : C5                  		PUSH BC				;ÇõïéÑ áÄ èêÖÑÖãõ íÖäìôÖÉé áÄÉêìÜÖççéÉé ëÖäíéêÄ
+    1202/    4778 : 01 00 00            		LD BC,0
+    1203/    477B : 13                  		INC DE
+    1204/    477C : CD 2C 48            		CALL LOADLST			;áÄÉêìÜÄÖå ëãÖÑìûôàâ ëÖäíéê îÄí íÄÅãàñõ
+    1205/    477F : C1                  		POP BC
+    1206/    4780 : F1                  RDFATS4		POP AF
+    1207/    4781 : 56                  		LD D,(HL)			;óàíÄÖå ëíÄêòàÖ Åàíõ çéåÖêÄ äãÄëíÖêÄ
+    1208/    4782 : 58                  		LD E,B				;íÖèÖêú DE=çéåÖê ëãÖÑìûôÖÉé äãÄëíÖêÄ Ç ñÖèéóäÖ
+    1209/    4783 : 01 00 00            		LD BC,0
+    1210/    4786 : 1F                  		RRA				;èêéÇÖêüÖå Åàí 0 ëíÄêéÉé çéåÖêÄ äãÄëíÖêÄ
+    1211/    4787 : 30 10               		JR NC,RDFATS3
+    1212/    4789 : CB 3A               		SRL D				;ëÑÇàÉÄÖå çéåÖê èêéóàíÄççéÉé çéåÖêÄ äãÄëíÖêÄ Ç åãÄÑòàÖ 12 Åàí
+    1213/    478B : CB 1B               		RR E
+    1214/    478D : CB 3A               		SRL D
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 26 - 1/17/2011 21:29:35
+
+
+    1215/    478F : CB 1B               		RR E
+    1216/    4791 : CB 3A               		SRL D
+    1217/    4793 : CB 1B               		RR E
+    1218/    4795 : CB 3A               		SRL D
+    1219/    4797 : CB 1B               		RR E
+    1220/    4799 : 7A                  RDFATS3		LD A,D
+    1221/    479A : E6 0F               		AND 0X0F
+    1222/    479C : 57                  		LD D,A				;ëÅêéëàãà çÖáçÄóÄôàÖ ëíÄêòàÖ 4 ÅàíÄ ì èéãìóÖççéÉé çéåÖêÄ äãÄëíÖêÄ
+    1223/    479D : C9                  		RET
+    1224/    479E :                     
+    1225/    479E :                     ;ÇõóàëãÖçàÖ êÖÄãúçéÉé ëÖäíéêÄ
+    1226/    479E :                     ;çÄ ÇïéÑÖ BCDE=çéåÖê äãÄëíÖêÄ FAT
+    1227/    479E :                     ;çÄ ÇõïéÑÖ BCDE=çéåÖê êÖÄãúçéÉé ëÖäíéêÄ
+    1228/    479E : 78                  REALSEC		LD A,B
+    1229/    479F : B1                  		OR C
+    1230/    47A0 : B2                  		OR D
+    1231/    47A1 : B3                  		OR E
+    1232/    47A2 : 20 13               		JR NZ,REALSE1			;BCDE=0?
+    1233/    47A4 : 21 08 56            		LD HL,SEC_FAT			;ùíé ROOT ÑàêÖäíéêàü ì îÄí12/16
+    1234/    47A7 : ED 5B 1E 56         		LD DE,(FATSTR)			;åÖëíéèéãéÜÖçàÖ ROOT Ñàêõ ëêÄáì èéëãÖ îÄí íÄÅãàñõ
+    1235/    47AB : ED 4B 20 56         		LD BC,(FATSTR+2)
+    1236/    47AF : E5                  		PUSH HL
+    1237/    47B0 : CD 03 48            		CALL BCDEHLP			;èêàÅÄÇàãà ä çÄóÄãì îÄí íÄÅãàñõ ÖÖ êÄáåÖê
+    1238/    47B3 : E1                  		POP HL
+    1239/    47B4 : C3 03 48            		JP BCDEHLP			;èêàÅÄÇàãà ÖôÖ êÄá à èéãìóàãà çéåÖê ëÖäíéêÄ çÄóÄãÄ ROOT Ñàêõ
+    1240/    47B7 :                     
+    1241/    47B7 : 21 FE FF            REALSE1		LD HL,0XFFFE
+    1242/    47BA : EB                  		EX DE,HL
+    1243/    47BB : 19                  		ADD HL,DE
+    1244/    47BC : EB                  		EX DE,HL
+    1245/    47BD : 23                  		INC HL
+    1246/    47BE : ED 4A               		ADC HL,BC			;HLDE=çéåÖê äãÄëíÖêÄ-2
+    1247/    47C0 : 3A 01 56            		LD A,(BYTSSEC)			;çìÜçé ìåçéÜàíú çÄ êÄáåÖê äãÄëíÖêÄ
+    1248/    47C3 : 18 08               		JR REALSE2
+    1249/    47C5 :                     
+    1250/    47C5 : CB 23               REALSE3		SLA E
+    1251/    47C7 : CB 12               		RL D
+    1252/    47C9 : CB 15               		RL L
+    1253/    47CB : CB 14               		RL H
+    1254/    47CD : 0F                  REALSE2		RRCA
+    1255/    47CE : 30 F5               		JR NC,REALSE3			;ìåçéÜàãà çÄ êÄáåÖê äãÄëíÖêÄ
+    1256/    47D0 : 44                  		LD B,H
+    1257/    47D1 : 4D                  		LD C,L
+    1258/    47D2 : 21 0E 56            		LD HL,STARTRZ
+    1259/    47D5 : CD 03 48            		CALL BCDEHLP			;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ ÑàëäÄ
+    1260/    47D8 : 21 12 56            		LD HL,FRSTDAT
+    1261/    47DB : C3 03 48            		JP BCDEHLP			;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ êÄáÑÖãÄ
+    1262/    47DE :                     
+    1263/    47DE :                     ;BCDE=BCDE/512
+    1264/    47DE : 5A                  BCDE200		LD E,D
+    1265/    47DF : 51                  		LD D,C
+    1266/    47E0 : 48                  		LD C,B
+    1267/    47E1 : 06 00               		LD B,0
+    1268/    47E3 : 3E 02               		LD A,2
+    1269/    47E5 : 18 08               		JR BCDE_A
+    1270/    47E7 :                     
+    1271/    47E7 :                     ;BCDE>>A=BCDE
+    1272/    47E7 : CB 38               BCDE_A1		SRL B
+    1273/    47E9 : CB 19               		RR C
+    1274/    47EB : CB 1A               		RR D
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 27 - 1/17/2011 21:29:35
+
+
+    1275/    47ED : CB 1B               		RR E
+    1276/    47EF : 0F                  BCDE_A		RRCA
+    1277/    47F0 : 30 F5               		JR NC,BCDE_A1
+    1278/    47F2 : C9                  		RET
+    1279/    47F3 :                     
+    1280/    47F3 :                     ;(ADR)-BCDE=BCDE
+    1281/    47F3 : 7E                  BCDEHLM		LD A,(HL)
+    1282/    47F4 : 23                  		INC HL
+    1283/    47F5 : 93                  		SUB E
+    1284/    47F6 : 5F                  		LD E,A
+    1285/    47F7 : 7E                  		LD A,(HL)
+    1286/    47F8 : 23                  		INC HL
+    1287/    47F9 : 9A                  		SBC A,D
+    1288/    47FA : 57                  		LD D,A
+    1289/    47FB : 7E                  		LD A,(HL)
+    1290/    47FC : 23                  		INC HL
+    1291/    47FD : 99                  		SBC A,C
+    1292/    47FE : 4F                  		LD C,A
+    1293/    47FF : 7E                  		LD A,(HL)
+    1294/    4800 : 98                  		SBC A,B
+    1295/    4801 : 47                  		LD B,A
+    1296/    4802 : C9                  		RET
+    1297/    4803 :                     
+    1298/    4803 :                     ;(ADR)+BCDE=BCDE
+    1299/    4803 : 7E                  BCDEHLP		LD A,(HL)
+    1300/    4804 : 23                  		INC HL
+    1301/    4805 : 83                  		ADD A,E
+    1302/    4806 : 5F                  		LD E,A
+    1303/    4807 : 7E                  		LD A,(HL)
+    1304/    4808 : 23                  		INC HL
+    1305/    4809 : 8A                  		ADC A,D
+    1306/    480A : 57                  		LD D,A
+    1307/    480B : 7E                  		LD A,(HL)
+    1308/    480C : 23                  		INC HL
+    1309/    480D : 89                  		ADC A,C
+    1310/    480E : 4F                  		LD C,A
+    1311/    480F : 7E                  		LD A,(HL)
+    1312/    4810 : 88                  		ADC A,B
+    1313/    4811 : 47                  		LD B,A
+    1314/    4812 : C9                  		RET
+    1315/    4813 :                     
+    1316/    4813 :                     ;HLDE+BC=HLDE
+    1317/    4813 : EB                  HLDEPBC		EX DE,HL
+    1318/    4814 : 09                  		ADD HL,BC
+    1319/    4815 : EB                  		EX DE,HL
+    1320/    4816 : 01 00 00            		LD BC,0
+    1321/    4819 : ED 4A               		ADC HL,BC
+    1322/    481B : C9                  		RET
+    1323/    481C :                     
+    1324/    481C :                     ;éèêÖÑÖãüíéê êÄáêüÑçéëíà FAT
+    1325/    481C : CD DE 47            RASCHET		CALL BCDE200			;êÄáÑÖãàãà çÄ êÄáåÖê ëÖäíéêÄ
+    1326/    481F : 21 08 56            		LD HL,SEC_FAT
+    1327/    4822 : CD F3 47            		CALL BCDEHLM			;Çõóãà çÄóÄãé îÄí íÄÅãàñõ
+    1328/    4825 : 7B                  		LD A,E
+    1329/    4826 : E6 F0               		AND 0XF0			;àÉçéêàêìÖå åãÄÑòàÖ 4 ÅàíÄ
+    1330/    4828 : B2                  		OR D
+    1331/    4829 : B1                  		OR C
+    1332/    482A : B0                  		OR B				;èêéÇÖêäÄ çÄ 0
+    1333/    482B : C9                  		RET
+    1334/    482C :                     
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 28 - 1/17/2011 21:29:35
+
+
+    1335/    482C :                     ;ÉêìáàãäÄ éÑçéÉé ëÖäíéêÄ
+    1336/    482C : 21 00 50            LOADLST		LD HL,BUF_512			;ÄÑêÖë ÅìîÖêÄ ëÖäíéêÄ
+    1337/    482F : 3E 01               		LD A,1				;Éêìáàíú 1 ëÖäíéê
+    1338/    4831 : E5                  		PUSH HL
+    1339/    4832 : CD B5 48            		CALL RDMULTI			;áÄÉêìáàãà ëÖäíéê
+    1340/    4835 : E1                  		POP HL				;çÄ ÇõïéÑÖ HL=ÄÑêÖë çÄóÄãÄ ÅìîÖêÄ áÄÉêìÜÖççéÉé ëÖäíéêÄ
+    1341/    4836 : C9                  		RET
+    1342/    4837 :                     
+    1343/    4837 :                     ;èéÑÄóÄ äéåÄçÑõ Ç SD äÄêíì ÅÖá èÄêÄåÖíêéÇ
+    1344/    4837 : C5                  OUTCOM		PUSH BC
+    1345/    4838 : 01 13 06            		LD BC,0X0600+SD_SEND		;ÇõÑÄíú Ç èéêí 6 ÅÄâí
+    1346/    483B : ED B3               		OTIR
+    1347/    483D : C1                  		POP BC
+    1348/    483E : C9                  		RET
+    1349/    483F :                     
+    1350/    483F :                     ;ÇõÑÄóÄ Ç èéêí SD äÄêíõ äéåÄçÑõ ë èÄêÄåÖíêéå 0
+    1351/    483F : C5                  OUT_COM		PUSH BC
+    1352/    4840 : 01 13 00            		LD BC,SD_SEND
+    1353/    4843 : ED 79               		OUT (C),A			;éíèêÄÇàãà äéÑ äéåÄçÑõ
+    1354/    4845 : AF                  		XOR A
+    1355/    4846 : ED 79               		OUT (C),A			;Åàíõ 31-24 èÄêÄåÖíêÄ
+    1356/    4848 : 00                  		NOP
+    1357/    4849 : ED 79               		OUT (C),A			;Åàíõ 23-16 èÄêÄåÖíêÄ
+    1358/    484B : 00                  		NOP
+    1359/    484C : ED 79               		OUT (C),A			;Åàíõ 15-8 èÄêÄåÖíêÄ
+    1360/    484E : 00                  		NOP
+    1361/    484F : ED 79               		OUT (C),A			;Åàíõ 7-0 èÄêÄåÖíêÄ
+    1362/    4851 : 3D                  		DEC A
+    1363/    4852 : ED 79               		OUT (C),A			;ÅÖá CRC16
+    1364/    4854 : C1                  		POP BC
+    1365/    4855 : C9                  		RET
+    1366/    4856 :                     
+    1367/    4856 : E5                  SECM200		PUSH HL
+    1368/    4857 : C5                  		PUSH BC
+    1369/    4858 : 3E 7A               		LD A,CMD_58
+    1370/    485A : CD 3F 48            		CALL OUT_COM
+    1371/    485D : CD 95 48            		CALL IN_OOUT
+    1372/    4860 : 01 14 00            		LD BC,SD_RSTR
+    1373/    4863 : ED 60               		IN H,(C)
+    1374/    4865 : 00                  		NOP
+    1375/    4866 : ED 78               		IN A,(C)
+    1376/    4868 : 00                  		NOP
+    1377/    4869 : ED 78               		IN A,(C)
+    1378/    486B : 00                  		NOP
+    1379/    486C : ED 78               		IN A,(C)
+    1380/    486E : CB 74               		BIT 6,H
+    1381/    4870 : E1                  		POP HL
+    1382/    4871 : 20 0A               		JR NZ,SECN200
+    1383/    4873 : EB                  		EX DE,HL
+    1384/    4874 : 29                  		ADD HL,HL
+    1385/    4875 : EB                  		EX DE,HL
+    1386/    4876 : ED 6A               		ADC HL,HL
+    1387/    4878 : 65                  		LD H,L
+    1388/    4879 : 6A                  		LD L,D
+    1389/    487A : 53                  		LD D,E
+    1390/    487B : 1E 00               		LD E,0
+    1391/    487D : 3E 52               SECN200		LD A,CMD_18
+    1392/    487F : 0E 13               		LD C,SD_SEND
+    1393/    4881 : ED 79               		OUT (C),A
+    1394/    4883 : 00                  		NOP
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 29 - 1/17/2011 21:29:35
+
+
+    1395/    4884 : ED 61               		OUT (C),H
+    1396/    4886 : 00                  		NOP
+    1397/    4887 : ED 69               		OUT (C),L
+    1398/    4889 : 00                  		NOP
+    1399/    488A : ED 51               		OUT (C),D
+    1400/    488C : 00                  		NOP
+    1401/    488D : ED 59               		OUT (C),E
+    1402/    488F : 3E FF               		LD A,0XFF
+    1403/    4891 : ED 79               		OUT (C),A
+    1404/    4893 : E1                  		POP HL
+    1405/    4894 : C9                  		RET
+    1406/    4895 :                     
+    1407/    4895 : D9                  IN_OOUT		EXX
+    1408/    4896 : 11 FF 20            		LD DE,0X20FF
+    1409/    4899 : DB 14               IN_WAIT		IN A,(SD_RSTR)
+    1410/    489B : BB                  		CP E
+    1411/    489C : 20 03               		JR NZ,IN_EXIT
+    1412/    489E : 15                  IN_NEXT		DEC D
+    1413/    489F : 20 F8               		JR NZ,IN_WAIT
+    1414/    48A1 : D9                  IN_EXIT		EXX
+    1415/    48A2 : C9                  		RET
+    1416/    48A3 :                     
+    1417/    48A3 : 40 00 00 00 00 95   CMD00		DB 0X40,0X00,0X00,0X00,0X00,0X95;GO_IDLE_STATE
+    1418/    48A9 : 48 00 00 01 AA 87   CMD08		DB 0X48,0X00,0X00,0X01,0XAA,0X87;SEND_IF_COND
+    1419/    48AF : 50 00 00 02 00 FF   CMD16		DB 0X50,0X00,0X00,0X02,0X00,0XFF;SET_BLOCKEN
+    1420/    48B5 :                     
+    1421/    48B5 :                     ;åçéÉé ëÖäíéêçéÖ óíÖçàÖ ë SD äÄêíõ
+    1422/    48B5 : 08                  RDMULTI		EX AF,AF'
+    1423/    48B6 : CD 56 48            		CALL SECM200
+    1424/    48B9 : 08                  		EX AF,AF'
+    1425/    48BA : 01 14 00            		LD BC,SD_RSTR
+    1426/    48BD : 08                  RDMULT1		EX AF,AF'
+    1427/    48BE : CD 95 48            		CALL IN_OOUT
+    1428/    48C1 : FE FE               		CP 0XFE
+    1429/    48C3 : 20 F9               		JR NZ,$-5
+    1430/    48C5 : ED B2               		INIR
+    1431/    48C7 : 00                  		NOP
+    1432/    48C8 : ED B2               		INIR
+    1433/    48CA : 00                  		NOP
+    1434/    48CB : ED 78               		IN A,(C)
+    1435/    48CD : 00                  		NOP
+    1436/    48CE : ED 78               		IN A,(C)
+    1437/    48D0 : 08                  		EX AF,AF'
+    1438/    48D1 : 3D                  		DEC A
+    1439/    48D2 : 20 E9               		JR NZ,RDMULT1
+    1440/    48D4 : 3E 4C               		LD A,CMD_12
+    1441/    48D6 : CD 3F 48            		CALL OUT_COM
+    1442/    48D9 : CD 95 48            		CALL IN_OOUT
+    1443/    48DC : 3C                  		INC A
+    1444/    48DD : 20 FA               		JR NZ,$-4
+    1445/    48DF : C9                  		RET
+    1446/    48E0 :                     
+    1447/    48E0 :                     ;ÇõÅéêäÄ çéåÖêÄ äãÄëíÖêÄ àá îÄâãéÇéÉé éèàëÄíÖãü
+    1448/    48E0 : EB                  RD_CLAS		EX DE,HL
+    1449/    48E1 : 11 14 00            		LD DE,0X14			;ëíÄêòàÖ 16 Åàí óàíÄÖå àá ëåÖôÖçàü +20
+    1450/    48E4 : 19                  		ADD HL,DE
+    1451/    48E5 : 4E                  		LD C,(HL)
+    1452/    48E6 : 23                  		INC HL
+    1453/    48E7 : 46                  		LD B,(HL)
+    1454/    48E8 : 1E 05               		LD E,5				;åãÄÑòàÖ 16 Åàí óàíÄÖå àá ëåÖôÖçàü +26
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 30 - 1/17/2011 21:29:35
+
+
+    1455/    48EA : 19                  		ADD HL,DE
+    1456/    48EB : 5E                  		LD E,(HL)
+    1457/    48EC : 23                  		INC HL
+    1458/    48ED : 56                  		LD D,(HL)
+    1459/    48EE : 23                  		INC HL
+    1460/    48EF : C9                  		RET
+    1461/    48F0 :                     
+    1462/    48F0 :                     ;èêéÇÖêäÄ èé åÄëäÖ
+    1463/    48F0 : 11 27 56            COMPARE		LD DE,FB_EXT
+    1464/    48F3 : 06 0B               		LD B,0X0B
+    1465/    48F5 : 1A                  		LD A,(DE)
+    1466/    48F6 : BE                  		CP (HL)
+    1467/    48F7 : C0                  		RET NZ
+    1468/    48F8 : 23                  		INC HL
+    1469/    48F9 : 13                  		INC DE
+    1470/    48FA : 10 F9               		DJNZ $-5
+    1471/    48FC : C9                  		RET
+    1472/    48FD :                     
+    1473/    48FD :                     ;êÄëèÄäéÇôàä èìíà ä îÄâãì
+    1474/    48FD : 01 02 08            FNDBUF		LD BC,0X0802
+    1475/    4900 : 11 27 56            		LD DE,FB_EXT
+    1476/    4903 : 7E                  FNDBUF4		LD A,(HL)
+    1477/    4904 : 23                  		INC HL
+    1478/    4905 : FE 2E               		CP ".";0X2E
+    1479/    4907 : 28 11               		JR Z,FNDBUF2
+    1480/    4909 : FE 2F               		CP "/";0X5C
+    1481/    490B : 28 0A               		JR Z,FNDBUF5
+    1482/    490D : 12                  		LD (DE),A
+    1483/    490E : 13                  		INC DE
+    1484/    490F : 10 F2               		DJNZ FNDBUF4
+    1485/    4911 : 7E                  		LD A,(HL)
+    1486/    4912 : A7                  		AND A
+    1487/    4913 : C8                  		RET Z
+    1488/    4914 : 23                  		INC HL
+    1489/    4915 : 18 0D               		JR FNDBUF3
+    1490/    4917 :                     
+    1491/    4917 : 79                  FNDBUF5		LD A,C
+    1492/    4918 : A7                  		AND A
+    1493/    4919 : C8                  		RET Z
+    1494/    491A : 78                  FNDBUF2		LD A,B
+    1495/    491B : A7                  		AND A
+    1496/    491C : 28 06               		JR Z,FNDBUF3
+    1497/    491E : 3E 20               		LD A," ";0X20
+    1498/    4920 : 12                  		LD (DE),A
+    1499/    4921 : 13                  		INC DE
+    1500/    4922 : 10 FC               		DJNZ $-2
+    1501/    4924 : 06 03               FNDBUF3		LD B,3
+    1502/    4926 : 0D                  		DEC C
+    1503/    4927 : 2B                  		DEC HL
+    1504/    4928 : 7E                  		LD A,(HL)
+    1505/    4929 : FE 2F               		CP "/";0X5C
+    1506/    492B : 28 D6               		JR Z,FNDBUF4
+    1507/    492D : 23                  		INC HL
+    1508/    492E : 18 D3               		JR FNDBUF4
+    1509/    4930 :                     RAMCEND
+    1510/     90A :                     		DEPHASE
+    1511/     90A :                     
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 31 - 1/17/2011 21:29:35
+
+
+  symbol table (* = unused):
+  ------------------------
+
+ A2TXT :                       41AF C |  ACMD_41 :                       69 - |
+*ADRLOAD :                     8000 - |  ADRPATH :                     5622 - |
+*ARCHITECTURE :  i386-unknown-win32 - |  BCDE200 :                     47DE C |
+ BCDEHLM :                     47F3 C |  BCDEHLP :                     4803 C |
+ BCDE_A :                      47EF C |  BCDE_A1 :                     47E7 C |
+*BIGENDIAN :                      0 - | *BRANCHEXT :                      0 - |
+ BUF_512 :                     5000 - |  BYTSSEC :                     5601 - |
+*B_8CHAN :                        2 - | *B_CBIT :                         0 - |
+*B_CKSL0 :                        4 - | *B_CKSL1 :                        5 - |
+*B_DBIT :                         7 - | *B_EXPAG :                        3 - |
+*B_INV7B :                        7 - | *B_MCNCS :                        1 - |
+*B_MCRDY :                        3 - | *B_MCSP0 :                        3 - |
+*B_MCSP1 :                        5 - | *B_MDDRQ :                        0 - |
+*B_MDHLF :                        4 - | *B_MPXRS :                        2 - |
+*B_NOROM :                        0 - | *B_PAN4C :                        6 - |
+*B_RAMRO :                        1 - | *B_SDDET :                        1 - |
+*B_SDNCS :                        0 - | *B_SDWP :                         2 - |
+*B_SNCLR :                        7 - |  CAL_FAT :                     5600 - |
+*CASESENSITIVE :                  1 - |  CLRCBIT :                        5 - |
+ CLS_DSC :                     561A - |  CMD00 :                       48A3 C |
+ CMD08 :                       48A9 C |  CMD16 :                       48AF C |
+*CMD_09 :                        49 - | *CMD_10 :                        4A - |
+ CMD_12 :                        4C - | *CMD_17 :                        51 - |
+ CMD_18 :                        52 - | *CMD_24 :                        58 - |
+*CMD_25 :                        59 - |  CMD_55 :                        77 - |
+ CMD_58 :                        7A - |  CMD_59 :                        7B - |
+ COMPARE :                     48F0 C | *CONSTPI :        3.141592653589793 - |
+ CP_PAGE :                     45F7 C |  CRC16 :                       4304 C |
+ CRC_0 :                       430A C |  CRC_1 :                       4325 C |
+ CRC_2 :                       4330 C |  CRC_3 :                       4320 C |
+*C_10MHZ :                       30 - | *C_12MHZ :                       10 - |
+*C_20MHZ :                       20 - | *C_24MHZ :                        0 - |
+*C_GLED :                        20 - | *C_GNMI :                        40 - |
+*C_GRST :                        80 - |  DATA :                        9631 - |
+*DATE :                   1/17/2011 - |  DD :                            11 - |
+*DMA_CST :                       1F - | *DMA_HAD :                       1C - |
+*DMA_LAD :                       1E - | *DMA_MAD :                       1D - |
+*DMA_MOD :                       1B - | *DPORT1 :                         A - |
+*DPORT2 :                         B - | *ERR_OK :                      42F1 C |
+*FALSE :                          0 - |  FATSTR :                      561E - |
+ FB_EXT :                      5627 - |  FINDFL :                      4586 C |
+ FINDFL1 :                     455D C |  FLOADE :                      4104 C |
+ FLOADER :                     40EE C |  FNDBUF :                      48FD C |
+ FNDBUF2 :                     491A C |  FNDBUF3 :                     4924 C |
+ FNDBUF4 :                     4903 C |  FNDBUF5 :                     4917 C |
+ FRSTDAT :                     5612 - |  FSRROO2 :                     4552 C |
+*FULLPMMU :                       1 - |  F_PATH :                      4088 C |
+ GET_CRC :                     4292 C |  GRUZILA :                       5A C |
+ GRUZIM :                      40BB C |  GRUZIM0 :                     40AE C |
+ GRUZIM1 :                     40CE C |  GRUZIM2 :                     40B4 C |
+ GS105 :                       4250 C |  GSCFG0 :                         F - |
+*GSCOM :                         BB - | *GSCTR :                         33 - |
+*GSDAT :                         B3 - | *GSSTAT :                        BB - |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+ HLDEPBC :                     4813 C | *INEXTMODE :                      0 - |
+*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 32 - 1/17/2011 21:29:35
+
+
+*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
+ IN_EXIT :                     48A1 C | *IN_NEXT :                     489E C |
+ IN_OOUT :                     4895 C |  IN_WAIT :                     4899 C |
+ JPLDROM :                     427C C |  LASTCLS :                     4580 C |
+ LDEFILE :                     467B C |  LDFILE0 :                     45FF C |
+ LDFILE1 :                     4614 C |  LDFILE2 :                     465A C |
+ LDFILE3 :                     4651 C |  LDFILE4 :                     464B C |
+ LDINSD :                      41CA C |  LDINSD1 :                     41D6 C |
+ LDMINI :                      467F C |  LD_FILE :                     4601 C |
+*LEDCTR :                         1 - | *LISTON :                         1 - |
+ LOADCO1 :                     422D C |  LOADCOD :                     4217 C |
+ LOADLST :                     482C C |  LOADROM :                     423B C |
+ LOADUPDATE :                  41E5 C |  LOADZP :                      46B5 C |
+ LOAD_SD :                     4347 C |  LST_CL1 :                     4701 C |
+ LST_CL2 :                     470A C |  LST_CL3 :                     4704 C |
+ LST_CLS :                     46F5 C | *MACEXP :                         1 - |
+*MC_READ :                       15 - | *MC_SEND :                       15 - |
+*MD_SEND :                       14 - |  MM :                             1 - |
+*MOMCPU :                      80DC - | *MOMCPUNAME :              Z80UNDOC - |
+ MOV1 :                        4255 C |  MPAG :                           0 - |
+*MPAGEX :                        10 - | *M_8CHAN :                        4 - |
+*M_CBIT :                         1 - | *M_CKSL0 :                       10 - |
+*M_CKSL1 :                       20 - | *M_DBIT :                        80 - |
+*M_EXPAG :                        8 - | *M_INV7B :                       80 - |
+*M_MCNCS :                        2 - | *M_MCRDY :                        8 - |
+*M_MCSP0 :                        8 - | *M_MCSP1 :                       20 - |
+*M_MDDRQ :                        1 - | *M_MDHLF :                       10 - |
+*M_MPXRS :                        4 - | *M_NOROM :                        1 - |
+*M_PAN4C :                       40 - | *M_RAMRO :                        2 - |
+*M_SDDET :                        2 - | *M_SDNCS :                        1 - |
+*M_SDWP :                         4 - | *M_SNCLR :                       80 - |
+*NESTMAX :                      100 - |  NEXTCLS :                     4571 C |
+ OLD_SP :                      5625 - |  OUTCOM :                      4837 C |
+ OUT_COM :                     483F C |  OUT_ERR :                     42F3 C |
+*PACKING :                        0 - | *PADDING :                        1 - |
+*P_CONF :                        77 - | *P_DATA :                        57 - |
+ RAM8KB :                      6000 - |  RAMCEND :                     4930 C |
+ RAMCOD :                      4080 - |  RASCHET :                     481C C |
+ RDBYT01 :                       21 C |  RDBYT02 :                       3B C |
+ RDBYT03 :                       45 C |  RDDIRSC :                     46BE C |
+ RDFAT00 :                     4460 C |  RDFAT01 :                     447D C |
+ RDFAT02 :                     4496 C |  RDFAT03 :                     44B4 C |
+ RDFAT04 :                     4525 C |  RDFAT05 :                     4412 C |
+ RDFAT06 :                     4408 C |  RDFATS0 :                     474F C |
+ RDFATS1 :                     4733 C |  RDFATS2 :                     4739 C |
+ RDFATS3 :                     4799 C |  RDFATS4 :                     4780 C |
+ RDFATZP :                     4712 C |  RDMULT1 :                     48BD C |
+ RDMULTI :                     48B5 C |  RD_CLAS :                     48E0 C |
+ REALSE1 :                     47B7 C |  REALSE2 :                     47CD C |
+ REALSE3 :                     47C5 C |  REALSEC :                     479E C |
+*RELAXED :                        1 - |  ROOTCLS :                     5602 - |
+ ROOTSEC :                     5606 - |  RROMSD :                      41F7 C |
+ RSVDSEC :                     560C - |  RUNCOD :                      4203 C |
+ SAVEZP :                      46AC C |  SCHET :                       42B3 C |
+ SCTRL :                         11 - | *SD_READ :                       13 - |
+ SD_RSTR :                       14 - |  SD_SEND :                       13 - |
+ SECM200 :                     4856 C |  SECN200 :                     487D C |
+ SEC_DSC :                     5616 - |  SEC_FAT :                     5608 - |
+*SSTAT :                         12 - |  STARTRZ :                     560E - |
+ STATSD :                      41EF C |  STATUS :                      5624 - |
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 33 - 1/17/2011 21:29:35
+
+
+ STRPAG :                      8000 - |  TDIRCLS :                     5200 - |
+*TIME :                    21:29:35 - | *TRUE :                           1 - |
+ TXT1 :                        409E C |  TXT1E :                       40A8 C |
+ TXT2 :                        40A8 C |  TXT2E :                       40AD C |
+ TXT3 :                        40AD C |  TXT3E :                       40AE C |
+ UNVERS :                      4156 C |  UNVERS1 :                     419F C |
+ UNVERS2 :                     41A5 C |  UPDATENAME :                  4092 C |
+ VERLOAD :                     4080 C | *VERPAG1 :                     410F C |
+*VERPAG2 :                     411F C |  VERPAGE :                     4104 C |
+*VERSION :                     142F - |  VFPGA0 :                      4142 C |
+ VFPGA1 :                      413C C |  VFPGA2 :                      414A C |
+ VOL1 :                           6 - |  VOL2 :                           7 - |
+ VOL3 :                           8 - |  VOL4 :                           9 - |
+ VOL5 :                          16 - |  VOL6 :                          17 - |
+ VOL7 :                          18 - |  VOL8 :                          19 - |
+*WC_FAT :                      43D2 C |  WDN :                         428C C |
+ WDY :                         4286 C |  WR_STAT :                     433F C |
+ YY :                             B - |  ZAW001 :                      4366 C |
+ ZAW003 :                      433D C |  ZAW004 :                      43BB C |
+ ZAW005 :                      43C6 C |  ZAW006 :                      4397 C |
+ ZXCMD :                          1 - |  ZXDATRD :                        2 - |
+ ZXDATWR :                        3 - |  ZXSTAT :                         4 - |
+
+    278 symbols
+    108 unused symbols
+
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 34 - 1/17/2011 21:29:35
+
+
+  defined macros:
+  ---------------
+
+DC                                    | DUPL                                 
+DZ                                    | SUM_HOB                              
+
+      4 macros
+
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 35 - 1/17/2011 21:29:35
+
+
+  defined functions:
+  ------------------
+
+LOW                                   | HIGH                                 
+
+ AS V1.42 Beta [Bld 78] - source file loader_ngs.a80 - page 36 - 1/17/2011 21:29:35
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.16 seconds assembly time
+
+   1794 lines source file
+      2 passes
+      0 errors
+      0 warnings

@@ -1,0 +1,144 @@
+ AS V1.42 Beta [Bld 28] - source file bootGS.asm - page 1 - 8/10/2008 17:22:52
+
+
+       1/       0 :                     	relaxed on
+       2/       0 :                     
+       3/       0 :                     
+       4/       0 :                     
+       5/       0 : =4H                 ramrun	equ	0x4000
+       6/       0 :                     
+       7/       0 : =6H                 ram8kb	equ	0x6000
+       8/       0 :                     
+       9/       0 :                     		ORG	0
+      10/       0 :                     		phase	0
+      11/       0 :                     
+      12/       0 :                     START:
+      13/       0 : F3                  		DI
+      14/       1 : 31 00 60            		ld	sp,ram8kb
+      15/       4 :                     
+      16/       4 : 3E 30               		ld	a,0x30	;10MHz Z80
+      17/       6 : D3 0F               		out	(0x0f),a
+      18/       8 :                     
+      19/       8 : AF                  		xor	a
+      20/       9 : D3 06               		out	(6),a
+      21/       B : D3 07               		out	(7),a
+      22/       D : D3 08               		out	(8),a
+      23/       F : D3 09               		out	(9),a
+      24/      11 : D3 16               		out	(0x16),a
+      25/      13 : D3 17               		out	(0x17),a
+      26/      15 : D3 18               		out	(0x18),a
+      27/      17 : D3 19               		out	(0x19),a
+      28/      19 :                     
+      29/      19 : 21 26 00            		ld	hl,ramcode
+      30/      1C : 11 00 40            		ld	de,ramrun
+      31/      1F : D5                  		push	de
+      32/      20 : 01 37 00            		ld	bc,ramcend-ramcode
+      33/      23 : ED B0               		ldir
+      34/      25 : C9                  		ret
+      35/      26 :                     
+      36/      26 :                     
+      37/      26 :                     ramcode:
+      38/    4000 :                     		phase	ramrun
+      39/    4000 :                     
+      40/    4000 :                     
+      41/    4000 : 21 00 80            		ld	hl,0x8000 ; move to the RAM page 0 mapped into 8000-FFFF
+      42/    4003 :                     
+      43/    4003 : 3E 04               		ld	a,4; 32768/8192 - move gs105a by four blocks
+      44/    4005 :                     
+      45/    4005 :                     
+      46/    4005 :                     
+      47/    4005 :                     mov1:
+      48/    4005 : 08                  		ex	af,af'
+      49/    4006 :                     
+      50/    4006 : 3E 30               		ld	a,0x30
+      51/    4008 : D3 0F               		out	(0x0f),a
+      52/    400A : 3E 02               		ld	a,2
+      53/    400C : D3 00               		out	(0),a
+      54/    400E :                     
+      55/    400E : E5                  		push	hl
+      56/    400F : 11 00 60            		ld	de,ram8kb
+      57/    4012 : 01 00 20            		ld	bc,8192
+      58/    4015 : ED B0               		ldir
+      59/    4017 :                     
+      60/    4017 :                     
+ AS V1.42 Beta [Bld 28] - source file bootGS.asm - page 2 - 8/10/2008 17:22:52
+
+
+      61/    4017 : 3E 31               		ld	a,0x31
+      62/    4019 : D3 0F               		out	(0x0f),a
+      63/    401B : 3E 00               		ld	a,0
+      64/    401D : D3 00               		out	(0),a
+      65/    401F :                     
+      66/    401F : D1                  		pop	de
+      67/    4020 : 21 00 60            		ld	hl,ram8kb
+      68/    4023 : 01 00 20            		ld	bc,8192
+      69/    4026 : ED B0               		ldir
+      70/    4028 :                     
+      71/    4028 : EB                  		ex	de,hl
+      72/    4029 :                     
+      73/    4029 : 08                  		ex	af,af'
+      74/    402A : 3D                  		dec	a
+      75/    402B : 20 D8               		jr	nz,mov1
+      76/    402D :                     
+      77/    402D :                     
+      78/    402D :                     
+      79/    402D : AF                  		xor	a
+      80/    402E : D3 00               		out	(0),a
+      81/    4030 : 3E 13               		ld	a,0x13
+      82/    4032 : D3 0F               		out	(0x0f),a
+      83/    4034 :                     
+      84/    4034 : C3 00 00            		jp	0
+      85/    4037 :                     
+      86/    4037 :                     
+      87/    4037 :                     
+      88/    4037 :                     
+      89/    4037 :                     
+      90/    4037 :                     
+      91/    4037 :                     
+      92/    4037 :                     
+      93/      5D :                     		dephase
+      94/      5D :                     ramcend:
+      95/      5D :                     
+      96/      5D :                     
+ AS V1.42 Beta [Bld 28] - source file bootGS.asm - page 3 - 8/10/2008 17:22:52
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
+*BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
+*CONSTPI :        3.141592653589793 - | *DATE :                   8/10/2008 - |
+*FALSE :                          0 - | *FULLPMMU :                       1 - |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
+*INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
+*INSUPMODE :                      0 - | *LISTON :                         1 - |
+*MACEXP :                         1 - | *MOMCPU :                        80 - |
+*MOMCPUNAME :                   Z80 - |  MOV1 :                        4005 C |
+*NESTMAX :                      100 - | *PACKING :                        0 - |
+*PADDING :                        1 - |  RAM8KB :                      6000 - |
+ RAMCEND :                       5D C |  RAMCODE :                       26 C |
+ RAMRUN :                      4000 - | *RELAXED :                        1 - |
+*START :                          0 C | *TIME :                    17:22:52 - |
+*TRUE :                           1 - | *VERSION :                     142F - |
+
+     34 symbols
+     29 unused symbols
+
+ AS V1.42 Beta [Bld 28] - source file bootGS.asm - page 4 - 8/10/2008 17:22:52
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.01 seconds assembly time
+
+     96 lines source file
+      2 passes
+      0 errors
+      0 warnings

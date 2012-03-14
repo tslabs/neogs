@@ -1,0 +1,211 @@
+
+;LAST UPDATE: 30.01.2011 savelij
+
+;ФОРМАТ ФЛАГОВОГО БАЙТА ОКНА
+;X,Y,V,H,C,C
+;IX+8
+;7-1-НИЖНИЙ ЗАГОЛОВОК
+;6-0-С РАМКОЙ,1-БЕЗ РАМКИ
+;5-1-ВЕРХНИЙ ЗАГОЛОВОК
+;4-0-ТЕКСТ ОКНА,1-БЕЗ ТЕКСТА
+;3
+;2-0-FILE,1-*.TRD
+;1-0-MENU,1-FILES
+;0-0-TRDOS,1-MSDOS
+
+;BIT 4,(IY+55)
+;BIT 3,(IY+55) 1-НЕТ ДИСКА, 0-ЕСТЬ
+;BIT 2,(IY+55) 1-НЕ НАЙДЕНО, 0-FAT ЕСТЬ
+
+;ОПИСАТЕЛЬ ОКНА (АДРЕС В IX)
+;+00 X
+;+01 Y
+;+02 V
+;+03 H
+;+04 C
+;+05 C
+;+06 | АДРЕСА
+;+07 | ПОДПРОГРАММ
+;+08 F
+;+09 X
+;+0A Y
+;+0B V
+;+0C H
+;+0D | АДРЕС
+;+0E | ТЕКСТА
+;+0F : НОМЕР ПУНКТА В ОКНЕ
+;+10 : КОЛИЧЕСТВО
+;+11 : ПУНКТОВ МЕНЮ
+;+12 "C" | ТЕКУЩИЙ
+;+13 "B" | ПУНКТ МЕНЮ
+
+WIN_INDICAT	DB 0X03,0X0A,0X0A,0X1A,0X0F,0X1F
+		DW 0
+		DB %00010000,0,0,0,0
+		DW 0
+		DB 0
+		DW 0,0
+		;   12345678901234567890123456789012
+TLOADPAGE1	DB "Загрузка обновления             ",0
+TLOADPAGE2	DB "Проверка CRC16 страницы         ",0
+NUMTLDP2	EQU $-9
+TLOADPAGE3	DB "CRC16 страницы ОК               ",0
+TLOADPAGE4	DB "  OK",0
+TLOADPAGE5	DB "  ERROR",0
+
+NEW_STROKA	DB 0X0D,"   ",0
+
+NO_UPDATE	DB 0X0C,0X09,0X03,0X08,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW NOTUPDATE
+		DB 0
+		DW 0,0
+NOTUPDATE	DB 0X0D,3,"No files",0
+
+ERROR_UPDATE	DB 0X05,0X08,0X03,0X16,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXT_ERRUPDATE
+		DB 0
+		DW 0,0
+TXT_ERRUPDATE	DB 0X0D,"  ",0
+TXT_ERRUPD1	DB "ERROR: File not found",0
+TXT_ERRUPD2	DB "ERROR: FAT not found",0
+TXT_ERRUPD3	DB "ERROR: SD card not found",0
+
+TXT_CRC		DB "ERROR: CRC error",0
+TXT_NONGS	DB "ERROR: NeoGS not found",0
+TXT_OKUPDATE	DB "Flash ROM NeoGS updated",0
+
+FILE_SELECT	DB 0,0,24,10,0X0F,0X1F,0,0,%00010001
+		DUPL 11,0
+
+PAGE128		DB 0
+
+PROGERS		DB 8,7,5,16,0X17,0X1F
+		DUPL 7,0
+		DW PROGERT
+		DUPL 5,0
+PROGERT		DB 0X0D,0X0D,3,"Прошиваю...",0
+
+THLPL0		DB 0X0D,0X0D,3,"Страница прошивок Pentagon режима",0
+
+THLPL1
+THLPL2
+THLPL3
+THLPL4
+THLPL5
+THLPL6		DB 0
+
+THLPL7		DB 0X0D,0X0D,3,"Страница прошивок ATM режима",0
+
+THLPR0		DB 0X0D,0X0D,3,"Загрузить обновление",0
+
+THLPR1		DB 0X0D,0X0D,3,"Обновить все страницы",0
+
+THLPR2		DB 0X0D,0X0D,3,"Небольшой встроенный HELP",0
+
+THLPR3		DB 0X0D,0X0D,3,"Выход из программы",0
+
+WHELP		DB 1,13,6,30,0X0F,0X1F,0,0,0X10
+		DUPL 11,0
+
+THELP1		DW THLPL0,THLPL1,THLPL2,THLPL3,THLPL4,THLPL5,THLPL6,THLPL7
+
+THELP2		DW THLPR0,THLPR1,THLPR2,THLPR3
+
+;WEKS1		DB 0X01,0X02,0X0A,0X0A,0X0F,0X1F
+;		DW THELP1
+;		DB %00100010,0,0,0,0
+;		DW DNAME
+;		DB 0
+;		DW 8,0			;КОЛИЧЕСТВО ПУНКТОВ МЕНЮ			
+;DNAME		DB 0X14,1,3
+;		DB "FLASH Pages",0X14,0
+;		DB 0X0D,3,"Page 0"
+;		DB 0X0D,3,"Page 1"
+;		DB 0X0D,3,"Page 2"
+;		DB 0X0D,3,"Page 3"
+;		DB 0X0D,3,"Page 4"
+;		DB 0X0D,3,"Page 5"
+;		DB 0X0D,3,"Page 6"
+;		DB 0X0D,3,"Page 7",0
+
+WEKS2		DB 0X09,0X0D,0X04,0X0E,0X0F,0X1F
+		DW THELP2
+		DB %00100000,0,0,0,0
+		DW SDNAME
+		DB 0
+		DW 2,0				;КОЛИЧЕСТВО ПУНКТОВ МЕНЮ
+SDNAME		DB 0X14,1,3,"Select",0X14,0
+		DB 0X0D,3,"Updating all"
+		DB 0X0D,3,"Exit",0
+
+ALLSCR		DB 0X00,0X00,0X18,0X20,0X29,0X1F
+		DW 0
+		DB %00100010,0,0,0,0
+		DW SCRTXT
+		DB 0
+		DW 0,0
+SCRTXT		DB 0X14,1,3,"FLASHER for NeoGS v0.21",0X14,0,0
+
+VERS_PAGESNGS	DB 0X01,0X02,0X0A,0X1E,0X0F,0
+		DW 0
+		DB %00100010,0,0,0,0
+		DW TXT_VERSNGS
+		DB 0
+		DW 0,0
+TXT_VERSNGS	DB 0X14,1,3,"Versions ROM NeoGS pages",0X14,0,0
+TXT_PAGES	DB 0X0D,"  Page "
+ETXT_PAGES
+
+HELPS		DB 0X00,0X12,0X06,0X20,0X0F,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXT_HELPS
+		DB 0
+		DW 0,0
+			;  12345678901234567890123456789012345
+TXT_HELPS	DB 0X0D,3,"Файл обновления должен иметь имя"
+		DB 0X0D,3,"NGS_ROM.UPD и должен находиться"
+		DB 0X0D,3,"в корне SD карты NeoGS, где его"
+		DB 0X0D,3,"будет искать этот Flasher",0
+
+UPDATE_NGS	DB 0X08,0X08,0X03,0X10,0X17,0X00
+		DW 0
+		DB 0,0,0,0,0
+		DW TXT_UPDNGS
+		DB 0
+		DW 0,0
+TXT_UPDNGS	DB 0X0D,3,"Updating...",0
+
+MEGHELP		DB 0,0,24,32,0X28,0X1F
+		DUPL 7,0
+		DW MEGATXT
+		DUPL 5,0
+		;       123456789012345678901234567890123456789012
+MEGATXT		DB 0X0D,"   Эта программа предназначена для обнов- "
+		DB 0X0D," ления прошивки FLASH ROM, находящейся на "
+		DB 0X0D," плате NeoGS. В этой версии обновляется:  "
+		DB 0X0D," прошивка FPGA - добавляется режим DMA;   "
+		DB 0X0D," загрузчик - добавлены несколько возмож-  "
+		DB 0X0D," ностей, подробнее в прилагающемся PDF-   "
+		DB 0X0D," файле.                                   "
+		DB 0X0D
+		DB 0X0D,"   Левое окно служит только для просмотра "
+		DB 0X0D," версии прошивки в страницах FLASH ROM.   "
+		DB 0X0D
+		DB 0X0D,"   Правое окно предназначено для обновле- "
+		DB 0X0D," ния прошивки FLASH ROM, просмотра этого  "
+		DB 0X0D," текста или выхода из программы с полным  "
+		DB 0X0D," перезапуском NeoGS.                      "
+		DB 0X0D
+		DB 0X0D,"   Нижнее окно показывает: номер версии   "
+		DB 0X0D," прошивки уже зашитой во FLASH ROM или    "
+		DB 0X0D," краткой помощи того, что можно сделать   "
+		DB 0X0D," в меню ",0X22,"Действие.",0X22
+		DB 0X0D
+		DB 0X0D,"                     ",DDMMYY,"   savelij "
+		DB 0
+		;       123456789012345678901234567890123456789012

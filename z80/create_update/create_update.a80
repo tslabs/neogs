@@ -1,0 +1,60 @@
+
+;LAST UPDATE: 09.02.2011 savelij
+
+		include macros.a80
+		CPU Z180			;€‡Œ… ”€‰‹€ ŒŽ†…’ Ž‹“—ˆ’‘Ÿ Ž‹…… 64Š
+
+DD		EQU 9
+MM		EQU 2
+YY		EQU 11
+DATA		EQU DD+MM<<5+YY<<9+0X8000		;„€’€ ‘ŽŠˆ ŽŽ‚‹…ˆŸ
+
+DD_P0		EQU 15					;—ˆ‘‹Ž ‘’€ˆ–› 0
+MM_P0		EQU 1					;Œ…‘Ÿ– ‘’€ˆ–› 0
+YY_P0		EQU 11					;ƒŽ„ ‘’€ˆ–› 0
+DD_P1		EQU 30					;—ˆ‘‹Ž ‘’€ˆ–› 1
+MM_P1		EQU 1 					;Œ…‘Ÿ– ‘’€ˆ–› 1
+YY_P1		EQU 11					;ƒŽ„ ‘’€ˆ–› 1
+DD_P7		EQU 19					;—ˆ‘‹Ž ‘’€ˆ–› 7
+MM_P7		EQU 1 					;Œ…‘Ÿ– ‘’€ˆ–› 7
+YY_P7		EQU 11					;ƒŽ„ ‘’€ˆ–› 7.
+DATA_P0		EQU DD_P0+MM_P0<<5+YY_P0<<9+0X8000	;“€ŠŽ‚€€Ÿ „€’€ ‘Ž‡„€ˆŸ ‘’€ˆ–› 0
+DATA_P1		EQU DD_P1+MM_P1<<5+YY_P1<<9+0X8000	;“€ŠŽ‚€€Ÿ „€’€ ‘Ž‡„€ˆŸ ‘’€ˆ–› 1
+DATA_P7		EQU DD_P7+MM_P7<<5+YY_P7<<9+0X8000	;“€ŠŽ‚€€Ÿ „€’€ ‘Ž‡„€ˆŸ ‘’€ˆ–› 7
+
+
+LOADER_PAGE	EQU 0
+MAINROM_PAGE	EQU 1
+FPGA_PAGE	EQU 7
+
+		ORG 0
+HEADER		DW EHEADER-HEADER
+		DB "NGSF"
+		DW DATA
+
+;BLOK0
+		DD BLOK0*0X100+LOADER_PAGE
+		DW BLOK1-BLOK0
+		binclude loader.crc
+		DB "LOADER"
+		DW DATA_P0
+
+;BLOK1		
+		DD BLOK1*0X100+MAINROM_PAGE
+		DW BLOK7-BLOK1
+		binclude neogs.crc
+		DB "MAIN  "
+		DW DATA_P1
+
+;BLOK7
+		DD BLOK7*0X100+FPGA_PAGE
+		DW BLOKE-BLOK7
+		binclude fpga.crc
+		DB "FPGA  "
+		DW DATA_P7
+EHEADER
+
+BLOK0		binclude loader_ngs.rom
+BLOK1		binclude neogs.rom
+BLOK7		binclude fpga.bin
+BLOKE

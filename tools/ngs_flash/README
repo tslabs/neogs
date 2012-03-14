@@ -1,0 +1,8 @@
+tool which programs ngs FLASH via JTAG pin-overriding capability of FPGA.
+Must be used with cpld3_onlyclock in CPLD or CPLD removed.
+
+ALso this tool does not like multitasking, just start it in separate DOS window and doesn't
+do anything else!
+
+It takes several hours to program everything...
+
