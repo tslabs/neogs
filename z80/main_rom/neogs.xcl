@@ -1,0 +1,7 @@
+// xcl-file for assembler-only projects
+-Fraw-binary
+-cz80
+-Z(CODE)CODE=0000-FFFF
+-o neogs.rom
+-l neogs.map
+-xmisn

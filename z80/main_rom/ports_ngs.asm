@@ -5,8 +5,8 @@
 ;
 ; bits degisnation:
 ; B_* -bit position (0,1,2,3,4,5,6,7)
-; M_* -bit mask (1,2,4,8,0X10,
-;                           0X20,0X40,0X80)
+; M_* -bit mask (1,2,4,8,h'10,
+;                           h'20,h'40,h'80)
 ;
 ; C_* - constants to be used
 ;
@@ -19,64 +19,64 @@
 
 ;ZX-side ports
 
-GSCOM		EQU 0XBB	; write-only, command for NGS
+GSCOM		EQU h'BB	; write-only, command for NGS
 
-GSSTAT		EQU 0XBB	; read-only, command and data bits
+GSSTAT		EQU h'BB	; read-only, command and data bits
 				; (positions given immediately below)
 
 B_CBIT		EQU 0		; Command position
 M_CBIT		EQU 1		; BIT:AND Mask
 
 B_DBIT		EQU 7		; Data position
-M_DBIT		EQU 0X80	; BIT and mask
+M_DBIT		EQU h'80	; BIT and mask
 
-GSDAT		EQU 0XB3	; read-write
+GSDAT		EQU h'B3	; read-write
 				; data transfer register for NGS
 
-GSCTR		EQU 0X33	; write-only, control register for NGS:
+GSCTR		EQU h'33	; write-only, control register for NGS:
 				; constants available given immediately below
 
-C_GRST		EQU 0X80	; reset constant to be written into
+C_GRST		EQU h'80	; reset constant to be written into
 
-C_GNMI		EQU 0X40	; NMI constant to be written into GSCTR
+C_GNMI		EQU h'40	; NMI constant to be written into GSCTR
 
-C_GLED		EQU 0X20	; LED toggle constant
+C_GLED		EQU h'20	; LED toggle constant
 
 ;---------------------------------------
 
 ;GS-side ports
 
-MPAG		EQU 0X00	; write-only, Memory PAGe ;port (big
+MPAG		EQU h'00	; write-only, Memory PAGe ;port (big
 				; pages at 8000-FFFF or small at 8000-BFFF)
 
-MPAGEX		EQU 0X10	; write-only, Memory PAGe EXtended
+MPAGEX		EQU h'10	; write-only, Memory PAGe EXtended
 				; (only small pages at C000-FFFF)
 
-ZXCMD		EQU 0X01	; read-only, ZX CoMmanD port: here is
+ZXCMD		EQU h'01	; read-only, ZX CoMmanD port: here is
 				; the byte written by ZX into GSCOM
 
-ZXDATRD		EQU 0X02	; read-only, ZX DATa ReaD: a byte
+ZXDATRD		EQU h'02	; read-only, ZX DATa ReaD: a byte
 				; written by ZX into GSDAT appears here
 				; upon reading this port, data bit is cleared
 
-ZXDATWR		EQU 0X03	; write-only, ZX DATa WRite: a byte
+ZXDATWR		EQU h'03	; write-only, ZX DATa WRite: a byte
 				; written here is available for ZX in
 				; GSDAT upon writing here, data bit is set
 
-ZXSTAT		EQU 0X04	; read-only, read ZX STATus: command and
+ZXSTAT		EQU h'04	; read-only, read ZX STATus: command and
 				; data bits. positions are defined by
 				; *_CBIT and *_DBIT above
 
-CLRCBIT		EQU 0X05	; read-write, upon either reading or
+CLRCBIT		EQU h'05	; read-write, upon either reading or
 				; writing this port, the Command BIT is CLeaRed
-VOL1		EQU 0X06
-VOL2		EQU 0X07
-VOL3		EQU 0X08
-VOL4		EQU 0X09
-VOL5		EQU 0X16
-VOL6		EQU 0X17
-VOL7		EQU 0X18
-VOL8		EQU 0X19	; write-only, volumes for sound channels 1-8
+VOL1		EQU h'06
+VOL2		EQU h'07
+VOL3		EQU h'08
+VOL4		EQU h'09
+VOL5		EQU h'16
+VOL6		EQU h'17
+VOL7		EQU h'18
+VOL8		EQU h'19	; write-only, volumes for sound channels 1-8
 
 ; following two ports are useless and
 ; very odd. They have been made just
@@ -88,29 +88,29 @@ VOL8		EQU 0X19	; write-only, volumes for sound channels 1-8
 ; functionality in future firmware
 ; releases.
 
-DPORT1		EQU 0X0A	; DAMNPORT1
+DPORT1		EQU h'0A	; DAMNPORT1
 				; writing or reading this port sets data
 				; bit to the inverse of bit 0 into MPAG
 				; port
 
-DPORT2		EQU 0X0B	; DAMNPORT2
+DPORT2		EQU h'0B	; DAMNPORT2
 				; the same as DAMNPORT1, but instead
 				; command bit involved, which is made
 				; equal to 5th bit of VOL4
 
-LEDCTR		EQU 0X01	; write-only, controls on-board LED.
+LEDCTR		EQU h'01	; write-only, controls on-board LED.
 				; D0=0 - LED is on, D0=1 - LED is off
 				; reset state is LED on.
 
-GSCFG0		EQU 0X0F	; read-write, GS ConFiG port 0: acts as
+GSCFG0		EQU h'0F	; read-write, GS ConFiG port 0: acts as
 				; memory cell, reads previously written
 				; value. Bits and fields follow:
 
-B_NOROM		EQU 0		; =0 - there is ROM everywhere except 0X4000-7FFF,
+B_NOROM		EQU 0		; =0 - there is ROM everywhere except h'4000-7FFF,
 				; =1 - the RAM is all around
 M_NOROM		EQU 1
 
-B_RAMRO		EQU 1		; =1 - ram absolute adresses 0X0000-7FFF
+B_RAMRO		EQU 1		; =1 - ram absolute adresses h'0000-7FFF
 				; (zeroth big page) are write-protected
 M_RAMRO		EQU 2
 
@@ -125,30 +125,30 @@ M_EXPAG		EQU 8
 B_CKSL0		EQU 4		; B_CKSEL0
 				; these bits should be set according to
 				; the C_**MHZ constants below
-M_CKSL0		EQU 0X10	; M_CKSEL0
+M_CKSL0		EQU h'10	; M_CKSEL0
 
 B_CKSL1		EQU 5		; B_CKSEL1
-M_CKSL1		EQU 0X20	; M_CKSEL1
+M_CKSL1		EQU h'20	; M_CKSEL1
 
-C_10MHZ		EQU 0X30
-C_12MHZ		EQU 0X10
-C_20MHZ		EQU 0X20
-C_24MHZ		EQU 0X00
+C_10MHZ		EQU h'30
+C_12MHZ		EQU h'10
+C_20MHZ		EQU h'20
+C_24MHZ		EQU h'00
 
 B_PAN4C		EQU 6		; B_PAN4CH
 				; =1 - 4 channels, panning (every
 				; channel is on left and right with two volumes)
-M_PAN4C		EQU 0X40	; M_PAN4CH
+M_PAN4C		EQU h'40	; M_PAN4CH
 
 B_INV7B		EQU 7		;B_INV7B
 				; =1 - invert 7th bit of sample before
 				; putting them to MUL/DAC
-M_INV7B		EQU 0X80
+M_INV7B		EQU h'80
 
 B_SNCLR		EQU 7		; B_SETNCLR
-M_SNCLR		EQU 0X80	; M_SETNCLR
+M_SNCLR		EQU h'80	; M_SETNCLR
 
-SCTRL		EQU 0X11	; Serial ConTRoL: read-write, read:
+SCTRL		EQU h'11	; Serial ConTRoL: read-write, read:
 				; current state of below bits, write - see GS_info
 
 B_SDNCS		EQU 0
@@ -164,12 +164,12 @@ B_MCSP0		EQU 3		; B_MCSPD0
 M_MCSP0		EQU 8		; M_MCSPD0
 
 B_MDHLF		EQU 4
-M_MDHLF		EQU 0X10
+M_MDHLF		EQU h'10
 
 B_MCSP1		EQU 5		; B_MCSPD1
-M_MCSP1		EQU 0X20	; M_MCSPD1
+M_MCSP1		EQU h'20	; M_MCSPD1
 
-SSTAT		EQU 0X12	; Serial STATus: read-only, reads state of below bits
+SSTAT		EQU h'12	; Serial STATus: read-only, reads state of below bits
 
 B_MDDRQ		EQU 0
 M_MDDRQ		EQU 1
@@ -183,33 +183,33 @@ M_SDWP		EQU 4
 B_MCRDY		EQU 3
 M_MCRDY		EQU 8
 
-SD_SEND		EQU 0X13	; SD card SEND, write-only, when
+SD_SEND		EQU h'13	; SD card SEND, write-only, when
 				; written, byte transfer starts with
 				; written byte
 
-SD_READ		EQU 0X13	; SD card READ, read-only, reads byte
+SD_READ		EQU h'13	; SD card READ, read-only, reads byte
 				; received in previous byte transfer
 
-SD_RSTR		EQU 0X14	; SD card Read and STaRt, read-only,
+SD_RSTR		EQU h'14	; SD card Read and STaRt, read-only,
 				; reads previously received byte and
-				; starts new byte transfer with 0XFF
+				; starts new byte transfer with h'FF
 
-MD_SEND		EQU 0X14	; Mp3 Data SEND, write-only, sends byte
+MD_SEND		EQU h'14	; Mp3 Data SEND, write-only, sends byte
 				; to the mp3 data interface
 
-MC_SEND		EQU 0X15	; Mp3 Control SEND, write-only, sends
+MC_SEND		EQU h'15	; Mp3 Control SEND, write-only, sends
 				; byte to the mp3 control interface
 
-MC_READ		EQU 0X15	; Mp3 Control READ, read-only, reads
+MC_READ		EQU h'15	; Mp3 Control READ, read-only, reads
 				; byte that was received during
 				; previous sending of byte
 
-DMA_MOD		EQU 0X1B	; DMA MODULE
+DMA_MOD		EQU h'1B	; DMA MODULE
 
-DMA_HAD		EQU 0X1C	; DMA High ADdress
+DMA_HAD		EQU h'1C	; DMA High ADdress
 
-DMA_MAD		EQU 0X1D	; DMA Middle ADdress
+DMA_MAD		EQU h'1D	; DMA Middle ADdress
 
-DMA_LAD		EQU 0X1E	; DMA Low ADdress
+DMA_LAD		EQU h'1E	; DMA Low ADdress
 
-DMA_CST		EQU 0X1F	; DMA Control and STate
+DMA_CST		EQU h'1F	; DMA Control and STate
