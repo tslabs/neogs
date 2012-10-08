@@ -1,4 +1,4 @@
-
+Ôªø
 GSRomBaseL	EQU h'0000
 GSRomBaseH	EQU h'C000
 
@@ -138,15 +138,15 @@ SMPADR		EQU h'4800
 ;PATDC3  EQU h'5600
 BUFFER		EQU h'5800
 
-INTAREA		EQU h'4242 ;#4040			;†§‡•· ‚†°´®ÊÎ Ø‡•‡Î¢†≠®©
+INTAREA		EQU h'4242 ;#4040			;–∞–¥—Ä–µ—Å —Ç–∞–±–ª–∏—Ü—ã –ø—Ä–µ—Ä—ã–≤–∞–Ω–∏–π
 
 BAS4000		EQU h'4000
 
-RAMPG		EQU BAS4000			;DS h'3F ‚†°´®Ê† ·‚‡†≠®Ê éáì
-ROMPG		EQU RAMPG + h'7F			;DS 1 ·‚‡†≠®Ê† èáì
+RAMPG		EQU BAS4000			;DS h'3F —Ç–∞–±–ª–∏—Ü–∞ —Å—Ç—Ä–∞–Ω–∏—Ü –û–ó–£
+ROMPG		EQU RAMPG + h'7F			;DS 1 —Å—Ç—Ä–∞–Ω–∏—Ü–∞ –ü–ó–£
 
-NUMPG		EQU BAS4000 + h'80		;4080	DS 1 †§‡•· ØÆ·´•§≠•© ·‚‡†≠®ÊÎ
-CPAGE		EQU NUMPG + 1			;4081	DS 1 ß≠†Á•≠®• ß†Ø®·†≠≠Æ• ¢ ØÆ‡‚ MPAG
+NUMPG		EQU BAS4000 + h'80		;4080	DS 1 –∞–¥—Ä–µ—Å –ø–æ—Å–ª–µ–¥–Ω–µ–π —Å—Ç—Ä–∞–Ω–∏—Ü—ã
+CPAGE		EQU NUMPG + 1			;4081	DS 1 –∑–Ω–∞—á–µ–Ω–∏–µ –∑–∞–ø–∏—Å–∞–Ω–Ω–æ–µ –≤ –ø–æ—Ä—Ç MPAG
 SYSTEM		EQU CPAGE + 1			;4082	DS 1
 SDPAGE		EQU SYSTEM + 1			;4083	DS 1
 
@@ -255,7 +255,7 @@ PTRB		EQU PTRA + 3			;40F7	DEFS h'03
 PTRC		EQU PTRB + 3			;40FA	DEFS h'03
 RAMTOP		EQU PTRC + 3			;40FD	DEFS h'03
 
-BAS4100		EQU BAS4000 + h'100	
+BAS4100		EQU BAS4000 + h'100
 
 QTMAP		EQU BAS4100			;4100	DEFS h'20
 VOLTAB		EQU QTMAP + h'20			;4120	DEFS h'20
@@ -270,10 +270,10 @@ TCKLEFT		EQU TICKLEN + 2			;4155	DEFS h'02
 MTBPM		EQU TCKLEFT + 2			;4157	DEFS h'01
 MTSPEED		EQU MTBPM + 1			;4158	DEFS h'01
 MTCOUNT		EQU MTSPEED + 1			;4159	DEFS h'01
-MTPATPS		EQU MTCOUNT + 1			;415A	DEFS h'01 ≠Æ‚†
-MTSNGPS		EQU MTPATPS + 1			;415B	DEFS h'01 ØÆß®Ê®Ô
-MTSNGSZ		EQU MTSNGPS + 1			;415C	DEFS h'01 ™Æ´®Á•·‚¢Æ Ø†‚‚•‡≠Æ¢
-MTSNGLP		EQU MTSNGSZ + 1			;415D	DEFS h'01 ØÆß®Ê®Ô ß†Ê®™´®¢†≠®Ô ??
+MTPATPS		EQU MTCOUNT + 1			;415A	DEFS h'01 –Ω–æ—Ç–∞
+MTSNGPS		EQU MTPATPS + 1			;415B	DEFS h'01 –ø–æ–∑–∏—Ü–∏—è
+MTSNGSZ		EQU MTSNGPS + 1			;415C	DEFS h'01 –∫–æ–ª–∏—á–µ—Å—Ç–≤–æ –ø–∞—Ç—Ç–µ—Ä–Ω–æ–≤
+MTSNGLP		EQU MTSNGSZ + 1			;415D	DEFS h'01 –ø–æ–∑–∏—Ü–∏—è –∑–∞—Ü–∏–∫–ª–∏–≤–∞–Ω–∏—è ??
 MTPDT2		EQU MTSNGLP + 1			;415E	DEFS h'01
 MTPDT		EQU MTPDT2 + 1			;415F	DEFS h'01
 
@@ -283,7 +283,7 @@ MTJMPFL		EQU MTBRKPS + 1			;4162	DEFS h'01
 MTFILTR		EQU MTJMPFL + 1			;4163	DEFS h'01
 MTROWS		EQU MTFILTR + 1			;4164	DEFS h'01
 MTVOL		EQU MTROWS + 1			;4165	DEFS h'01
-        
+
 ;4166	DEFS h'01
 ;4167	DEFS h'01
 
@@ -301,8 +301,8 @@ MODPTST		EQU h'5001
 ChipSP_		EQU h'5005
 CHIP246		EQU h'5007
 TOcip_		EQU h'5009
-CHIPLN		EQU h'5010			; çÄ4Äãé ëÖåèãéÇ (pointer)
-CHIPPP		EQU h'5013			; ÑãàçÄ åéÑìãü
-CIP1		EQU h'5016			; éíäìÑÄ èÖêÖçéëàíú
-CIP2		EQU h'5019			; äìÑÄ èÖêÖçéëàíú
-CIP3		EQU h'501C			; äéçÖñ ÅãéäÄ
+CHIPLN		EQU h'5010			; –ù–ê4–ê–õ–û –°–ï–ú–ü–õ–û–í (pointer)
+CHIPPP		EQU h'5013			; –î–õ–ò–ù–ê –ú–û–î–£–õ–Ø
+CIP1		EQU h'5016			; –û–¢–ö–£–î–ê –ü–ï–†–ï–ù–û–°–ò–¢–¨
+CIP2		EQU h'5019			; –ö–£–î–ê –ü–ï–†–ï–ù–û–°–ò–¢–¨
+CIP3		EQU h'501C			; –ö–û–ù–ï–¶ –ë–õ–û–ö–ê

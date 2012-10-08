@@ -1,11 +1,4 @@
-        ; HIGH ROM INCLUDES
-	; PHASE GSRomBaseH
-        ; ORG GSRomBaseH - h'8000
-
-        ; ASEG h'4000
-
-;INCLUDE "INIT_H.a80"
-
+я╗┐
 INITVAR DI
 ;---patched
         CALL Patch5i1
@@ -244,8 +237,6 @@ INITCHN LD HL,(h'EC60)
         DJNZ INITCHN
         RET
 
-;INCLUDE "COM_H.a80"
-
 HGET    IN A,(ZXSTAT)
         AND h'81
         JR Z,HGET
@@ -296,7 +287,7 @@ ERR     LD (ERRCODE),A
         JP COMINT
 
 ;Get total RAM
-;Получить общий объем доступной памяти на GS. (В базовой версии это 112к)
+;╨Я╨╛╨╗╤Г╤З╨╕╤В╤М ╨╛╨▒╤Й╨╕╨╣ ╨╛╨▒╤К╨╡╨╝ ╨┤╨╛╤Б╤В╤Г╨┐╨╜╨╛╨╣ ╨┐╨░╨╝╤П╤В╨╕ ╨╜╨░ GS. (╨Т ╨▒╨░╨╖╨╛╨▓╨╛╨╣ ╨▓╨╡╤А╤Б╨╕╨╕ ╤Н╤В╨╛ 112╨║)
 COM20   LD DE,(RAMBOT)
         LD A,(RAMBOT+2)
         LD C,A
@@ -318,7 +309,7 @@ COM20   LD DE,(RAMBOT)
         RET
 
 ;Get free RAM
-;Получить общий об'ем свободной памяти на GS.
+;╨Я╨╛╨╗╤Г╤З╨╕╤В╤М ╨╛╨▒╤Й╨╕╨╣ ╨╛╨▒'╨╡╨╝ ╤Б╨▓╨╛╨▒╨╛╨┤╨╜╨╛╨╣ ╨┐╨░╨╝╤П╤В╨╕ ╨╜╨░ GS.
 COM21   LD DE,(MEMBOT)
         LD A,(MEMBOT+2)
         LD C,A
@@ -342,7 +333,7 @@ COM21   LD DE,(MEMBOT)
         RET
 
 ;Get free RAM
-;Получить общий об'ем свободной памяти на GS.
+;╨Я╨╛╨╗╤Г╤З╨╕╤В╤М ╨╛╨▒╤Й╨╕╨╣ ╨╛╨▒'╨╡╨╝ ╤Б╨▓╨╛╨▒╨╛╨┤╨╜╨╛╨╣ ╨┐╨░╨╝╤П╤В╨╕ ╨╜╨░ GS.
 COM22   IN A,(ZXDATRD)
         LD E,A
         LD D,HIGH (RAMPG)
@@ -352,14 +343,14 @@ COM22   IN A,(ZXDATRD)
         RET
 
 ;Get number of RAM Pages
-;Получить число страниц на  GS.
+;╨Я╨╛╨╗╤Г╤З╨╕╤В╤М ╤З╨╕╤Б╨╗╨╛ ╤Б╤В╤А╨░╨╜╨╕╤Ж ╨╜╨░  GS.
 COM23   LD A,(NUMPG)
         OUT (ZXDATWR),A
         OUT (CLRCBIT),A
         RET
 
 ;Set Module Master Volume
-;Установить громкость проигрывания модулей.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М ╨│╤А╨╛╨╝╨║╨╛╤Б╤В╤М ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╤П ╨╝╨╛╨┤╤Г╨╗╨╡╨╣.
 COM2A   LD A,(MODVOL)
         OUT (ZXDATWR),A
         IN A,(ZXDATRD)
@@ -377,7 +368,7 @@ COM2A__ SET 0,(IY+CHSTAT)
         RET
 
 ;Set FX Master Volume
-;Установить громкость проигрывания эффектов.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М ╨│╤А╨╛╨╝╨║╨╛╤Б╤В╤М ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╤П ╤Н╤Д╤Д╨╡╨║╤В╨╛╨▓.
 COM2B   LD A,(FXVOL)
         OUT (ZXDATWR),A
         IN A,(ZXDATRD)
@@ -439,11 +430,11 @@ COM2D__ XOR A
         RET
 
 ;Set Current FX
-;Установить текущий эффект. Просто присваивает переменной CURFX это зна-
-;чение. Если какая-либо команда требует номер сэмпла (sample handle), то
-;можно вместо этого номера подать ей h'00 и интерпретатор подставит вмес-
-;то этого нуля значение переменной CURFX. (См. команды h'38, h'39, h'40-h'4F
-;для понимания вышеизложенного.)
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М ╤В╨╡╨║╤Г╤Й╨╕╨╣ ╤Н╤Д╤Д╨╡╨║╤В. ╨Я╤А╨╛╤Б╤В╨╛ ╨┐╤А╨╕╤Б╨▓╨░╨╕╨▓╨░╨╡╤В ╨┐╨╡╤А╨╡╨╝╨╡╨╜╨╜╨╛╨╣ CURFX ╤Н╤В╨╛ ╨╖╨╜╨░-
+;╤З╨╡╨╜╨╕╨╡. ╨Х╤Б╨╗╨╕ ╨║╨░╨║╨░╤П-╨╗╨╕╨▒╨╛ ╨║╨╛╨╝╨░╨╜╨┤╨░ ╤В╤А╨╡╨▒╤Г╨╡╤В ╨╜╨╛╨╝╨╡╤А ╤Б╤Н╨╝╨┐╨╗╨░ (sample handle), ╤В╨╛
+;╨╝╨╛╨╢╨╜╨╛ ╨▓╨╝╨╡╤Б╤В╨╛ ╤Н╤В╨╛╨│╨╛ ╨╜╨╛╨╝╨╡╤А╨░ ╨┐╨╛╨┤╨░╤В╤М ╨╡╨╣ h'00 ╨╕ ╨╕╨╜╤В╨╡╤А╨┐╤А╨╡╤В╨░╤В╨╛╤А ╨┐╨╛╨┤╤Б╤В╨░╨▓╨╕╤В ╨▓╨╝╨╡╤Б-
+;╤В╨╛ ╤Н╤В╨╛╨│╨╛ ╨╜╤Г╨╗╤П ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╡ ╨┐╨╡╤А╨╡╨╝╨╡╨╜╨╜╨╛╨╣ CURFX. (╨б╨╝. ╨║╨╛╨╝╨░╨╜╨┤╤Л h'38, h'39, h'40-h'4F
+;╨┤╨╗╤П ╨┐╨╛╨╜╨╕╨╝╨░╨╜╨╕╤П ╨▓╤Л╤И╨╡╨╕╨╖╨╗╨╛╨╢╨╡╨╜╨╜╨╛╨│╨╛.)
 COM2E   LD A,(CURFX)
         OUT (ZXDATWR),A
         IN A,(ZXDATRD)
@@ -488,7 +479,7 @@ COM2F__ LD HL,h'0000
         RET
 
 ;Load Module
-;Загрузка модуля в память.
+;╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╨╝╨╛╨┤╤Г╨╗╤П ╨▓ ╨┐╨░╨╝╤П╤В╤М.
 COM30   LD A,(CNTMOD)
         OR A
         JP NZ,INITVAR
@@ -508,7 +499,7 @@ LDMOD   LD A,h'00		;h'C3F8
         RET
 
 ;Jump to position (*)
-;Делает переход на заданную позицию.
+;╨Ф╨╡╨╗╨░╨╡╤В ╨┐╨╡╤А╨╡╤Е╨╛╨┤ ╨╜╨░ ╨╖╨░╨┤╨░╨╜╨╜╤Г╤О ╨┐╨╛╨╖╨╕╤Ж╨╕╤О.
 COM65   IN A,(ZXDATRD)
         LD C,A
         LD A,(CURMOD)
@@ -516,7 +507,7 @@ COM65   IN A,(ZXDATRD)
         JP COM65_
 
 ;Play module
-;Проигрывание модуля.
+;╨Я╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╨╡ ╨╝╨╛╨┤╤Г╨╗╤П.
 COM31   IN A,(ZXDATRD)
         OR A
         JR NZ,COM31_
@@ -586,7 +577,7 @@ COM31_2 XOR A
         RET
 
 ;Stop module
-;Остановить проигрывание модуля.
+;╨Ю╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╨╡ ╨╝╨╛╨┤╤Г╨╗╤П.
 COM32   LD A,(MODUL)
         OUT (ZXDATWR),A
         IN A,(ZXDATRD)
@@ -596,7 +587,7 @@ STOPMOD	LD HL,MTSTAT		;h'C4AE
         RET
 
 ;Continue module
-;Продолжить проигрывание модуля после остановки.
+;╨Я╤А╨╛╨┤╨╛╨╗╨╢╨╕╤В╤М ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╨╡ ╨╝╨╛╨┤╤Г╨╗╤П ╨┐╨╛╤Б╨╗╨╡ ╨╛╤Б╤В╨░╨╜╨╛╨▓╨║╨╕.
 COM33   LD A,(MODUL)
         OUT (ZXDATWR),A
         IN A,(ZXDATRD)
@@ -621,7 +612,7 @@ COM34   LD A,(MODFADE)
         RET
 
 ;Set Module Volume
-;Установить громкость проигрывания модулей.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М ╨│╤А╨╛╨╝╨║╨╛╤Б╤В╤М ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╤П ╨╝╨╛╨┤╤Г╨╗╨╡╨╣.
 COM35   LD A,(MTVOL)
         OUT (ZXDATWR),A
         IN A,(ZXDATRD)
@@ -639,14 +630,14 @@ COM35__ SET 0,(IY+CHSTAT)
         RET
 
 ;Data on (*)
-;Устанавливает регистр данных в h'FF.
+;╨г╤Б╤В╨░╨╜╨░╨▓╨╗╨╕╨▓╨░╨╡╤В ╤А╨╡╨│╨╕╤Б╤В╤А ╨┤╨░╨╜╨╜╤Л╤Е ╨▓ h'FF.
 COM36   LD A,h'FF
         OUT (ZXDATWR),A
         OUT (CLRCBIT),A
         RET
 
 ;Reinitialisation (*)
-;Переустанавливает внутренние переменные в исходное состояние.
+;╨Я╨╡╤А╨╡╤Г╤Б╤В╨░╨╜╨░╨▓╨╗╨╕╨▓╨░╨╡╤В ╨▓╨╜╤Г╤В╤А╨╡╨╜╨╜╨╕╨╡ ╨┐╨╡╤А╨╡╨╝╨╡╨╜╨╜╤Л╨╡ ╨▓ ╨╕╤Б╤Е╨╛╨┤╨╜╨╛╨╡ ╤Б╨╛╤Б╤В╨╛╤П╨╜╨╕╨╡.
 COM37   OUT (CLRCBIT),A
         LD HL,MTSTAT
         SET 7,(HL)
@@ -662,7 +653,7 @@ COM37   OUT (CLRCBIT),A
         RET
 
 ;Load FX (Extended version)
-;Загрузка сэмпла эффекта в память. Позволяет загружать сэмплы со знаком.
+;╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╤Б╤Н╨╝╨┐╨╗╨░ ╤Н╤Д╤Д╨╡╨║╤В╨░ ╨▓ ╨┐╨░╨╝╤П╤В╤М. ╨Я╨╛╨╖╨▓╨╛╨╗╤П╨╡╤В ╨╖╨░╨│╤А╤Г╨╢╨░╤В╤М ╤Б╤Н╨╝╨┐╨╗╤Л ╤Б╨╛ ╨╖╨╜╨░╨║╨╛╨╝.
 COM3E   IN A,(ZXDATRD)
         CP h'01
         JR Z,COM38
@@ -676,7 +667,7 @@ COM3E   IN A,(ZXDATRD)
         RET
 
 ;Load FX
-;Загрузка сэмпла эффекта в память. Загружает беззнаковые сэмплы (PC type)
+;╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╤Б╤Н╨╝╨┐╨╗╨░ ╤Н╤Д╤Д╨╡╨║╤В╨░ ╨▓ ╨┐╨░╨╝╤П╤В╤М. ╨Ч╨░╨│╤А╤Г╨╢╨░╨╡╤В ╨▒╨╡╨╖╨╖╨╜╨░╨║╨╛╨▓╤Л╨╡ ╤Б╤Н╨╝╨┐╨╗╤Л (PC type)
 COM38   LD IXL,h'00
 COM38_  LD A,(CNTFX)
         CP 60
@@ -785,7 +776,7 @@ GETFX2  LD H,h'00
         RET
 
 ;Play FX
-;Проигрывание эффекта.
+;╨Я╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╨╡ ╤Н╤Д╤Д╨╡╨║╤В╨░.
 COM39   IN A,(ZXDATRD)
         OR A
         JR NZ,COM39_1
@@ -825,7 +816,7 @@ COM3C   LD A,(FXFADE)
         RET
 
 ;Set FX Volume
-;Установить громкость проигрывания эффектов.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М ╨│╤А╨╛╨╝╨║╨╛╤Б╤В╤М ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╤П ╤Н╤Д╤Д╨╡╨║╤В╨╛╨▓.
 COM3D   LD A,(FXMVOL)
         OUT (ZXDATWR),A
         IN A,(ZXDATRD)
@@ -845,7 +836,7 @@ COM3D__ SET 0,(IY+CHSTAT)
 COM3F
 
 ;Set FX Sample Playing Note
-;Установка ноты по умолчанию для текущего эффекта.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨╜╨╛╤В╤Л ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░.
 COM40   IN A,(ZXDATRD)
         OUT (CLRCBIT),A
         LD E,A
@@ -867,7 +858,7 @@ COM40_  LD (IY+31),E
         RET
 
 ;Set FX Sample Volume
-;Установка громкости по умолчанию для текущего эффекта.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨│╤А╨╛╨╝╨║╨╛╤Б╤В╨╕ ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░.
 COM41   IN A,(ZXDATRD)
         OUT (CLRCBIT),A
         LD E,A
@@ -883,7 +874,7 @@ COM41_  LD (IY+20),E
         RET
 
 ;Set FX Sample Finetune
-;Установка Finetune по умолчанию для текущего эффекта.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ Finetune ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░.
 COM42   LD A,(CURFX)
         CALL GETFX
         PUSH HL
@@ -896,7 +887,7 @@ COM42   LD A,(CURFX)
         RET
 
 ;Set FX Sample Priority
-;Установка приоритета для текущего эффекта. (См. команду h'39)
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨┐╤А╨╕╨╛╤А╨╕╤В╨╡╤В╨░ ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░. (╨б╨╝. ╨║╨╛╨╝╨░╨╜╨┤╤Г h'39)
 COM45   LD A,(CURFX)
         CALL GETFX
         PUSH HL
@@ -909,7 +900,7 @@ COM45   LD A,(CURFX)
         RET
 
 ;Set FX Sample Seek First parameter
-;Установка параметра Seek First для текущего эффекта. (См. команду h'39)
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨┐╨░╤А╨░╨╝╨╡╤В╤А╨░ Seek First ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░. (╨б╨╝. ╨║╨╛╨╝╨░╨╜╨┤╤Г h'39)
 COM46   LD A,(CURFX)
         CALL GETFX
         PUSH HL
@@ -922,7 +913,7 @@ COM46   LD A,(CURFX)
         RET
 
 ;Set FX Sample Seek Last parameter
-;Установка параметра Seek Last для текущего эффекта. (См. команду h'39)
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨┐╨░╤А╨░╨╝╨╡╤В╤А╨░ Seek Last ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░. (╨б╨╝. ╨║╨╛╨╝╨░╨╜╨┤╤Г h'39)
 COM47   LD A,(CURFX)
         CALL GETFX
         PUSH HL
@@ -935,7 +926,7 @@ COM47   LD A,(CURFX)
         RET
 
 ;Set FX Sample Loop Begin (*)
-;Установка начала цикла для текущего эффекта.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨╜╨░╤З╨░╨╗╨░ ╤Ж╨╕╨║╨╗╨░ ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░.
 COM48   LD A,(CURFX)
         CALL GETFX
         PUSH HL
@@ -950,7 +941,7 @@ COM48   LD A,(CURFX)
         RET
 
 ;Set FX Sample Loop End (*)
-;Установка конца цикла для текущего эффекта.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨║╨╛╨╜╤Ж╨░ ╤Ж╨╕╨║╨╗╨░ ╨┤╨╗╤П ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤Н╤Д╤Д╨╡╨║╤В╨░.
 COM49   LD A,(CURFX)
         CALL GETFX
         PUSH HL
@@ -1112,21 +1103,21 @@ C50_E0
 C50_F0
 
 ;Get Song Position
-;Получение значения переменной Song_Position в текущем модуле.
+;╨Я╨╛╨╗╤Г╤З╨╡╨╜╨╕╨╡ ╨╖╨╜╨░╤З╨╡╨╜╨╕╤П ╨┐╨╡╤А╨╡╨╝╨╡╨╜╨╜╨╛╨╣ Song_Position ╨▓ ╤В╨╡╨║╤Г╤Й╨╡╨╝ ╨╝╨╛╨┤╤Г╨╗╨╡.
 COM60   LD A,(MTSNGPS)
         OUT (ZXDATWR),A
         OUT (CLRCBIT),A
         RET
 
 ;Get Pattern Position
-;Получение значения переменной Pattern_Position в текущем модуле.
+;╨Я╨╛╨╗╤Г╤З╨╡╨╜╨╕╨╡ ╨╖╨╜╨░╤З╨╡╨╜╨╕╤П ╨┐╨╡╤А╨╡╨╝╨╡╨╜╨╜╨╛╨╣ Pattern_Position ╨▓ ╤В╨╡╨║╤Г╤Й╨╡╨╝ ╨╝╨╛╨┤╤Г╨╗╨╡.
 COM61   LD A,(MTPATPS)
         OUT (ZXDATWR),A
         OUT (CLRCBIT),A
         RET
 
 ;Get Mixed Position
-;Получить значение Pattern_Position, немного смешанной с Song_Position.
+;╨Я╨╛╨╗╤Г╤З╨╕╤В╤М ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╡ Pattern_Position, ╨╜╨╡╨╝╨╜╨╛╨│╨╛ ╤Б╨╝╨╡╤И╨░╨╜╨╜╨╛╨╣ ╤Б Song_Position.
 COM62   LD A,(MTSNGPS)
         RRCA
         RRCA
@@ -1140,7 +1131,7 @@ COM62   LD A,(MTSNGPS)
         RET
 
 ;Get Channel Volumes
-;Получить громкости всех каналов модуля.
+;╨Я╨╛╨╗╤Г╤З╨╕╤В╤М ╨│╤А╨╛╨╝╨║╨╛╤Б╤В╨╕ ╨▓╤Б╨╡╤Е ╨║╨░╨╜╨░╨╗╨╛╨▓ ╨╝╨╛╨┤╤Г╨╗╤П.
 COM64   LD HL,CHANS+CHMVOL
         JP COM64_
 
@@ -1153,7 +1144,7 @@ COM64_  LD DE,CHANLEN
         JP COM63__
 
 ;Get Channel Notes
-;Получить ноты всех каналов модуля.
+;╨Я╨╛╨╗╤Г╤З╨╕╤В╤М ╨╜╨╛╤В╤Л ╨▓╤Б╨╡╤Е ╨║╨░╨╜╨░╨╗╨╛╨▓ ╨╝╨╛╨┤╤Г╨╗╤П.
 COM63_  LD A,(HL)
         OUT (ZXDATWR),A
 COM63__ SET 7,(HL)
@@ -1163,30 +1154,30 @@ COM63__ SET 7,(HL)
         RET
 
 ;Set speed/tempo (*)
-;Установка скорости в пределах h'01-h'1F. При значениях h'20-h'FF устанавли-
-;вается темп проигрывания. Значения темпа соответствуют оригинальным при
-;скорости равной h'06.
+;╨г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╤Б╨║╨╛╤А╨╛╤Б╤В╨╕ ╨▓ ╨┐╤А╨╡╨┤╨╡╨╗╨░╤Е h'01-h'1F. ╨Я╤А╨╕ ╨╖╨╜╨░╤З╨╡╨╜╨╕╤П╤Е h'20-h'FF ╤Г╤Б╤В╨░╨╜╨░╨▓╨╗╨╕-
+;╨▓╨░╨╡╤В╤Б╤П ╤В╨╡╨╝╨┐ ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╤П. ╨Ч╨╜╨░╤З╨╡╨╜╨╕╤П ╤В╨╡╨╝╨┐╨░ ╤Б╨╛╨╛╤В╨▓╨╡╤В╤Б╤В╨▓╤Г╤О╤В ╨╛╤А╨╕╨│╨╕╨╜╨░╨╗╤М╨╜╤Л╨╝ ╨┐╤А╨╕
+;╤Б╨║╨╛╤А╨╛╤Б╤В╨╕ ╤А╨░╨▓╨╜╨╛╨╣ h'06.
 COM66   IN A,(ZXDATRD)
         OUT (CLRCBIT),A
         CALL FXF
         RET
 
 ;Get speed value (*)
-;Чтение текущей скорости.
+;╨з╤В╨╡╨╜╨╕╨╡ ╤В╨╡╨║╤Г╤Й╨╡╨╣ ╤Б╨║╨╛╤А╨╛╤Б╤В╨╕.
 COM67   LD A,(MTSPEED)
         OUT (ZXDATWR),A
         OUT (CLRCBIT),A
         RET
 
 ;Get tempo value (*)
-;Чтение текущего темпа.
+;╨з╤В╨╡╨╜╨╕╨╡ ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╤В╨╡╨╝╨┐╨░.
 COM68   LD A,(MTBPM)
         OUT (ZXDATWR),A
         OUT (CLRCBIT),A
         RET
 
 ;Process Sound (*)
-;Переход на следующий кварк (или тик) в процессе проигрывания звука.
+;╨Я╨╡╤А╨╡╤Е╨╛╨┤ ╨╜╨░ ╤Б╨╗╨╡╨┤╤Г╤О╤Й╨╕╨╣ ╨║╨▓╨░╤А╨║ (╨╕╨╗╨╕ ╤В╨╕╨║) ╨▓ ╨┐╤А╨╛╤Ж╨╡╤Б╤Б╨╡ ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╤П ╨╖╨▓╤Г╨║╨░.
 COM69   LD A,h'FF
         LD (INGEN),A
         CALL ENGINE
@@ -1196,9 +1187,9 @@ COM69   LD A,h'FF
         RET
 
 ;Stop FX in channels
-;установка проигрывания эффектов в заданных каналах,  которые указывают-
-;ся в маске каналов (Channel Mask).  В ней единица в n-ном  бите  указы-
-;вает на то, что эффект в n-ном канале требуется остановить
+;╤Г╤Б╤В╨░╨╜╨╛╨▓╨║╨░ ╨┐╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╤П ╤Н╤Д╤Д╨╡╨║╤В╨╛╨▓ ╨▓ ╨╖╨░╨┤╨░╨╜╨╜╤Л╤Е ╨║╨░╨╜╨░╨╗╨░╤Е,  ╨║╨╛╤В╨╛╤А╤Л╨╡ ╤Г╨║╨░╨╖╤Л╨▓╨░╤О╤В-
+;╤Б╤П ╨▓ ╨╝╨░╤Б╨║╨╡ ╨║╨░╨╜╨░╨╗╨╛╨▓ (Channel Mask).  ╨Т ╨╜╨╡╨╣ ╨╡╨┤╨╕╨╜╨╕╤Ж╨░ ╨▓ n-╨╜╨╛╨╝  ╨▒╨╕╤В╨╡  ╤Г╨║╨░╨╖╤Л-
+;╨▓╨░╨╡╤В ╨╜╨░ ╤В╨╛, ╤З╤В╨╛ ╤Н╤Д╤Д╨╡╨║╤В ╨▓ n-╨╜╨╛╨╝ ╨║╨░╨╜╨░╨╗╨╡ ╤В╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╨╛╤Б╤В╨░╨╜╨╛╨▓╨╕╤В╤М
 COM3A   IN A,(ZXDATRD)
         OUT (CLRCBIT),A
         LD C,A
@@ -1219,7 +1210,7 @@ COM3A_2 ADD IY,DE
         RET
 
 ;Direct Play FX Sample (h'80..h'83)
-;Проигрывание сэмпла в заданном канале.
+;╨Я╤А╨╛╨╕╨│╤А╤Л╨▓╨░╨╜╨╕╨╡ ╤Б╤Н╨╝╨┐╨╗╨░ ╨▓ ╨╖╨░╨┤╨░╨╜╨╜╨╛╨╝ ╨║╨░╨╜╨░╨╗╨╡.
 COM80   IN A,(ZXDATRD)
         OR A
         JR NZ,COM80_1
@@ -1555,7 +1546,6 @@ PLFX_13 LD E,(IY+20)
         LD (PROCESS),A
         RET
 
-;INCLUDE "MEM_H.a80"
 ;MEMORY MOVEMENT MODULE - HIGH PART
 
 ;PROCEDURE: MOVE MEMORY
@@ -1938,7 +1928,6 @@ SM5     LD A,E
         INC A
         JP  SM1
 
-;INCLUDE "ENGINE_L.a80"
 ENGINE  LD HL,(QTFREE)
         LD H,HIGH (QTMAP)
         LD A,L
@@ -2071,8 +2060,6 @@ ENG_FUL LD A,(PLAYING)
         LD (FILLALL),A
         CALL QTPLAY
         RET
-
-;INCLUDE "FX_H.a80"
 
 FXCHK_  LD HL,FXJP2
         JP FXCHK__
@@ -2775,8 +2762,6 @@ FXEE    LD HL,MTPDT2
         LD (MTPDT),A
         RET
 
-;INCLUDE "VOL_H.a80"
-
 ;VOLUME CALCULATION FOR MODULES AND FX
 
 CALCVOL RES 0,(IY+CHSTAT)
@@ -2932,8 +2917,6 @@ MUL64_F LD A,B
         ADD HL,DE
 MUL64_S EX DE,HL
         RET
-
-;INCLUDE "TEST_H.a80"
 
 TCOM    IN A,(ZXSTAT)
         RRCA
@@ -3131,9 +3114,7 @@ TWAIT2  IN A,(ZXSTAT)
         DJNZ TWAIT2
         JP (IY)
 
-;INCLUDE "TABLES_H.a80"
-
-        org ($ & h'FF00) + h'100
+        ALIGN256
 
 VIBTB	DEFB h'00,h'18,h'31,h'4A,h'61,h'78,h'8D,h'A1
 	DEFB h'B4,h'C5,h'D4,h'E0,h'EB,h'F4,h'FA,h'FD
@@ -3222,7 +3203,6 @@ TCOMTB  DEFW TCOM,TCOM,TCOM2,TCOM3,TCOM4,TCOM5,TCOM6,TCOM7
         DEFW TCOM10,TCOM11,TCOM12,TCOM13,TCOM14,TCOM15,TCOM,TCOM
         DEFW TCOM,TCOM,TCOM,TCOM,TCOM,TCOM,TCOM,TCOM
 
-;INCLUDE "DIHO.a80"
 ;RETURN: E - NOTE
 
 NOTEID  LD HL,AMINOTE
@@ -3406,8 +3386,3 @@ AMINOTE DEFW h'1AC0,h'1940,h'17D0,h'1680,h'1530,h'1400,h'12E0,h'11D0,h'10D0,h'0F
 	DEFW h'006B,h'0065,h'005F,h'005A,h'0055,h'0050,h'004B,h'0047,h'0043,h'003F,h'003C,h'0038;C-6
 	DEFW h'0035,h'0032,h'002F,h'002D,h'002A,h'0028,h'0025,h'0023,h'0021,h'001F,h'001E,h'001C;C-7
 ___END
-
-		; DUPL GSRomBaseH+h'2000-$,h'FF
-
-	    ; PHASE GSRomBaseH+h'2000
-
