@@ -1252,8 +1252,8 @@ LPCNT   LD A,(IY+24)
         LD D,HIGH (RAMPG)
         ; LD A,(NUMPG)
         LD A,(MEMBOT+2)	; No obsolete memory abusing patch (TSL)
-		ADD A,3			; patch end
-        SUB E
+		ADD A,A
+		INC A
         LD B,A
 SMPMD2  LD A,(DE)
         OUT (MPAG),A
