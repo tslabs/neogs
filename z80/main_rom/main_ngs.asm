@@ -10,7 +10,7 @@
 		JP INIT
 
 ;---patched
-		DEFB h'06			;LOW	(in BCD!)
+		DEFB h'08			;LOW	(in BCD!)
 		DEFB h'01			;HIGH	(in BCD!)
 ;---
 
@@ -63,7 +63,7 @@ NMILP3	IN A,(ZXSTAT)
 		ORG GSRomBaseL+h'0100
 		DEFB 'General  Sound (tm)  ROM'
 		DEFB 'Copyright   1997 Stinger'
-		DEFB 'Version 1.06            '
+		DEFB 'Version 1.08            '
 
 INIT	DI
 		OUT (CLRCBIT),A
@@ -1250,7 +1250,9 @@ LPCNT   LD A,(IY+24)
         LD A,(SMPS+2)
         LD E,A
         LD D,HIGH (RAMPG)
-        LD A,(NUMPG)
+        ; LD A,(NUMPG)
+        LD A,(MEMBOT+2)	; No obsolete memory abusing patch (TSL)
+		ADD A,3			; patch end
         SUB E
         LD B,A
 SMPMD2  LD A,(DE)

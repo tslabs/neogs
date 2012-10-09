@@ -5,6 +5,7 @@ echo off
 
 "..\..\tools\finesplit\finesplit.exe" neogs.rom
 copy /b neogs.rom.00 + neogs.rom.03 neogs.rom
+copy /b page0.bin + pageFF.bin + neogs.rom + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin + pageFF.bin+ page14.bin + pageFF.bin bootgs.rom
 
 del neogs.rom.bat
 del neogs.rom.00
