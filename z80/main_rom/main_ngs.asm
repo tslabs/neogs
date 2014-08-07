@@ -9,8 +9,8 @@
 		DI
 		JP INIT
 
-;---patched
-		DEFB h'08			;LOW	(in BCD!)
+;--- version
+		DEFB h'09			;LOW	(in BCD!)
 		DEFB h'01			;HIGH	(in BCD!)
 ;---
 
@@ -63,7 +63,7 @@ NMILP3	IN A,(ZXSTAT)
 		ORG GSRomBaseL+h'0100
 		DEFB 'General  Sound (tm)  ROM'
 		DEFB 'Copyright   1997 Stinger'
-		DEFB 'Version 1.08            '
+		DEFB 'Version 1.09            '
 
 INIT	DI
 		OUT (CLRCBIT),A
@@ -1561,9 +1561,21 @@ FX9_    LD (IY+CHOFFST),A
         LD A,L
         CP (IY+CHENDL)
         JP C,COMM5
-COMM3_  RES 7,(IY+CHSTAT)
+COMM3_  
+        LD A,(IY+CHLPBP)
+        INC A
+        JP Z,Patch6e
+        DEC A
+        LD L,(IY+CHLPBL)
+        LD H,(IY+CHLPBH)
+        LD (IY+CHCURL),L
+        LD (IY+CHCURH),H
+        LD (IY+CHCURP),A
         JP COMM5
-
+Patch6e
+        RES 7,(IY+CHSTAT)
+        JP COMM5
+        
 COMM4   LD (IY+CHWNT),D
 COMM5   XOR A
         LD (CPAGE),A
