@@ -12,11 +12,7 @@ ren crc.bin neogs.crc
 ..\..\tools\asw\asw -cpu z80undoc -U -L create_update.a80
 ..\..\tools\asw\p2bin create_update.p ngs_rom.upd -r $-$ -k
 
-del loader_ngs.rom
-del neogs.rom
-del loader.crc
-del fpga.crc
-del neogs.crc
-del crc.bin
+del *.rom
+del *.crc
 
 pause

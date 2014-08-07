@@ -1,4 +1,8 @@
 
+!!! ОБЯЗАТЕЛЬНО МЕНЯТЬ ВЕРСИЮ ПРОШИВКИ В !!!
+create_update.a80
+
+
 Для сборки апдейта запускать create_update.bat
 
 Файлы загрузчика (loader_ngs.rom) и основное ПЗУ NeoGS (neogs.rom)

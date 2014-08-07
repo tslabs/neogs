@@ -1,8 +1,6 @@
 
-;LAST UPDATE: 09.02.2011 savelij
-
 		include macros.a80
-		CPU Z180			;€‡Œ… ”€‰‹€ ŒŽ†…’ Ž‹“—ˆ’‘Ÿ Ž‹…… 64Š
+		CPU Z180			;€‡Œ… ”€‰‹€ ŒŽ†…’ Ž‹“—ˆ’œ‘Ÿ Ž‹…… 64Š
 
 DD		EQU 9
 MM		EQU 2
@@ -12,9 +10,9 @@ DATA		EQU DD+MM<<5+YY<<9+0X8000		;„€’€ ‘ŽŠˆ ŽŽ‚‹…ˆŸ
 DD_P0		EQU 15					;—ˆ‘‹Ž ‘’€ˆ–› 0
 MM_P0		EQU 1					;Œ…‘Ÿ– ‘’€ˆ–› 0
 YY_P0		EQU 11					;ƒŽ„ ‘’€ˆ–› 0
-DD_P1		EQU 9					;—ˆ‘‹Ž ‘’€ˆ–› 1
-MM_P1		EQU 10 					;Œ…‘Ÿ– ‘’€ˆ–› 1
-YY_P1		EQU 12					;ƒŽ„ ‘’€ˆ–› 1
+DD_P1		EQU 7					;—ˆ‘‹Ž ‘’€ˆ–› 1
+MM_P1		EQU 8 					;Œ…‘Ÿ– ‘’€ˆ–› 1
+YY_P1		EQU 14					;ƒŽ„ ‘’€ˆ–› 1
 DD_P7		EQU 19					;—ˆ‘‹Ž ‘’€ˆ–› 7
 MM_P7		EQU 1 					;Œ…‘Ÿ– ‘’€ˆ–› 7
 YY_P7		EQU 11					;ƒŽ„ ‘’€ˆ–› 7.
