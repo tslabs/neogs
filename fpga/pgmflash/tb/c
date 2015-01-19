@@ -1,0 +1,12 @@
+#!/bin/bash
+
+FILES=""
+FILES="${FILES} ../top.v"
+FILES="${FILES} ../zxbus/zxbus.v"
+FILES="${FILES} ../reset/reset.v"
+FILES="${FILES} ../rom/rom.v"
+
+BENCH="tb.v"
+
+vlog -sv -novopt -incr $FILES $BENCH
+

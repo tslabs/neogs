@@ -1,0 +1,3614 @@
+###############################################################################
+#                                                                             #
+#     IAR Systems Z80/64180 Assembler V4.06A/W32 07/Aug/2014  02:44:52        #
+#     Copyright 2001 IAR Systems. All rights reserved.                        #
+#                                                                             #
+#           Target option =  z80                                              #
+#           Source file   =  main_ngs.asm                                     #
+#           List file     =  main_ngs.lst                                     #
+#           Object file   =  neogs.r01                                        #
+#           Command line  =  main_ngs.asm -uu -o neogs.r01 -L                 #
+#                                                                             #
+###############################################################################
+
+      1    000000          ﻿        RSEG CODE
+      2    000000          ;1720708
+      3    000000          
+      4    000000          #include "macros.asm"
+      5    000000          #include "ports_ngs.asm"
+      6    000000          #include "equ_ngs.asm"
+      7    000000          
+      8    000000                          ORG GSRomBaseL
+      9    000000 F3                       DI
+     10    000001 C3....                   JP INIT
+     11    000004          
+     12    000004          ;---patched
+     13    000004 08                       DEFB h'08                       ;LOW
+     (in BCD!)
+     14    000005 01                       DEFB h'01                      
+  ;HIGH   (in BCD!)
+     15    000006          ;---
+     16    000006          
+     17    000006 28E4     ROMCRC  DEFW h'E428                     ;CRC from
+                                                                    original
+                                                                    rom,
+                                                                    corrupted!?
+     18    000008          
+     19    000030                          ORG GSRomBaseL+h'0030
+     20    000030 C3....                   JP SGEN                        
+  ;h'2030
+     21    000033          
+     22    000038                          ORG GSRomBaseL+h'0038
+     23    000038          
+     24    000038 08       INT8    EX AF,AF'
+     25    000039 D5                       PUSH DE
+     26    00003A 5F                       LD E,A
+     27    00003B DD54                     LD D,IXH
+     28    00003D 1A                       LD A,(DE)
+     29    00003E 14                       INC D
+     30    00003F 1A                       LD A,(DE)
+     31    000040 14                       INC D
+     32    000041 1A                       LD A,(DE)
+     33    000042 14                       INC D
+     34    000043 1A                       LD A,(DE)
+     35    000044 1C                       INC E
+     36    000045 2805                     JR Z,INT8_
+     37    000047 7B                       LD A,E
+     38    000048 D1                       POP DE
+     39    000049 08                       EX AF,AF'
+     40    00004A FB                       EI
+     41    00004B C9                       RET
+     42    00004C          
+     43    00004C C3....   INT8_   JP QTDONE
+     44    00004F          
+     45    000066                          ORG GSRomBaseL+h'0066
+     46    000066 E1       NMILP   POP HL
+     47    000067 7D                       LD A,L
+     48    000068 D303                     OUT (ZXDATWR),A
+     49    00006A DB04     NMILP2  IN A,(ZXSTAT)
+     50    00006C 07                       RLCA
+     51    00006D 38FB                     JR C,NMILP2
+     52    00006F 7C                       LD A,H
+     53    000070 D303                     OUT (ZXDATWR),A
+     54    000072 DB04     NMILP3  IN A,(ZXSTAT)
+     55    000074 07                       RLCA
+     56    000075 38FB                     JR C,NMILP3
+     57    000077 C3....                   JP NMILP
+     58    00007A          
+     59    000080                          ORG GSRomBaseL+h'0080
+     60    000080 54686973*                DEFB 'This is improved ROM Version
+                                                 1.04 Beta. '
+     61    0000A8 42756766*                DEFB 'Bugfixes by psb & Evgeny
+  Muchkin, 2007.',0
+     62    0000D0          
+     63    000100                          ORG GSRomBaseL+h'0100
+     64    000100 47656E65*                DEFB 'General  Sound (tm) 
+                                                 ROM'
+     65    000118 436F7079*                DEFB 'Copyright   1997 Stinger'
+     66    000130 56657273*                DEFB 'Version 1.08           
+                                                 '
+     67    000148          
+     68    000148 F3       INIT    DI
+     69    000149 D305                     OUT (CLRCBIT),A
+     70    00014B AF       INIT_   XOR A
+     71    00014C D303                     OUT (ZXDATWR),A
+     72    00014E          ;               LD L,A
+     73    00014E          ;               LD H,A
+     74    00014E          ;               LD BC,h'0004
+     75    00014E          ;               LD SP,h'0008
+     76    00014E          ;               JR INIT02
+     77    00014E          
+     78    00014E          ;INIT00
+     79    00014E D300                     OUT (MPAG),A
+     80    000150          ;               LD SP,h'C000
+     81    000150          ;               LD C,h'04
+     82    000150          ;               DEC A
+     83    000150          ;INIT01         POP DE
+     84    000150          ;               ADD HL,DE
+     85    000150          ;               POP DE
+     86    000150          ;               ADD HL,DE
+     87    000150          ;               POP DE
+     88    000150          ;               ADD HL,DE
+     89    000150          ;               POP DE
+     90    000150          ;               ADD HL,DE
+     91    000150          ;INIT02         POP DE
+     92    000150          ;               ADD HL,DE
+     93    000150          ;               POP DE
+     94    000150          ;               ADD HL,DE
+     95    000150          ;               POP DE
+     96    000150          ;               ADD HL,DE
+     97    000150          ;               POP DE
+     98    000150          ;               ADD HL,DE
+     99    000150          ;               DJNZ INIT01
+    100    000150          ;               DEC C
+    101    000150          ;               JR NZ,INIT01
+    102    000150          ;               OR A
+    103    000150          ;               JR Z,INIT00
+    104    000150          ;               LD DE,(ROMCRC)
+    105    000150          ;               SBC HL,DE
+    106    000150          ;               LD HL,RAMPG
+    107    000150          ;---patched
+    108    000150          ;               LD A,2
+    109    000150          ;CREATE_LIST_PAGE
+    110    000150          ;               LD (HL),A
+    111    000150          ;               INC HL
+    112    000150          ;               INC A
+    113    000150          ;               CP h'40
+    114    000150          ;               JR NZ,CREATE_LIST_PAGE
+    115    000150          ;               LD (HL),1
+    116    000150          ;               INC HL
+    117    000150          ;               LD (HL),0
+    118    000150 210080                   LD HL,h'8000
+    119    000153 3E7F                     LD A,h'7F
+    120    000155 D300                     OUT (MPAG),A
+    121    000157 36AA                     LD (HL),h'AA
+    122    000159 3E3F                     LD A,h'3F
+    123    00015B D300                     OUT (MPAG),A
+    124    00015D 3655                     LD (HL),h'55
+    125    00015F 3E7F                     LD A,h'7F
+    126    000161 D300                     OUT (MPAG),A
+    127    000163 7E                       LD A,(HL)
+    128    000164 FEAA                     CP h'AA
+    129    000166 3E7E                     LD A,h'7E
+    130    000168 2802                     JR Z,CP_RAMPAGES
+    131    00016A 3E3E                     LD A,h'3E
+    132    00016C 328040   CP_RAMPAGES     LD (NUMPG),A
+    133    00016F D303                     OUT (ZXDATWR),A
+    134    000171 C602                     ADD A,2
+    135    000173 47                       LD B,A
+    136    000174 210040                   LD HL,RAMPG
+    137    000177 3E02                     LD A,2
+    138    000179 77       CREATE_TABL     LD (HL),A
+    139    00017A 23                       INC HL
+    140    00017B 3C                       INC A
+    141    00017C B8                       CP B
+    142    00017D 38FA                     JR C,CREATE_TABL
+    143    00017F 3601                     LD (HL),1
+    144    000181 23                       INC HL
+    145    000182 3600                     LD (HL),0
+    146    000184 310080                   LD SP,h'8000
+    147    000187 AF                       XOR A
+    148    000188 D300                     OUT (MPAG),A
+    149    00018A C3....                   JP Patch5i3
+    150    00018D          
+    151    00018D                          ; DUPL GSRomBaseL + h'269 - $,
+                            0
+    152    00018D                          DUPL 256, 0
+    152.1  00018D                          REPT 256
+    152.2  00018D                          DEFB 0
+    152.3  00018D                          ENDR
+    152.4  00018D 00                       DEFB 0
+    152.5  00028D                          ENDM
+    153    00028D          
+    154    000269                          ORG GSRomBaseL + h'269
+    155    000269          
+    156    000269 D305     COMHZ   OUT (CLRCBIT),A
+    157    00026B 310044   COMINT  LD SP,ISTACK            ;h'026B
+    158    00026E DB04     COMINT_ IN A,(ZXSTAT)
+    159    000270 0F                       RRCA
+    160    000271 3822                     JR C,COMINT1
+    161    000273 3A8440                   LD A,(PROCESS)          ;h'0273
+    162    000276 B7                       OR A
+    163    000277 28F5                     JR Z,COMINT_
+    164    000279 3A8640                   LD A,(BUSY)
+    165    00027C B7                       OR A
+    166    00027D 20EF                     JR NZ,COMINT_
+    167    00027F DB04                     IN A,(ZXSTAT)
+    168    000281 0F                       RRCA
+    169    000282 3811                     JR C,COMINT1
+    170    000284 3EFF                     LD A,h'FF
+    171    000286 328740                   LD (INGEN),A
+    172    000289 D5                       PUSH DE
+    173    00028A CD....                   CALL ENGINE
+    174    00028D D1                       POP DE
+    175    00028E AF                       XOR A
+    176    00028F 328740                   LD (INGEN),A
+    177    000292 C3....                   JP COMINT_
+    178    000295          
+    179    000295 DB01     COMINT1 IN A,(ZXCMD)
+    180    000297 FE20                     CP h'20
+    181    000299 3806                     JR C,COMLOW
+    182    00029B FEF0     COMINT2 CP h'F0
+    183    00029D 380B                     JR C,COMHIGH
+    184    00029F D6D0                     SUB h'D0
+    185    0002A1 87       COMLOW  ADD A,A
+    186    0002A2 26..                     LD H,HIGH (COMTAB)
+    187    0002A4 6F                       LD L,A
+    188    0002A5 7E                       LD A,(HL)
+    189    0002A6 2C                       INC L
+    190    0002A7 66                       LD H,(HL)
+    191    0002A8 6F                       LD L,A
+    192    0002A9 E9                       JP (HL)
+    193    0002AA          
+    194    0002AA 21....   COMHIGH LD HL,COMINT_
+    195    0002AD E5                       PUSH HL
+    196    0002AE 6F                       LD L,A
+    197    0002AF 26..                     LD H,HIGH (COMTABH)
+    198    0002B1 AF                       XOR A
+    199    0002B2 328140                   LD (CPAGE),A
+    200    0002B5 D300                     OUT (MPAG),A
+    201    0002B7 7E                       LD A,(HL)
+    202    0002B8 24                       INC H
+    203    0002B9 66                       LD H,(HL)
+    204    0002BA 6F                       LD L,A
+    205    0002BB E9                       JP (HL)
+    206    0002BC          
+    207    0002BC DB04     WTDTL   IN A,(ZXSTAT)
+    208    0002BE E681                     AND h'81
+    209    0002C0 28FA                     JR Z,WTDTL
+    210    0002C2 DB02                     IN A,(ZXDATRD)
+    211    0002C4 F2....                   JP P,COMINT1
+    212    0002C7 FDE9                     JP (IY)
+    213    0002C9          
+    214    0002C9 DB04     WTDTG   IN A,(ZXSTAT)
+    215    0002CB B7                       OR A
+    216    0002CC F2....                   JP P,WTDTG
+    217    0002CF DB02                     IN A,(ZXDATRD)
+    218    0002D1 FDE9                     JP (IY)
+    219    0002D3          
+    220    0002D3                          ALIGN256
+    220.1  000300                  org (($ - 1) & h'FF00) + h'100
+    220.2  000300                  ENDM
+    221    000300          #include "comtab.asm"
+    222    000360          
+    223    000360 D305     COMZ    OUT (CLRCBIT),A
+    224    000362 C3....                   JP COMINT_
+    225    000365          
+    226    000365          COM1E   EQU COMZ
+    227    000365          COM1F   EQU COMZ
+    228    000365          
+    229    000365          COMF1   EQU COMZ
+    230    000365          COMF2   EQU COMZ
+    231    000365          
+    232    000365          COMF8   EQU COMZ
+    233    000365          COMF9   EQU COMZ
+    234    000365          
+    235    000365          COMFB   EQU COMZ
+    236    000365          COMFC   EQU COMZ
+    237    000365          COMFD   EQU COMZ
+    238    000365          COMFE   EQU COMZ
+    239    000365          COMFF   EQU COMZ
+    240    000365          
+    241    000365          ;Reset flags
+    242    000365          ;Сбрасывает флаги Data bit и Command
+                            bit.
+    243    000365 DB02     COM00   IN A,(ZXDATRD)
+    244    000367 D305                     OUT (CLRCBIT),A
+    245    000369 C3....                   JP COMINT_
+    246    00036C          
+    247    00036C          ;Set silence (*)
+    248    00036C          ;Выводит в ЦАПы всех каналов
+                            h'80. По сути устанавливает
+                            тишину.
+    249    00036C D305     COM01   OUT (CLRCBIT),A
+    250    00036E 3E80                     LD A,h'80
+    251    000370 210060                   LD HL,DAC0
+    252    000373 77                       LD (HL),A
+    253    000374 46                       LD B,(HL)
+    254    000375 24                       INC H
+    255    000376 77                       LD (HL),A
+    256    000377 46                       LD B,(HL)
+    257    000378 24                       INC H
+    258    000379 77                       LD (HL),A
+    259    00037A 46                       LD B,(HL)
+    260    00037B 24                       INC H
+    261    00037C 77                       LD (HL),A
+    262    00037D 46                       LD B,(HL)
+    263    00037E C3....                   JP COMINT_
+    264    000381          
+    265    000381          ;Set low volume (*)
+    266    000381          ;Устанавливает громкостx
+                            ЦАПов всех каналов в ноль.
+    267    000381 D305     COM02   OUT (CLRCBIT),A
+    268    000383 3E3F             LD A,h'3F
+    269    000385 D306             OUT (VOL1),A
+    270    000387 D307             OUT (VOL2),A
+    271    000389 D308             OUT (VOL3),A
+    272    00038B D309             OUT (VOL4),A
+    273    00038D C3....           JP COMINT_
+    274    000390          
+    275    000390          ;Set high volume (*)
+    276    000390          ;Устанавливает громкость
+                            ЦАПов всех каналов в максим�
+                           �м.
+    277    000390 D305     COM03   OUT (CLRCBIT),A
+    278    000392 AF               XOR A
+    279    000393 D306             OUT (VOL1),A
+    280    000395 D307             OUT (VOL2),A
+    281    000397 D308             OUT (VOL3),A
+    282    000399 D309             OUT (VOL4),A
+    283    00039B C3....           JP COMINT_
+    284    00039E          
+    285    00039E          ;Set 'E' 3bits (*)
+    286    00039E          ;Устанавливает в 'E' регистре
+                            GS 3 младших бита в соответст�
+                           �ии с  задан-
+    287    00039E          ;ным значением (2  младших 
+                            бита  в  сущности  являются 
+                            номером  канала
+    288    00039E          ;h'00-h'03).
+    289    00039E DB02     COM04   IN A,(ZXDATRD)
+    290    0003A0 D305             OUT (CLRCBIT),A
+    291    0003A2 E607             AND h'07
+    292    0003A4 5F               LD E,A
+    293    0003A5 C3....           JP COMINT_
+    294    0003A8          
+    295    0003A8          ;Out volume port (*)
+    296    0003A8          ;Устанавливает громкость
+                            канала, номер которого
+                            содержится в 'E', в ука-
+    297    0003A8          ;занное значение. (Команда
+                            срабатывает при условии, 
+                            что 'E' находится в
+    298    0003A8          ;пределах h'00-h'03)
+    299    0003A8 DB02     COM05   IN A,(ZXDATRD)
+    300    0003AA D305             OUT (CLRCBIT),A
+    301    0003AC 47               LD B,A
+    302    0003AD 7B               LD A,E
+    303    0003AE FE04             CP h'04
+    304    0003B0 D2....           JP NC,COMINT_
+    305    0003B3 C606             ADD A,VOL1
+    306    0003B5 4F               LD C,A
+    307    0003B6 ED41             OUT (C),B
+    308    0003B8 C3....           JP COMINT_
+    309    0003BB          
+    310    0003BB          ;Send to DAC (*)
+    311    0003BB          ;Выводит байт в ЦАП канала,
+                            указываемого по 'E'.
+    312    0003BB DB02     COM06   IN A,(ZXDATRD)
+    313    0003BD D305             OUT (CLRCBIT),A
+    314    0003BF 47               LD B,A
+    315    0003C0 7B               LD A,E
+    316    0003C1 FE04             CP h'04
+    317    0003C3 D2....           JP NC,COMINT_
+    318    0003C6 C660             ADD A,HIGH (DAC0)
+    319    0003C8 67               LD H,A
+    320    0003C9 2E00             LD L,h'00
+    321    0003CB 70               LD (HL),B
+    322    0003CC 7E               LD A,(HL)
+    323    0003CD C3....           JP COMINT_
+    324    0003D0          
+    325    0003D0          ;Send to DAC and to volume port (*)
+    326    0003D0          ;Выводит байт в ЦАП ('E') с
+                            заданной громкостью.
+    327    0003D0 DB02     COM07   IN A,(ZXDATRD)
+    328    0003D2 D305             OUT (CLRCBIT),A
+    329    0003D4 47               LD B,A
+    330    0003D5 7B               LD A,E
+    331    0003D6 FE04             CP h'04
+    332    0003D8 D2....           JP NC,COMINT_
+    333    0003DB C660             ADD A,HIGH (DAC0)
+    334    0003DD 67               LD H,A
+    335    0003DE 2E00             LD L,h'00
+    336    0003E0 70               LD (HL),B
+    337    0003E1 D660             SUB HIGH (DAC0)
+    338    0003E3 C606             ADD A,VOL1
+    339    0003E5 4F               LD C,A
+    340    0003E6 FD21....         LD IY,COM07_1
+    341    0003EA C3....           JP WTDTL
+    342    0003ED          
+    343    0003ED ED79     COM07_1 OUT (C),A
+    344    0003EF 7E               LD A,(HL)
+    345    0003F0 C3....           JP COMINT_
+    346    0003F3          
+    347    0003F3          ;то же что и команда h'00
+    348    0003F3          ;Reset flags
+    349    0003F3          ;Сбрасывает флаги Data bit и Command
+                            bit.
+    350    0003F3          COM08   EQU COMZ
+    351    0003F3          
+    352    0003F3          ;Sets one's byte volume. (*)
+    353    0003F3          ;Установка громкости канала,
+                            номер которого задан в 2х
+                            старших битах.
+    354    0003F3 DB02     COM09   IN A,(ZXDATRD)
+    355    0003F5 D305             OUT (CLRCBIT),A
+    356    0003F7 47               LD B,A
+    357    0003F8 07               RLCA
+    358    0003F9 07               RLCA
+    359    0003FA E603             AND h'03
+    360    0003FC C606             ADD A,VOL1
+    361    0003FE 4F               LD C,A
+    362    0003FF 78               LD A,B
+    363    000400 E63F             AND h'3F
+    364    000402 ED79             OUT (C),A
+    365    000404 C3....           JP COMINT_
+    366    000407          
+    367    000407          ;DAC output (*)
+    368    000407          ;Еще один непосредственный
+                            вывод в ЦАП.
+    369    000407 DB02     COM0A   IN A,(ZXDATRD)
+    370    000409 D305             OUT (CLRCBIT),A
+    371    00040B 47               LD B,A
+    372    00040C FD21....         LD IY,COM0A_1
+    373    000410 C3....           JP WTDTL
+    374    000413          
+    375    000413 E603     COM0A_1 AND h'03
+    376    000415 C660             ADD A,HIGH (DAC0)
+    377    000417 67               LD H,A
+    378    000418 2E00             LD L,h'00
+    379    00041A 70               LD (HL),B
+    380    00041B 7E               LD A,(HL)
+    381    00041C C3....           JP COMINT_
+    382    00041F          
+    383    00041F          ;DAC and Volume output (*)
+    384    00041F          ;И наконец последний вывод в
+                            ЦАП с установкой громкости.
+    385    00041F DB02     COM0B   IN A,(ZXDATRD)
+    386    000421 D305             OUT (CLRCBIT),A
+    387    000423 4F               LD C,A
+    388    000424 FD21....         LD IY,COM0B_1
+    389    000428 C3....           JP WTDTL
+    390    00042B          
+    391    00042B 47       COM0B_1 LD B,A
+    392    00042C 07               RLCA
+    393    00042D 07               RLCA
+    394    00042E E603             AND h'03
+    395    000430 C660             ADD A,HIGH (DAC0)
+    396    000432 67               LD H,A
+    397    000433 2E00             LD L,h'00
+    398    000435 71               LD (HL),C
+    399    000436 D660             SUB HIGH (DAC0)
+    400    000438 C606             ADD A,VOL1
+    401    00043A 4F               LD C,A
+    402    00043B 78               LD A,B
+    403    00043C E63F             AND h'3F
+    404    00043E ED79             OUT (C),A
+    405    000440 7E               LD A,(HL)
+    406    000441 C3....           JP COMINT_
+    407    000444          
+    408    000444          ;Call SounDrive Covox mode (*)
+    409    000444          ;Вызывает режим четырехкана�
+                           �ьного Ковокса,  последовате�
+                           �ьно копирует ре-
+    410    000444          ;гистр данных по каналам. 
+                            Выход из режима  автоматиче�
+                           �ки  после  вывода
+    411    000444          ;четвертого байта.
+    412    000444 DB02     COM0C   IN A,(ZXDATRD)
+    413    000446 D305             OUT (CLRCBIT),A
+    414    000448 210060           LD HL,DAC0
+    415    00044B 77               LD (HL),A
+    416    00044C 7E               LD A,(HL)
+    417    00044D 24               INC H
+    418    00044E FD21....         LD IY,COM0C_1
+    419    000452 C3....           JP WTDTL
+    420    000455          
+    421    000455 77       COM0C_1 LD (HL),A
+    422    000456 7E               LD A,(HL)
+    423    000457 24               INC H
+    424    000458 FD21....         LD IY,COM0C_2
+    425    00045C C3....           JP WTDTL
+    426    00045F          
+    427    00045F 77       COM0C_2 LD (HL),A
+    428    000460 7E               LD A,(HL)
+    429    000461 24               INC H
+    430    000462 FD21....         LD IY,COM0C_3
+    431    000466 C3....           JP WTDTL
+    432    000469          
+    433    000469 77       COM0C_3 LD (HL),A
+    434    00046A 7E               LD A,(HL)
+    435    00046B C3....           JP COMINT_
+    436    00046E          
+    437    00046E          ;Call Ultravox mode (*)
+    438    00046E          ;Вызывает режим универсальн�
+                           �го Ковокса,   последовательн
+                           о  копирует  ре-
+    439    00046E          ;гистр данных по каналам, 
+                            число которых регулируется
+                            (1-4).В отличие от
+    440    00046E          ;предыдущего варианта синхр�
+                           �низация не производится. 
+                            Выход также произ-
+    441    00046E          ;водится автоматически по
+                            записи последнего байта.
+    442    00046E DB02     COM0D   IN A,(ZXDATRD)
+    443    000470 D305             OUT (CLRCBIT),A
+    444    000472 E60F             AND h'0F
+    445    000474 CA....           JP Z,COMINT_
+    446    000477 07               RLCA
+    447    000478 07               RLCA
+    448    000479 07               RLCA
+    449    00047A 07               RLCA
+    450    00047B 47               LD B,A
+    451    00047C 210060           LD HL,DAC0
+    452    00047F FD21....         LD IY,COM0D_3
+    453    000483 C3....           JP COM0D_2
+    454    000486          
+    455    000486 77       COM0D_3 LD (HL),A
+    456    000487 7E               LD A,(HL)
+    457    000488 24               INC H
+    458    000489 C3....           JP COM0D_2
+    459    00048C          
+    460    00048C CA....   COM0D_1 JP Z,COMINT_
+    461    00048F 24               INC H
+    462    000490 CB20     COM0D_2 SLA B
+    463    000492 30F8             JR NC,COM0D_1
+    464    000494 C3....           JP WTDTL
+    465    000497          
+    466    000497          ;Go to LPT Covox mode
+    467    000497          ;Переходит в режим одноканал
+                           ьного Ковокса,   напрямую 
+                            копирует  регистр
+    468    000497          ;данных в ЦАПы двух (правого
+                            и левого) каналов.  Выход из
+                            этого режима -
+    469    000497          ;запись h'00 в регистр команд.
+    470    000497 D305     COM0E   OUT (CLRCBIT),A
+    471    000499 210060           LD HL,DAC0
+    472    00049C 010062           LD BC,DAC2
+    473    00049F DB02     COM0E_1 IN A,(ZXDATRD)
+    474    0004A1 77               LD (HL),A
+    475    0004A2 02               LD (BC),A
+    476    0004A3 7E               LD A,(HL)
+    477    0004A4 0A               LD A,(BC)
+    478    0004A5 DB04             IN A,(ZXSTAT)
+    479    0004A7 0F               RRCA
+    480    0004A8 D2....           JP NC,COM0E_1
+    481    0004AB C3....           JP COMINT_
+    482    0004AE          
+    483    0004AE          ;Go in Profi Covox mode (*)
+    484    0004AE          ;Переходит в режим двухканал
+                           ьного Ковокса,   напрямую 
+                            копирует  регистр
+    485    0004AE          ;данных в ЦАПы одного канала,
+                             а регистр каманд в ЦАПы 
+                            второго  канала.
+    486    0004AE          ;Выход из этого режима -
+                            запись h'4Е в регистр данных, 
+                            затем  последова-
+    487    0004AE          ;тельно h'0F и h'AA в регистр
+                            команд.
+    488    0004AE DB02     COM0F   IN A,(ZXDATRD)
+    489    0004B0 D305             OUT (CLRCBIT),A
+    490    0004B2 FE59             CP 'Y'
+    491    0004B4 C2....           JP NZ,COMINT_
+    492    0004B7 210060           LD HL,DAC0
+    493    0004BA 110062           LD DE,DAC2
+    494    0004BD DB02     COM0F_1 IN A,(ZXDATRD)
+    495    0004BF 77               LD (HL),A
+    496    0004C0 DB01             IN A,(ZXCMD)
+    497    0004C2 12               LD (DE),A
+    498    0004C3 7E               LD A,(HL)
+    499    0004C4 1A               LD A,(DE)
+    500    0004C5 DB04             IN A,(ZXSTAT)
+    501    0004C7 B7               OR A
+    502    0004C8 FA....           JP M,COM0F_1
+    503    0004CB 0600             LD B,h'00
+    504    0004CD D305             OUT (CLRCBIT),A
+    505    0004CF DB04     COM0F_2 IN A,(ZXSTAT)
+    506    0004D1 E681             AND h'81
+    507    0004D3 20E8             JR NZ,COM0F_1
+    508    0004D5 10F8             DJNZ COM0F_2
+    509    0004D7 DB04     COM0F_3 IN A,(ZXSTAT)
+    510    0004D9 E681             AND h'81
+    511    0004DB 28FA             JR Z,COM0F_3
+    512    0004DD FE80             CP h'80
+    513    0004DF 20DC             JR NZ,COM0F_1
+    514    0004E1 DB02             IN A,(ZXDATRD)
+    515    0004E3 FE4E             CP 'N'
+    516    0004E5 C2....           JP NZ,COM0F_1
+    517    0004E8 DB04     COM0F_4 IN A,(ZXSTAT)
+    518    0004EA E681             AND h'81
+    519    0004EC 28FA             JR Z,COM0F_4
+    520    0004EE FE01             CP h'01
+    521    0004F0 20CB             JR NZ,COM0F_1
+    522    0004F2 DB01             IN A,(ZXCMD)
+    523    0004F4 FE0F             CP h'0F
+    524    0004F6 C2....           JP NZ,COM0F_1
+    525    0004F9 D305             OUT (CLRCBIT),A
+    526    0004FB DB04     COM0F_5 IN A,(ZXSTAT)
+    527    0004FD E681             AND h'81
+    528    0004FF 28FA             JR Z,COM0F_5
+    529    000501 FE01             CP h'01
+    530    000503 20B8             JR NZ,COM0F_1
+    531    000505 DB01             IN A,(ZXCMD)
+    532    000507 FEAA             CP h'AA
+    533    000509 C2....           JP NZ,COM0F_1
+    534    00050C D305             OUT (CLRCBIT),A
+    535    00050E C3....           JP COMINT_
+    536    000511          
+    537    000511          ;Out to any port (*)
+    538    000511          ;Выводит байт вo внутренний
+                            порт GS (h'00-h'09).
+    539    000511 DB02     COM10   IN A,(ZXDATRD)
+    540    000513 D305             OUT (CLRCBIT),A
+    541    000515 4F               LD C,A
+    542    000516 FD21....         LD IY,COM10_1
+    543    00051A C3....           JP WTDTL
+    544    00051D          
+    545    00051D ED79     COM10_1 OUT (C),A
+    546    00051F C3....           JP COMINT_
+    547    000522          
+    548    000522          ;In from any port (*)
+    549    000522          ;читает байт из внутреннего
+                            порта GS (h'00-h'09).
+    550    000522 DB02     COM11   IN A,(ZXDATRD)
+    551    000524 4F               LD C,A
+    552    000525 ED78             IN A,(C)
+    553    000527 D303             OUT (ZXDATWR),A
+    554    000529 D305             OUT (CLRCBIT),A
+    555    00052B C3....           JP COMINT_
+    556    00052E          
+    557    00052E          ;OUT to 0 port (*)
+    558    00052E          ;Выводит байт в порт кофигур�
+                           �ции GS (h'00).
+    559    00052E DB02     COM12   IN A,(ZXDATRD)
+    560    000530 D305             OUT (CLRCBIT),A
+    561    000532 D300             OUT (MPAG),A
+    562    000534 C3....           JP COMINT_
+    563    000537          
+    564    000537          ;Jump to Address (*)
+    565    000537          ;Передает управление по
+                            заданному адресу.
+    566    000537 DB02     COM13   IN A,(ZXDATRD)
+    567    000539 D305             OUT (CLRCBIT),A
+    568    00053B 6F               LD L,A
+    569    00053C FD21....         LD IY,COM13_1
+    570    000540 C3....           JP WTDTL
+    571    000543          
+    572    000543 67       COM13_1 LD H,A
+    573    000544 E9               JP (HL)
+    574    000545          
+    575    000545          ;Load memory block (*)
+    576    000545          ;Загрузка блока кодов по
+                            указанному адресу с заданно
+                           й длиной.
+    577    000545          ; 70+27*WAIT PER LOOP : 171K,123K,96K PER SECOND
+                            MAX
+    578    000545 DB02     COM14   IN A,(ZXDATRD)
+    579    000547 D305             OUT (CLRCBIT),A
+    580    000549 2F               CPL
+    581    00054A 4F               LD C,A
+    582    00054B 21....           LD HL,WTDTL
+    583    00054E FD21....         LD IY,COM14_1
+    584    000552 E9               JP (HL)
+    585    000553          
+    586    000553 2F       COM14_1 CPL
+    587    000554 47               LD B,A
+    588    000555 03               INC BC
+    589    000556 FD21....         LD IY,COM14_2
+    590    00055A E9               JP (HL)
+    591    00055B          
+    592    00055B 5F       COM14_2 LD E,A
+    593    00055C FD21....         LD IY,COM14_3
+    594    000560 E9               JP (HL)
+    595    000561          
+    596    000561 57       COM14_3 LD D,A
+    597    000562 78               LD A,B
+    598    000563 B1               OR C
+    599    000564 CA....           JP Z,COMINT_
+    600    000567 DD68             LD IXL,B
+    601    000569 0681             LD B,h'81
+    602    00056B CB41             BIT 0,C
+    603    00056D 200D             JR NZ,COM14_7
+    604    00056F DB04     COM14_6 IN A,(ZXSTAT)
+    605    000571 A0               AND B
+    606    000572 28FB             JR Z,COM14_6
+    607    000574 DB02             IN A,(ZXDATRD)
+    608    000576 F2....           JP P,COMINT1
+    609    000579 12               LD (DE),A
+    610    00057A 13               INC DE
+    611    00057B 0C               INC C
+    612    00057C DB04     COM14_7 IN A,(ZXSTAT)
+    613    00057E A0               AND B
+    614    00057F 28FB             JR Z,COM14_7
+    615    000581 DB02             IN A,(ZXDATRD)
+    616    000583 F2....           JP P,COMINT1
+    617    000586 12               LD (DE),A
+    618    000587 13               INC DE
+    619    000588 0C               INC C
+    620    000589 C2....           JP NZ,COM14_6
+    621    00058C DD2C             INC IXL
+    622    00058E C2....           JP NZ,COM14_6
+    623    000591 C3....           JP COMINT_
+    624    000594          
+    625    000594          ;Get memory block (*)
+    626    000594          ;Выгрузка блока кодов по
+                            указанному адресу с заданно
+                           й длиной.
+    627    000594 DB02     COM15   IN A,(ZXDATRD)  ;ошибка-не
+                                                    сбрасывается
+                                                    команд бит
+    628    000596 2F               CPL
+    629    000597 4F               LD C,A
+    630    000598 FD21....         LD IY,COM15_1
+    631    00059C C3....           JP WTDTG
+    632    00059F          
+    633    00059F 2F       COM15_1 CPL
+    634    0005A0 47               LD B,A
+    635    0005A1 03               INC BC
+    636    0005A2 FD21....         LD IY,COM15_2
+    637    0005A6 C3....           JP WTDTG
+    638    0005A9          
+    639    0005A9 5F       COM15_2 LD E,A
+    640    0005AA FD21....         LD IY,COM15_3
+    641    0005AE C3....           JP WTDTG
+    642    0005B1          
+    643    0005B1 57       COM15_3 LD D,A
+    644    0005B2 78               LD A,B
+    645    0005B3 B1               OR C
+    646    0005B4 CA....           JP Z,COMINT_
+    647    0005B7 DD68             LD IXL,B
+    648    0005B9 0681             LD B,h'81
+    649    0005BB 1A               LD A,(DE)
+    650    0005BC 13               INC DE
+    651    0005BD D303             OUT (ZXDATWR),A
+    652    0005BF D305             OUT (CLRCBIT),A
+    653    0005C1 21....           LD HL,COM15_4
+    654    0005C4 0C               INC C
+    655    0005C5 C2....           JP NZ,COM15_4
+    656    0005C8 DD2C             INC IXL
+    657    0005CA CA....           JP Z,COMINT_
+    658    0005CD DB04     COM15_4 IN A,(ZXSTAT)
+    659    0005CF A0               AND B
+    660    0005D0 281C             JR Z,COM15_5
+    661    0005D2 F2....           JP P,COMINT1
+    662    0005D5 DB04             IN A,(ZXSTAT)
+    663    0005D7 A0               AND B
+    664    0005D8 2814             JR Z,COM15_5
+    665    0005DA F2....           JP P,COMINT1
+    666    0005DD DB04             IN A,(ZXSTAT)
+    667    0005DF A0               AND B
+    668    0005E0 280C             JR Z,COM15_5
+    669    0005E2 F2....           JP P,COMINT1
+    670    0005E5 DB04             IN A,(ZXSTAT)
+    671    0005E7 A0               AND B
+    672    0005E8 2804             JR Z,COM15_5
+    673    0005EA F2....           JP P,COMINT1
+    674    0005ED E9               JP (HL)
+    675    0005EE          
+    676    0005EE 1A       COM15_5 LD A,(DE)
+    677    0005EF D303             OUT (ZXDATWR),A
+    678    0005F1 13               INC DE
+    679    0005F2 0C               INC C
+    680    0005F3 C2....           JP NZ,COM15_4
+    681    0005F6 DD2C     COM15_7 INC IXL
+    682    0005F8 C2....           JP NZ,COM15_4
+    683    0005FB C3....           JP COMINT_
+    684    0005FE          
+    685    0005FE          ;Poke to address (*)
+    686    0005FE          ;Записывает единичный байт
+                            по указанному адресу.
+    687    0005FE DB02     COM16   IN A,(ZXDATRD)
+    688    000600 D305             OUT (CLRCBIT),A
+    689    000602 47               LD B,A
+    690    000603 FD21....         LD IY,COM16_1
+    691    000607 C3....           JP WTDTL
+    692    00060A          
+    693    00060A 6F       COM16_1 LD L,A
+    694    00060B FD21....         LD IY,COM16_2
+    695    00060F C3....           JP WTDTL
+    696    000612          
+    697    000612 67       COM16_2 LD H,A
+    698    000613 70               LD (HL),B
+    699    000614 C3....           JP COMINT_
+    700    000617          
+    701    000617          ;Peek from address (*)
+    702    000617          ;Считывает единичный байт из
+                            указанного адреса.
+    703    000617 DB02     COM17   IN A,(ZXDATRD)
+    704    000619 6F               LD L,A
+    705    00061A FD21....         LD IY,COM17_1
+    706    00061E C3....           JP WTDTL
+    707    000621          
+    708    000621 67       COM17_1 LD H,A
+    709    000622 7E               LD A,(HL)
+    710    000623 D303             OUT (ZXDATWR),A
+    711    000625 D305             OUT (CLRCBIT),A
+    712    000627 C3....           JP COMINT_
+    713    00062A          
+    714    00062A          ;Load DE Pair (*)
+    715    00062A          ;Загружает регистовую пару DE
+                            (относящуюся к GS,  не путать
+                            с  одноимен-
+    716    00062A          ;ной парой Main CPU) указанным
+                            словом.
+    717    00062A DB02     COM18   IN A,(ZXDATRD)
+    718    00062C D305             OUT (CLRCBIT),A
+    719    00062E 5F               LD E,A
+    720    00062F FD21....         LD IY,COM18_1
+    721    000633 C3....           JP WTDTL
+    722    000636          
+    723    000636 57       COM18_1 LD D,A
+    724    000637 C3....           JP COMINT_
+    725    00063A          
+    726    00063A          ;Poke to (DE) address (*)
+    727    00063A          ;Записывает байт по адресу
+                            указанному в DE.
+    728    00063A DB02     COM19   IN A,(ZXDATRD)
+    729    00063C D305             OUT (CLRCBIT),A
+    730    00063E 12               LD (DE),A
+    731    00063F C3....           JP COMINT_
+    732    000642          
+    733    000642          ;Peek from (DE) address (*)
+    734    000642          ;Считывает содержимое адрес�
+                           �, указываемого по DE.
+    735    000642 1A       COM1A   LD A,(DE)
+    736    000643 D303             OUT (ZXDATWR),A
+    737    000645 D305             OUT (CLRCBIT),A
+    738    000647 C3....           JP COMINT_
+    739    00064A          
+    740    00064A          ;Increment of DE Pair (*)
+    741    00064A          ;Увеличивает пару DE на едини�
+                           �ку.
+    742    00064A D305     COM1B   OUT (CLRCBIT),A
+    743    00064C 13               INC DE
+    744    00064D C3....           JP COMINT_
+    745    000650          
+    746    000650          ;Poke to (h'2h'X) address (*)
+    747    000650          ;Записывает байт по адресу,
+                            старший байт которого равен
+                            h'20.
+    748    000650 DB02     COM1C   IN A,(ZXDATRD)
+    749    000652 D305             OUT (CLRCBIT),A
+    750    000654 6F               LD L,A
+    751    000655 FD21....         LD IY,COM1C_1
+    752    000659 C3....           JP WTDTL
+    753    00065C          
+    754    00065C 2620     COM1C_1 LD H,h'20
+    755    00065E 77               LD (HL),A
+    756    00065F C3....           JP COMINT_
+    757    000662          
+    758    000662          ;Peek from (h'2h'X) address (*)
+    759    000662          ;читает байт с адреса, старши
+                           й байт которого равен h'20.
+    760    000662 DB02     COM1D   IN A,(ZXDATRD)
+    761    000664 6F               LD L,A
+    762    000665 2620             LD H,h'20
+    763    000667 7E               LD A,(HL)
+    764    000668 D303             OUT (ZXDATWR),A
+    765    00066A D305             OUT (CLRCBIT),A
+    766    00066C C3....           JP COMINT_
+    767    00066F          
+    768    00066F 3AB240   COMF0   LD A,(ERRCODE)  ; GET STATUS
+    769    000672 D303             OUT (ZXDATWR),A
+    770    000674 D305             OUT (CLRCBIT),A
+    771    000676 C3....           JP COMINT_
+    772    000679          
+    773    000679          ;Warm restart
+    774    000679          ;Сбрасывает полностью GS,  но
+                            пропускает  этапы  определе�
+                           �ия  количества
+    775    000679          ;страниц памяти и их провеки,
+                             что очень сильно ускоряет
+                            процесс инициа-
+    776    000679          ;лизации.
+    777    000679 D305     COMF3   OUT (CLRCBIT),A
+    778    00067B C3....           JP INITVAR
+    779    00067E          
+    780    00067E          ;Cold restart
+    781    00067E          ;Полный перезапуск GS со
+                            всеми проверками. По сути, JP
+                            h'0000.
+    782    00067E D305     COMF4   OUT (CLRCBIT),A
+    783    000680 C30000           JP h'0000
+    784    000683          
+    785    000683          ;Busy on
+    786    000683          ;Устанавливает флаг занятос�
+                           �и в h'FF
+    787    000683 D305     COMF5   OUT (CLRCBIT),A
+    788    000685 DD7C             LD A,IXH
+    789    000687 E680             AND h'80
+    790    000689 C2....           JP NZ,COMF5_1
+    791    00068C 3EFF             LD A,h'FF
+    792    00068E 328640           LD (BUSY),A
+    793    000691 C3....           JP COMINT_
+    794    000694          
+    795    000694 F640     COMF5_1 OR h'40
+    796    000696 DD67             LD IXH,A
+    797    000698 C3....           JP COMINT_
+    798    00069B          
+    799    00069B          ;Busy off
+    800    00069B          ;Устанавливает флаг занятос�
+                           �и в h'00
+    801    00069B D305     COMF6   OUT (CLRCBIT),A
+    802    00069D DD7C             LD A,IXH
+    803    00069F E680             AND h'80
+    804    0006A1 C2....           JP NZ,COMF6_1
+    805    0006A4 AF               XOR A
+    806    0006A5 328640           LD (BUSY),A
+    807    0006A8 C3....           JP COMINT_
+    808    0006AB          
+    809    0006AB DD67     COMF6_1 LD IXH,A
+    810    0006AD C3....           JP COMINT_
+    811    0006B0          
+    812    0006B0          ;Get IXH Register (*)
+    813    0006B0          ;Получить содержимое регист�
+                           �а IXH (GS)
+    814    0006B0          ;IXH участвует в обработке
+                            флага Busy.
+    815    0006B0 DD7C     COMF7   LD A,IXH
+    816    0006B2 D303             OUT (ZXDATWR),A
+    817    0006B4 D305             OUT (CLRCBIT),A
+    818    0006B6 C3....           JP COMINT_
+    819    0006B9          
+    820    0006B9          ;Out zero_to_zero
+    821    0006B9          ;Вывод нуля в нулевой (конфиг
+                           урационный) порт GS.   Делает 
+                            приостановку
+    822    0006B9          ;звучания музыки до следующе
+                           го чтения из к.л. порта.
+    823    0006B9 D305     COMFA   OUT (CLRCBIT),A
+    824    0006BB AF               XOR A
+    825    0006BC 328140           LD (CPAGE),A
+    826    0006BF D300             OUT (MPAG),A
+    827    0006C1 C3....           JP TCOM
+    828    0006C4          
+    829    0006C4          ;MEMORY MOVEMENT MODULE - LOW PART
+    830    0006C4                  ALIGN256
+    830.1  000700                  org (($ - 1) & h'FF00) + h'100
+    830.2  000700                  ENDM
+    831    000700          
+    832    000700          LDITAB  REPT h'100
+    833    000700                  DEFB h'ED, h'A0
+    834    000700                  ENDR
+    834.1  000700 EDA0             DEFB h'ED, h'A0
+    834.2  000702 EDA0             DEFB h'ED, h'A0
+    834.3  000704 EDA0             DEFB h'ED, h'A0
+    834.4  000706 EDA0             DEFB h'ED, h'A0
+    834.5  000708 EDA0             DEFB h'ED, h'A0
+    834.6  00070A EDA0             DEFB h'ED, h'A0
+    834.7  00070C EDA0             DEFB h'ED, h'A0
+    834.8  00070E EDA0             DEFB h'ED, h'A0
+    834.9  000710 EDA0             DEFB h'ED, h'A0
+    834.10 000712 EDA0             DEFB h'ED, h'A0
+    834.11 000714 EDA0             DEFB h'ED, h'A0
+    834.12 000716 EDA0             DEFB h'ED, h'A0
+    834.13 000718 EDA0             DEFB h'ED, h'A0
+    834.14 00071A EDA0             DEFB h'ED, h'A0
+    834.15 00071C EDA0             DEFB h'ED, h'A0
+    834.16 00071E EDA0             DEFB h'ED, h'A0
+    834.17 000720 EDA0             DEFB h'ED, h'A0
+    834.18 000722 EDA0             DEFB h'ED, h'A0
+    834.19 000724 EDA0             DEFB h'ED, h'A0
+    834.20 000726 EDA0             DEFB h'ED, h'A0
+    834.21 000728 EDA0             DEFB h'ED, h'A0
+    834.22 00072A EDA0             DEFB h'ED, h'A0
+    834.23 00072C EDA0             DEFB h'ED, h'A0
+    834.24 00072E EDA0             DEFB h'ED, h'A0
+    834.25 000730 EDA0             DEFB h'ED, h'A0
+    834.26 000732 EDA0             DEFB h'ED, h'A0
+    834.27 000734 EDA0             DEFB h'ED, h'A0
+    834.28 000736 EDA0             DEFB h'ED, h'A0
+    834.29 000738 EDA0             DEFB h'ED, h'A0
+    834.30 00073A EDA0             DEFB h'ED, h'A0
+    834.31 00073C EDA0             DEFB h'ED, h'A0
+    834.32 00073E EDA0             DEFB h'ED, h'A0
+    834.33 000740 EDA0             DEFB h'ED, h'A0
+    834.34 000742 EDA0             DEFB h'ED, h'A0
+    834.35 000744 EDA0             DEFB h'ED, h'A0
+    834.36 000746 EDA0             DEFB h'ED, h'A0
+    834.37 000748 EDA0             DEFB h'ED, h'A0
+    834.38 00074A EDA0             DEFB h'ED, h'A0
+    834.39 00074C EDA0             DEFB h'ED, h'A0
+    834.40 00074E EDA0             DEFB h'ED, h'A0
+    834.41 000750 EDA0             DEFB h'ED, h'A0
+    834.42 000752 EDA0             DEFB h'ED, h'A0
+    834.43 000754 EDA0             DEFB h'ED, h'A0
+    834.44 000756 EDA0             DEFB h'ED, h'A0
+    834.45 000758 EDA0             DEFB h'ED, h'A0
+    834.46 00075A EDA0             DEFB h'ED, h'A0
+    834.47 00075C EDA0             DEFB h'ED, h'A0
+    834.48 00075E EDA0             DEFB h'ED, h'A0
+    834.49 000760 EDA0             DEFB h'ED, h'A0
+    834.50 000762 EDA0             DEFB h'ED, h'A0
+    834.51 000764 EDA0             DEFB h'ED, h'A0
+    834.52 000766 EDA0             DEFB h'ED, h'A0
+    834.53 000768 EDA0             DEFB h'ED, h'A0
+    834.54 00076A EDA0             DEFB h'ED, h'A0
+    834.55 00076C EDA0             DEFB h'ED, h'A0
+    834.56 00076E EDA0             DEFB h'ED, h'A0
+    834.57 000770 EDA0             DEFB h'ED, h'A0
+    834.58 000772 EDA0             DEFB h'ED, h'A0
+    834.59 000774 EDA0             DEFB h'ED, h'A0
+    834.60 000776 EDA0             DEFB h'ED, h'A0
+    834.61 000778 EDA0             DEFB h'ED, h'A0
+    834.62 00077A EDA0             DEFB h'ED, h'A0
+    834.63 00077C EDA0             DEFB h'ED, h'A0
+    834.64 00077E EDA0             DEFB h'ED, h'A0
+    834.65 000780 EDA0             DEFB h'ED, h'A0
+    834.66 000782 EDA0             DEFB h'ED, h'A0
+    834.67 000784 EDA0             DEFB h'ED, h'A0
+    834.68 000786 EDA0             DEFB h'ED, h'A0
+    834.69 000788 EDA0             DEFB h'ED, h'A0
+    834.70 00078A EDA0             DEFB h'ED, h'A0
+    834.71 00078C EDA0             DEFB h'ED, h'A0
+    834.72 00078E EDA0             DEFB h'ED, h'A0
+    834.73 000790 EDA0             DEFB h'ED, h'A0
+    834.74 000792 EDA0             DEFB h'ED, h'A0
+    834.75 000794 EDA0             DEFB h'ED, h'A0
+    834.76 000796 EDA0             DEFB h'ED, h'A0
+    834.77 000798 EDA0             DEFB h'ED, h'A0
+    834.78 00079A EDA0             DEFB h'ED, h'A0
+    834.79 00079C EDA0             DEFB h'ED, h'A0
+    834.80 00079E EDA0             DEFB h'ED, h'A0
+    834.81 0007A0 EDA0             DEFB h'ED, h'A0
+    834.82 0007A2 EDA0             DEFB h'ED, h'A0
+    834.83 0007A4 EDA0             DEFB h'ED, h'A0
+    834.84 0007A6 EDA0             DEFB h'ED, h'A0
+    834.85 0007A8 EDA0             DEFB h'ED, h'A0
+    834.86 0007AA EDA0             DEFB h'ED, h'A0
+    834.87 0007AC EDA0             DEFB h'ED, h'A0
+    834.88 0007AE EDA0             DEFB h'ED, h'A0
+    834.89 0007B0 EDA0             DEFB h'ED, h'A0
+    834.90 0007B2 EDA0             DEFB h'ED, h'A0
+    834.91 0007B4 EDA0             DEFB h'ED, h'A0
+    834.92 0007B6 EDA0             DEFB h'ED, h'A0
+    834.93 0007B8 EDA0             DEFB h'ED, h'A0
+    834.94 0007BA EDA0             DEFB h'ED, h'A0
+    834.95 0007BC EDA0             DEFB h'ED, h'A0
+    834.96 0007BE EDA0             DEFB h'ED, h'A0
+    834.97 0007C0 EDA0             DEFB h'ED, h'A0
+    834.98 0007C2 EDA0             DEFB h'ED, h'A0
+    834.99 0007C4 EDA0             DEFB h'ED, h'A0
+    834.100 0007C6 EDA0             DEFB h'ED, h'A0
+    834.101 0007C8 EDA0             DEFB h'ED, h'A0
+    834.102 0007CA EDA0             DEFB h'ED, h'A0
+    834.103 0007CC EDA0             DEFB h'ED, h'A0
+    834.104 0007CE EDA0             DEFB h'ED, h'A0
+    834.105 0007D0 EDA0             DEFB h'ED, h'A0
+    834.106 0007D2 EDA0             DEFB h'ED, h'A0
+    834.107 0007D4 EDA0             DEFB h'ED, h'A0
+    834.108 0007D6 EDA0             DEFB h'ED, h'A0
+    834.109 0007D8 EDA0             DEFB h'ED, h'A0
+    834.110 0007DA EDA0             DEFB h'ED, h'A0
+    834.111 0007DC EDA0             DEFB h'ED, h'A0
+    834.112 0007DE EDA0             DEFB h'ED, h'A0
+    834.113 0007E0 EDA0             DEFB h'ED, h'A0
+    834.114 0007E2 EDA0             DEFB h'ED, h'A0
+    834.115 0007E4 EDA0             DEFB h'ED, h'A0
+    834.116 0007E6 EDA0             DEFB h'ED, h'A0
+    834.117 0007E8 EDA0             DEFB h'ED, h'A0
+    834.118 0007EA EDA0             DEFB h'ED, h'A0
+    834.119 0007EC EDA0             DEFB h'ED, h'A0
+    834.120 0007EE EDA0             DEFB h'ED, h'A0
+    834.121 0007F0 EDA0             DEFB h'ED, h'A0
+    834.122 0007F2 EDA0             DEFB h'ED, h'A0
+    834.123 0007F4 EDA0             DEFB h'ED, h'A0
+    834.124 0007F6 EDA0             DEFB h'ED, h'A0
+    834.125 0007F8 EDA0             DEFB h'ED, h'A0
+    834.126 0007FA EDA0             DEFB h'ED, h'A0
+    834.127 0007FC EDA0             DEFB h'ED, h'A0
+    834.128 0007FE EDA0             DEFB h'ED, h'A0
+    834.129 000800 EDA0             DEFB h'ED, h'A0
+    834.130 000802 EDA0             DEFB h'ED, h'A0
+    834.131 000804 EDA0             DEFB h'ED, h'A0
+    834.132 000806 EDA0             DEFB h'ED, h'A0
+    834.133 000808 EDA0             DEFB h'ED, h'A0
+    834.134 00080A EDA0             DEFB h'ED, h'A0
+    834.135 00080C EDA0             DEFB h'ED, h'A0
+    834.136 00080E EDA0             DEFB h'ED, h'A0
+    834.137 000810 EDA0             DEFB h'ED, h'A0
+    834.138 000812 EDA0             DEFB h'ED, h'A0
+    834.139 000814 EDA0             DEFB h'ED, h'A0
+    834.140 000816 EDA0             DEFB h'ED, h'A0
+    834.141 000818 EDA0             DEFB h'ED, h'A0
+    834.142 00081A EDA0             DEFB h'ED, h'A0
+    834.143 00081C EDA0             DEFB h'ED, h'A0
+    834.144 00081E EDA0             DEFB h'ED, h'A0
+    834.145 000820 EDA0             DEFB h'ED, h'A0
+    834.146 000822 EDA0             DEFB h'ED, h'A0
+    834.147 000824 EDA0             DEFB h'ED, h'A0
+    834.148 000826 EDA0             DEFB h'ED, h'A0
+    834.149 000828 EDA0             DEFB h'ED, h'A0
+    834.150 00082A EDA0             DEFB h'ED, h'A0
+    834.151 00082C EDA0             DEFB h'ED, h'A0
+    834.152 00082E EDA0             DEFB h'ED, h'A0
+    834.153 000830 EDA0             DEFB h'ED, h'A0
+    834.154 000832 EDA0             DEFB h'ED, h'A0
+    834.155 000834 EDA0             DEFB h'ED, h'A0
+    834.156 000836 EDA0             DEFB h'ED, h'A0
+    834.157 000838 EDA0             DEFB h'ED, h'A0
+    834.158 00083A EDA0             DEFB h'ED, h'A0
+    834.159 00083C EDA0             DEFB h'ED, h'A0
+    834.160 00083E EDA0             DEFB h'ED, h'A0
+    834.161 000840 EDA0             DEFB h'ED, h'A0
+    834.162 000842 EDA0             DEFB h'ED, h'A0
+    834.163 000844 EDA0             DEFB h'ED, h'A0
+    834.164 000846 EDA0             DEFB h'ED, h'A0
+    834.165 000848 EDA0             DEFB h'ED, h'A0
+    834.166 00084A EDA0             DEFB h'ED, h'A0
+    834.167 00084C EDA0             DEFB h'ED, h'A0
+    834.168 00084E EDA0             DEFB h'ED, h'A0
+    834.169 000850 EDA0             DEFB h'ED, h'A0
+    834.170 000852 EDA0             DEFB h'ED, h'A0
+    834.171 000854 EDA0             DEFB h'ED, h'A0
+    834.172 000856 EDA0             DEFB h'ED, h'A0
+    834.173 000858 EDA0             DEFB h'ED, h'A0
+    834.174 00085A EDA0             DEFB h'ED, h'A0
+    834.175 00085C EDA0             DEFB h'ED, h'A0
+    834.176 00085E EDA0             DEFB h'ED, h'A0
+    834.177 000860 EDA0             DEFB h'ED, h'A0
+    834.178 000862 EDA0             DEFB h'ED, h'A0
+    834.179 000864 EDA0             DEFB h'ED, h'A0
+    834.180 000866 EDA0             DEFB h'ED, h'A0
+    834.181 000868 EDA0             DEFB h'ED, h'A0
+    834.182 00086A EDA0             DEFB h'ED, h'A0
+    834.183 00086C EDA0             DEFB h'ED, h'A0
+    834.184 00086E EDA0             DEFB h'ED, h'A0
+    834.185 000870 EDA0             DEFB h'ED, h'A0
+    834.186 000872 EDA0             DEFB h'ED, h'A0
+    834.187 000874 EDA0             DEFB h'ED, h'A0
+    834.188 000876 EDA0             DEFB h'ED, h'A0
+    834.189 000878 EDA0             DEFB h'ED, h'A0
+    834.190 00087A EDA0             DEFB h'ED, h'A0
+    834.191 00087C EDA0             DEFB h'ED, h'A0
+    834.192 00087E EDA0             DEFB h'ED, h'A0
+    834.193 000880 EDA0             DEFB h'ED, h'A0
+    834.194 000882 EDA0             DEFB h'ED, h'A0
+    834.195 000884 EDA0             DEFB h'ED, h'A0
+    834.196 000886 EDA0             DEFB h'ED, h'A0
+    834.197 000888 EDA0             DEFB h'ED, h'A0
+    834.198 00088A EDA0             DEFB h'ED, h'A0
+    834.199 00088C EDA0             DEFB h'ED, h'A0
+    834.200 00088E EDA0             DEFB h'ED, h'A0
+    834.201 000890 EDA0             DEFB h'ED, h'A0
+    834.202 000892 EDA0             DEFB h'ED, h'A0
+    834.203 000894 EDA0             DEFB h'ED, h'A0
+    834.204 000896 EDA0             DEFB h'ED, h'A0
+    834.205 000898 EDA0             DEFB h'ED, h'A0
+    834.206 00089A EDA0             DEFB h'ED, h'A0
+    834.207 00089C EDA0             DEFB h'ED, h'A0
+    834.208 00089E EDA0             DEFB h'ED, h'A0
+    834.209 0008A0 EDA0             DEFB h'ED, h'A0
+    834.210 0008A2 EDA0             DEFB h'ED, h'A0
+    834.211 0008A4 EDA0             DEFB h'ED, h'A0
+    834.212 0008A6 EDA0             DEFB h'ED, h'A0
+    834.213 0008A8 EDA0             DEFB h'ED, h'A0
+    834.214 0008AA EDA0             DEFB h'ED, h'A0
+    834.215 0008AC EDA0             DEFB h'ED, h'A0
+    834.216 0008AE EDA0             DEFB h'ED, h'A0
+    834.217 0008B0 EDA0             DEFB h'ED, h'A0
+    834.218 0008B2 EDA0             DEFB h'ED, h'A0
+    834.219 0008B4 EDA0             DEFB h'ED, h'A0
+    834.220 0008B6 EDA0             DEFB h'ED, h'A0
+    834.221 0008B8 EDA0             DEFB h'ED, h'A0
+    834.222 0008BA EDA0             DEFB h'ED, h'A0
+    834.223 0008BC EDA0             DEFB h'ED, h'A0
+    834.224 0008BE EDA0             DEFB h'ED, h'A0
+    834.225 0008C0 EDA0             DEFB h'ED, h'A0
+    834.226 0008C2 EDA0             DEFB h'ED, h'A0
+    834.227 0008C4 EDA0             DEFB h'ED, h'A0
+    834.228 0008C6 EDA0             DEFB h'ED, h'A0
+    834.229 0008C8 EDA0             DEFB h'ED, h'A0
+    834.230 0008CA EDA0             DEFB h'ED, h'A0
+    834.231 0008CC EDA0             DEFB h'ED, h'A0
+    834.232 0008CE EDA0             DEFB h'ED, h'A0
+    834.233 0008D0 EDA0             DEFB h'ED, h'A0
+    834.234 0008D2 EDA0             DEFB h'ED, h'A0
+    834.235 0008D4 EDA0             DEFB h'ED, h'A0
+    834.236 0008D6 EDA0             DEFB h'ED, h'A0
+    834.237 0008D8 EDA0             DEFB h'ED, h'A0
+    834.238 0008DA EDA0             DEFB h'ED, h'A0
+    834.239 0008DC EDA0             DEFB h'ED, h'A0
+    834.240 0008DE EDA0             DEFB h'ED, h'A0
+    834.241 0008E0 EDA0             DEFB h'ED, h'A0
+    834.242 0008E2 EDA0             DEFB h'ED, h'A0
+    834.243 0008E4 EDA0             DEFB h'ED, h'A0
+    834.244 0008E6 EDA0             DEFB h'ED, h'A0
+    834.245 0008E8 EDA0             DEFB h'ED, h'A0
+    834.246 0008EA EDA0             DEFB h'ED, h'A0
+    834.247 0008EC EDA0             DEFB h'ED, h'A0
+    834.248 0008EE EDA0             DEFB h'ED, h'A0
+    834.249 0008F0 EDA0             DEFB h'ED, h'A0
+    834.250 0008F2 EDA0             DEFB h'ED, h'A0
+    834.251 0008F4 EDA0             DEFB h'ED, h'A0
+    834.252 0008F6 EDA0             DEFB h'ED, h'A0
+    834.253 0008F8 EDA0             DEFB h'ED, h'A0
+    834.254 0008FA EDA0             DEFB h'ED, h'A0
+    834.255 0008FC EDA0             DEFB h'ED, h'A0
+    834.256 0008FE EDA0             DEFB h'ED, h'A0
+    835    000900          
+    836    000900 D8               RET C
+    837    000901 3A8240           LD A,(SYSTEM)
+    838    000904 328140           LD (CPAGE),A
+    839    000907 D300             OUT (MPAG),A
+    840    000909 C9               RET
+    841    00090A          
+    842    00090A ED44     MLDI    NEG
+    843    00090C 87               ADD A,A
+    844    00090D FD6F             LD IYL,A
+    845    00090F 3E..             LD A,HIGH (LDITAB)
+    846    000911 CE00             ADC A,h'00
+    847    000913 FD67             LD IYH,A
+    848    000915 3A8340           LD A,(SDPAGE)
+    849    000918 328140           LD (CPAGE),A
+    850    00091B D300             OUT (MPAG),A
+    851    00091D FDE9             JP (IY)
+    852    00091F          
+    853    00091F ED44     TLDI    NEG
+    854    000921 87               ADD A,A
+    855    000922 FD6F             LD IYL,A
+    856    000924 3E..             LD A,HIGH (LDITAB)
+    857    000926 CE00             ADC A,h'00
+    858    000928 FD67             LD IYH,A
+    859    00092A 37               SCF
+    860    00092B FDE9             JP (IY)
+    861    00092D          
+    862    00092D ED44     MLDD    NEG
+    863    00092F 87               ADD A,A
+    864    000930 FD6F             LD IYL,A
+    865    000932 3E..             LD A,HIGH (LDDTAB)
+    866    000934 CE00             ADC A,h'00
+    867    000936 FD67             LD IYH,A
+    868    000938 3A8340           LD A,(SDPAGE)
+    869    00093B 328140           LD (CPAGE),A
+    870    00093E D300             OUT (MPAG),A
+    871    000940 FDE9             JP (IY)
+    872    000942          
+    873    000942                  ALIGN256
+    873.1  000A00                  org (($ - 1) & h'FF00) + h'100
+    873.2  000A00                  ENDM
+    874    000A00          
+    875    000A00          LDDTAB  REPT h'100
+    876    000A00                  DEFB h'ED, h'A8
+    877    000A00                  ENDR
+    877.1  000A00 EDA8             DEFB h'ED, h'A8
+    877.2  000A02 EDA8             DEFB h'ED, h'A8
+    877.3  000A04 EDA8             DEFB h'ED, h'A8
+    877.4  000A06 EDA8             DEFB h'ED, h'A8
+    877.5  000A08 EDA8             DEFB h'ED, h'A8
+    877.6  000A0A EDA8             DEFB h'ED, h'A8
+    877.7  000A0C EDA8             DEFB h'ED, h'A8
+    877.8  000A0E EDA8             DEFB h'ED, h'A8
+    877.9  000A10 EDA8             DEFB h'ED, h'A8
+    877.10 000A12 EDA8             DEFB h'ED, h'A8
+    877.11 000A14 EDA8             DEFB h'ED, h'A8
+    877.12 000A16 EDA8             DEFB h'ED, h'A8
+    877.13 000A18 EDA8             DEFB h'ED, h'A8
+    877.14 000A1A EDA8             DEFB h'ED, h'A8
+    877.15 000A1C EDA8             DEFB h'ED, h'A8
+    877.16 000A1E EDA8             DEFB h'ED, h'A8
+    877.17 000A20 EDA8             DEFB h'ED, h'A8
+    877.18 000A22 EDA8             DEFB h'ED, h'A8
+    877.19 000A24 EDA8             DEFB h'ED, h'A8
+    877.20 000A26 EDA8             DEFB h'ED, h'A8
+    877.21 000A28 EDA8             DEFB h'ED, h'A8
+    877.22 000A2A EDA8             DEFB h'ED, h'A8
+    877.23 000A2C EDA8             DEFB h'ED, h'A8
+    877.24 000A2E EDA8             DEFB h'ED, h'A8
+    877.25 000A30 EDA8             DEFB h'ED, h'A8
+    877.26 000A32 EDA8             DEFB h'ED, h'A8
+    877.27 000A34 EDA8             DEFB h'ED, h'A8
+    877.28 000A36 EDA8             DEFB h'ED, h'A8
+    877.29 000A38 EDA8             DEFB h'ED, h'A8
+    877.30 000A3A EDA8             DEFB h'ED, h'A8
+    877.31 000A3C EDA8             DEFB h'ED, h'A8
+    877.32 000A3E EDA8             DEFB h'ED, h'A8
+    877.33 000A40 EDA8             DEFB h'ED, h'A8
+    877.34 000A42 EDA8             DEFB h'ED, h'A8
+    877.35 000A44 EDA8             DEFB h'ED, h'A8
+    877.36 000A46 EDA8             DEFB h'ED, h'A8
+    877.37 000A48 EDA8             DEFB h'ED, h'A8
+    877.38 000A4A EDA8             DEFB h'ED, h'A8
+    877.39 000A4C EDA8             DEFB h'ED, h'A8
+    877.40 000A4E EDA8             DEFB h'ED, h'A8
+    877.41 000A50 EDA8             DEFB h'ED, h'A8
+    877.42 000A52 EDA8             DEFB h'ED, h'A8
+    877.43 000A54 EDA8             DEFB h'ED, h'A8
+    877.44 000A56 EDA8             DEFB h'ED, h'A8
+    877.45 000A58 EDA8             DEFB h'ED, h'A8
+    877.46 000A5A EDA8             DEFB h'ED, h'A8
+    877.47 000A5C EDA8             DEFB h'ED, h'A8
+    877.48 000A5E EDA8             DEFB h'ED, h'A8
+    877.49 000A60 EDA8             DEFB h'ED, h'A8
+    877.50 000A62 EDA8             DEFB h'ED, h'A8
+    877.51 000A64 EDA8             DEFB h'ED, h'A8
+    877.52 000A66 EDA8             DEFB h'ED, h'A8
+    877.53 000A68 EDA8             DEFB h'ED, h'A8
+    877.54 000A6A EDA8             DEFB h'ED, h'A8
+    877.55 000A6C EDA8             DEFB h'ED, h'A8
+    877.56 000A6E EDA8             DEFB h'ED, h'A8
+    877.57 000A70 EDA8             DEFB h'ED, h'A8
+    877.58 000A72 EDA8             DEFB h'ED, h'A8
+    877.59 000A74 EDA8             DEFB h'ED, h'A8
+    877.60 000A76 EDA8             DEFB h'ED, h'A8
+    877.61 000A78 EDA8             DEFB h'ED, h'A8
+    877.62 000A7A EDA8             DEFB h'ED, h'A8
+    877.63 000A7C EDA8             DEFB h'ED, h'A8
+    877.64 000A7E EDA8             DEFB h'ED, h'A8
+    877.65 000A80 EDA8             DEFB h'ED, h'A8
+    877.66 000A82 EDA8             DEFB h'ED, h'A8
+    877.67 000A84 EDA8             DEFB h'ED, h'A8
+    877.68 000A86 EDA8             DEFB h'ED, h'A8
+    877.69 000A88 EDA8             DEFB h'ED, h'A8
+    877.70 000A8A EDA8             DEFB h'ED, h'A8
+    877.71 000A8C EDA8             DEFB h'ED, h'A8
+    877.72 000A8E EDA8             DEFB h'ED, h'A8
+    877.73 000A90 EDA8             DEFB h'ED, h'A8
+    877.74 000A92 EDA8             DEFB h'ED, h'A8
+    877.75 000A94 EDA8             DEFB h'ED, h'A8
+    877.76 000A96 EDA8             DEFB h'ED, h'A8
+    877.77 000A98 EDA8             DEFB h'ED, h'A8
+    877.78 000A9A EDA8             DEFB h'ED, h'A8
+    877.79 000A9C EDA8             DEFB h'ED, h'A8
+    877.80 000A9E EDA8             DEFB h'ED, h'A8
+    877.81 000AA0 EDA8             DEFB h'ED, h'A8
+    877.82 000AA2 EDA8             DEFB h'ED, h'A8
+    877.83 000AA4 EDA8             DEFB h'ED, h'A8
+    877.84 000AA6 EDA8             DEFB h'ED, h'A8
+    877.85 000AA8 EDA8             DEFB h'ED, h'A8
+    877.86 000AAA EDA8             DEFB h'ED, h'A8
+    877.87 000AAC EDA8             DEFB h'ED, h'A8
+    877.88 000AAE EDA8             DEFB h'ED, h'A8
+    877.89 000AB0 EDA8             DEFB h'ED, h'A8
+    877.90 000AB2 EDA8             DEFB h'ED, h'A8
+    877.91 000AB4 EDA8             DEFB h'ED, h'A8
+    877.92 000AB6 EDA8             DEFB h'ED, h'A8
+    877.93 000AB8 EDA8             DEFB h'ED, h'A8
+    877.94 000ABA EDA8             DEFB h'ED, h'A8
+    877.95 000ABC EDA8             DEFB h'ED, h'A8
+    877.96 000ABE EDA8             DEFB h'ED, h'A8
+    877.97 000AC0 EDA8             DEFB h'ED, h'A8
+    877.98 000AC2 EDA8             DEFB h'ED, h'A8
+    877.99 000AC4 EDA8             DEFB h'ED, h'A8
+    877.100 000AC6 EDA8             DEFB h'ED, h'A8
+    877.101 000AC8 EDA8             DEFB h'ED, h'A8
+    877.102 000ACA EDA8             DEFB h'ED, h'A8
+    877.103 000ACC EDA8             DEFB h'ED, h'A8
+    877.104 000ACE EDA8             DEFB h'ED, h'A8
+    877.105 000AD0 EDA8             DEFB h'ED, h'A8
+    877.106 000AD2 EDA8             DEFB h'ED, h'A8
+    877.107 000AD4 EDA8             DEFB h'ED, h'A8
+    877.108 000AD6 EDA8             DEFB h'ED, h'A8
+    877.109 000AD8 EDA8             DEFB h'ED, h'A8
+    877.110 000ADA EDA8             DEFB h'ED, h'A8
+    877.111 000ADC EDA8             DEFB h'ED, h'A8
+    877.112 000ADE EDA8             DEFB h'ED, h'A8
+    877.113 000AE0 EDA8             DEFB h'ED, h'A8
+    877.114 000AE2 EDA8             DEFB h'ED, h'A8
+    877.115 000AE4 EDA8             DEFB h'ED, h'A8
+    877.116 000AE6 EDA8             DEFB h'ED, h'A8
+    877.117 000AE8 EDA8             DEFB h'ED, h'A8
+    877.118 000AEA EDA8             DEFB h'ED, h'A8
+    877.119 000AEC EDA8             DEFB h'ED, h'A8
+    877.120 000AEE EDA8             DEFB h'ED, h'A8
+    877.121 000AF0 EDA8             DEFB h'ED, h'A8
+    877.122 000AF2 EDA8             DEFB h'ED, h'A8
+    877.123 000AF4 EDA8             DEFB h'ED, h'A8
+    877.124 000AF6 EDA8             DEFB h'ED, h'A8
+    877.125 000AF8 EDA8             DEFB h'ED, h'A8
+    877.126 000AFA EDA8             DEFB h'ED, h'A8
+    877.127 000AFC EDA8             DEFB h'ED, h'A8
+    877.128 000AFE EDA8             DEFB h'ED, h'A8
+    877.129 000B00 EDA8             DEFB h'ED, h'A8
+    877.130 000B02 EDA8             DEFB h'ED, h'A8
+    877.131 000B04 EDA8             DEFB h'ED, h'A8
+    877.132 000B06 EDA8             DEFB h'ED, h'A8
+    877.133 000B08 EDA8             DEFB h'ED, h'A8
+    877.134 000B0A EDA8             DEFB h'ED, h'A8
+    877.135 000B0C EDA8             DEFB h'ED, h'A8
+    877.136 000B0E EDA8             DEFB h'ED, h'A8
+    877.137 000B10 EDA8             DEFB h'ED, h'A8
+    877.138 000B12 EDA8             DEFB h'ED, h'A8
+    877.139 000B14 EDA8             DEFB h'ED, h'A8
+    877.140 000B16 EDA8             DEFB h'ED, h'A8
+    877.141 000B18 EDA8             DEFB h'ED, h'A8
+    877.142 000B1A EDA8             DEFB h'ED, h'A8
+    877.143 000B1C EDA8             DEFB h'ED, h'A8
+    877.144 000B1E EDA8             DEFB h'ED, h'A8
+    877.145 000B20 EDA8             DEFB h'ED, h'A8
+    877.146 000B22 EDA8             DEFB h'ED, h'A8
+    877.147 000B24 EDA8             DEFB h'ED, h'A8
+    877.148 000B26 EDA8             DEFB h'ED, h'A8
+    877.149 000B28 EDA8             DEFB h'ED, h'A8
+    877.150 000B2A EDA8             DEFB h'ED, h'A8
+    877.151 000B2C EDA8             DEFB h'ED, h'A8
+    877.152 000B2E EDA8             DEFB h'ED, h'A8
+    877.153 000B30 EDA8             DEFB h'ED, h'A8
+    877.154 000B32 EDA8             DEFB h'ED, h'A8
+    877.155 000B34 EDA8             DEFB h'ED, h'A8
+    877.156 000B36 EDA8             DEFB h'ED, h'A8
+    877.157 000B38 EDA8             DEFB h'ED, h'A8
+    877.158 000B3A EDA8             DEFB h'ED, h'A8
+    877.159 000B3C EDA8             DEFB h'ED, h'A8
+    877.160 000B3E EDA8             DEFB h'ED, h'A8
+    877.161 000B40 EDA8             DEFB h'ED, h'A8
+    877.162 000B42 EDA8             DEFB h'ED, h'A8
+    877.163 000B44 EDA8             DEFB h'ED, h'A8
+    877.164 000B46 EDA8             DEFB h'ED, h'A8
+    877.165 000B48 EDA8             DEFB h'ED, h'A8
+    877.166 000B4A EDA8             DEFB h'ED, h'A8
+    877.167 000B4C EDA8             DEFB h'ED, h'A8
+    877.168 000B4E EDA8             DEFB h'ED, h'A8
+    877.169 000B50 EDA8             DEFB h'ED, h'A8
+    877.170 000B52 EDA8             DEFB h'ED, h'A8
+    877.171 000B54 EDA8             DEFB h'ED, h'A8
+    877.172 000B56 EDA8             DEFB h'ED, h'A8
+    877.173 000B58 EDA8             DEFB h'ED, h'A8
+    877.174 000B5A EDA8             DEFB h'ED, h'A8
+    877.175 000B5C EDA8             DEFB h'ED, h'A8
+    877.176 000B5E EDA8             DEFB h'ED, h'A8
+    877.177 000B60 EDA8             DEFB h'ED, h'A8
+    877.178 000B62 EDA8             DEFB h'ED, h'A8
+    877.179 000B64 EDA8             DEFB h'ED, h'A8
+    877.180 000B66 EDA8             DEFB h'ED, h'A8
+    877.181 000B68 EDA8             DEFB h'ED, h'A8
+    877.182 000B6A EDA8             DEFB h'ED, h'A8
+    877.183 000B6C EDA8             DEFB h'ED, h'A8
+    877.184 000B6E EDA8             DEFB h'ED, h'A8
+    877.185 000B70 EDA8             DEFB h'ED, h'A8
+    877.186 000B72 EDA8             DEFB h'ED, h'A8
+    877.187 000B74 EDA8             DEFB h'ED, h'A8
+    877.188 000B76 EDA8             DEFB h'ED, h'A8
+    877.189 000B78 EDA8             DEFB h'ED, h'A8
+    877.190 000B7A EDA8             DEFB h'ED, h'A8
+    877.191 000B7C EDA8             DEFB h'ED, h'A8
+    877.192 000B7E EDA8             DEFB h'ED, h'A8
+    877.193 000B80 EDA8             DEFB h'ED, h'A8
+    877.194 000B82 EDA8             DEFB h'ED, h'A8
+    877.195 000B84 EDA8             DEFB h'ED, h'A8
+    877.196 000B86 EDA8             DEFB h'ED, h'A8
+    877.197 000B88 EDA8             DEFB h'ED, h'A8
+    877.198 000B8A EDA8             DEFB h'ED, h'A8
+    877.199 000B8C EDA8             DEFB h'ED, h'A8
+    877.200 000B8E EDA8             DEFB h'ED, h'A8
+    877.201 000B90 EDA8             DEFB h'ED, h'A8
+    877.202 000B92 EDA8             DEFB h'ED, h'A8
+    877.203 000B94 EDA8             DEFB h'ED, h'A8
+    877.204 000B96 EDA8             DEFB h'ED, h'A8
+    877.205 000B98 EDA8             DEFB h'ED, h'A8
+    877.206 000B9A EDA8             DEFB h'ED, h'A8
+    877.207 000B9C EDA8             DEFB h'ED, h'A8
+    877.208 000B9E EDA8             DEFB h'ED, h'A8
+    877.209 000BA0 EDA8             DEFB h'ED, h'A8
+    877.210 000BA2 EDA8             DEFB h'ED, h'A8
+    877.211 000BA4 EDA8             DEFB h'ED, h'A8
+    877.212 000BA6 EDA8             DEFB h'ED, h'A8
+    877.213 000BA8 EDA8             DEFB h'ED, h'A8
+    877.214 000BAA EDA8             DEFB h'ED, h'A8
+    877.215 000BAC EDA8             DEFB h'ED, h'A8
+    877.216 000BAE EDA8             DEFB h'ED, h'A8
+    877.217 000BB0 EDA8             DEFB h'ED, h'A8
+    877.218 000BB2 EDA8             DEFB h'ED, h'A8
+    877.219 000BB4 EDA8             DEFB h'ED, h'A8
+    877.220 000BB6 EDA8             DEFB h'ED, h'A8
+    877.221 000BB8 EDA8             DEFB h'ED, h'A8
+    877.222 000BBA EDA8             DEFB h'ED, h'A8
+    877.223 000BBC EDA8             DEFB h'ED, h'A8
+    877.224 000BBE EDA8             DEFB h'ED, h'A8
+    877.225 000BC0 EDA8             DEFB h'ED, h'A8
+    877.226 000BC2 EDA8             DEFB h'ED, h'A8
+    877.227 000BC4 EDA8             DEFB h'ED, h'A8
+    877.228 000BC6 EDA8             DEFB h'ED, h'A8
+    877.229 000BC8 EDA8             DEFB h'ED, h'A8
+    877.230 000BCA EDA8             DEFB h'ED, h'A8
+    877.231 000BCC EDA8             DEFB h'ED, h'A8
+    877.232 000BCE EDA8             DEFB h'ED, h'A8
+    877.233 000BD0 EDA8             DEFB h'ED, h'A8
+    877.234 000BD2 EDA8             DEFB h'ED, h'A8
+    877.235 000BD4 EDA8             DEFB h'ED, h'A8
+    877.236 000BD6 EDA8             DEFB h'ED, h'A8
+    877.237 000BD8 EDA8             DEFB h'ED, h'A8
+    877.238 000BDA EDA8             DEFB h'ED, h'A8
+    877.239 000BDC EDA8             DEFB h'ED, h'A8
+    877.240 000BDE EDA8             DEFB h'ED, h'A8
+    877.241 000BE0 EDA8             DEFB h'ED, h'A8
+    877.242 000BE2 EDA8             DEFB h'ED, h'A8
+    877.243 000BE4 EDA8             DEFB h'ED, h'A8
+    877.244 000BE6 EDA8             DEFB h'ED, h'A8
+    877.245 000BE8 EDA8             DEFB h'ED, h'A8
+    877.246 000BEA EDA8             DEFB h'ED, h'A8
+    877.247 000BEC EDA8             DEFB h'ED, h'A8
+    877.248 000BEE EDA8             DEFB h'ED, h'A8
+    877.249 000BF0 EDA8             DEFB h'ED, h'A8
+    877.250 000BF2 EDA8             DEFB h'ED, h'A8
+    877.251 000BF4 EDA8             DEFB h'ED, h'A8
+    877.252 000BF6 EDA8             DEFB h'ED, h'A8
+    877.253 000BF8 EDA8             DEFB h'ED, h'A8
+    877.254 000BFA EDA8             DEFB h'ED, h'A8
+    877.255 000BFC EDA8             DEFB h'ED, h'A8
+    877.256 000BFE EDA8             DEFB h'ED, h'A8
+    878    000C00          
+    879    000C00 3A8240           LD A,(SYSTEM)
+    880    000C03 328140           LD (CPAGE),A
+    881    000C06 D300             OUT (MPAG),A
+    882    000C08 C9               RET
+    883    000C09          
+    884    000C09          
+    885    000C09          ; RET B,DE - OLD CURADR
+    886    000C09          ;h'0C09
+    887    000C09          
+    888    000C09 0681     LOAD    LD B,h'81
+    889    000C0B 2A9841           LD HL,(CURADR)
+    890    000C0E 3A9A41           LD A,(CURADR+2)
+    891    000C11 37               SCF
+    892    000C12 CB14             RL H
+    893    000C14 17               RLA
+    894    000C15 CB0C             RRC H
+    895    000C17 5F               LD E,A
+    896    000C18 1640             LD D,HIGH (RAMPG)
+    897    000C1A 1A       LOAD_   LD A,(DE)
+    898    000C1B B7               OR A
+    899    000C1C CA....           JP Z,LOADEFWT3
+    900    000C1F 328140           LD (CPAGE),A
+    901    000C22 D300             OUT (MPAG),A
+    902    000C24 3A8040           LD A,(NUMPG)
+    903    000C27 BB               CP E
+    904    000C28 2008             JR NZ,LOADEFWT
+    905    000C2A 7C               LD A,H
+    906    000C2B FEC0             CP h'C0
+    907    000C2D 3834             JR C,LOADEFWT2
+    908    000C2F C3....           JP LOADEFWT3
+    909    000C32          
+    910    000C32          LOADEFWT
+    911    000C32 DB04             IN A,(ZXSTAT)
+    912    000C34 A0               AND B
+    913    000C35 28FB             JR Z,LOADEFWT
+    914    000C37 0F               RRCA
+    915    000C38 DB02             IN A,(ZXDATRD)
+    916    000C3A 3811             JR C,LOADCM
+    917    000C3C 81               ADD A,C
+    918    000C3D 77               LD (HL),A
+    919    000C3E 2C               INC L
+    920    000C3F C2....           JP NZ,LOADEFWT
+    921    000C42 24               INC H
+    922    000C43 C2....           JP NZ,LOADEFWT
+    923    000C46 1C               INC E
+    924    000C47 210080           LD HL,h'8000
+    925    000C4A C3....           JP LOAD_
+    926    000C4D          
+    927    000C4D DB01     LOADCM  IN A,(ZXCMD)
+    928    000C4F FEF3             CP h'F3
+    929    000C51 CA....           JP Z,COMF3
+    930    000C54 FEF4             CP h'F4
+    931    000C56 CA....           JP Z,COMF4
+    932    000C59 D305             OUT (CLRCBIT),A
+    933    000C5B FED2             CP h'D2
+    934    000C5D CA....           JP Z,LOAD3
+    935    000C60 C3....           JP LOADEFWT
+    936    000C63          
+    937    000C63          LOADEFWT2
+    938    000C63 DB04             IN A,(ZXSTAT)
+    939    000C65 A0               AND B
+    940    000C66 28FB             JR Z,LOADEFWT2
+    941    000C68 0F               RRCA
+    942    000C69 DB02             IN A,(ZXDATRD)
+    943    000C6B 382B             JR C,LOADCM2
+    944    000C6D 77               LD (HL),A
+    945    000C6E 2C               INC L
+    946    000C6F C2....           JP NZ,LOADEFWT2
+    947    000C72 24               INC H
+    948    000C73 CB74             BIT 6,H
+    949    000C75 CA....           JP Z,LOADEFWT2
+    950    000C78          LOADEFWT3
+    951    000C78 DB04             IN A,(ZXSTAT)
+    952    000C7A A0               AND B
+    953    000C7B 28FB             JR Z,LOADEFWT3
+    954    000C7D 0F               RRCA
+    955    000C7E DB02             IN A,(ZXDATRD)
+    956    000C80 D2....           JP NC,LOADEFWT3
+    957    000C83 DB01             IN A,(ZXCMD)
+    958    000C85 FEF3             CP h'F3
+    959    000C87 CA....           JP Z,COMF3
+    960    000C8A FEF4             CP h'F4
+    961    000C8C CA....           JP Z,COMF4
+    962    000C8F D305             OUT (CLRCBIT),A
+    963    000C91 FED2             CP h'D2
+    964    000C93 2818             JR Z,LOAD3
+    965    000C95 C3....           JP LOADEFWT3
+    966    000C98          
+    967    000C98 DB01     LOADCM2 IN A,(ZXCMD)
+    968    000C9A FEF3             CP h'F3
+    969    000C9C CA....           JP Z,COMF3
+    970    000C9F FEF4             CP h'F4
+    971    000CA1 CA....           JP Z,COMF4
+    972    000CA4 D305             OUT (CLRCBIT),A
+    973    000CA6 FED2             CP h'D2
+    974    000CA8 2803             JR Z,LOAD3
+    975    000CAA C3....           JP LOADEFWT2
+    976    000CAD          
+    977    000CAD 7B       LOAD3   LD A,E
+    978    000CAE CB14             RL H
+    979    000CB0 CB3F             SRL A
+    980    000CB2 CB1C             RR H
+    981    000CB4 229841           LD (CURADR),HL
+    982    000CB7 329A41           LD (CURADR+2),A
+    983    000CBA 22D940           LD (MEMBOT),HL
+    984    000CBD 32DB40           LD (MEMBOT+2),A
+    985    000CC0 5F               LD E,A
+    986    000CC1 AF               XOR A
+    987    000CC2 328140           LD (CPAGE),A
+    988    000CC5 D300             OUT (MPAG),A
+    989    000CC7 7B               LD A,E
+    990    000CC8 C9               RET
+    991    000CC9          
+    992    000CC9 3A0040   PLAYMD  LD A,(RAMPG)            ;h'0CC9
+    993    000CCC D300             OUT (MPAG),A
+    994    000CCE FD210046         LD IY,CHANS
+    995    000CD2 114000           LD DE,CHANLEN
+    996    000CD5 0604             LD B,h'04
+    997    000CD7          RDLP1
+    998    000CD7          ;---patched
+    999    000CD7 CD....           CALL Patch4
+   1000    000CDA 00               NOP
+   1001    000CDB          ;---
+   1002    000CDB FD360F00         LD (IY+CHCNTH),h'00
+   1003    000CDF FD363F80         LD (IY+CHOLDV),h'80
+   1004    000CE3 FD360001         LD (IY+CHSTAT),h'01
+   1005    000CE7 FD363500         LD (IY+CHLPCNT),h'00
+   1006    000CEB FD363400         LD (IY+CHPATPS),h'00
+   1007    000CEF FD363300         LD (IY+CHTRMPS),h'00
+   1008    000CF3 FD363100         LD (IY+CHVIBPS),h'00
+   1009    000CF7 FD361940         LD (IY+CHVOL),h'40
+   1010    000CFB FD361A40         LD (IY+CHMVOL),h'40
+   1011    000CFF FD362900         LD (IY+CHINS),h'00
+   1012    000D03 FD362A00         LD (IY+CHSMP),h'00
+   1013    000D07 FD361780         LD (IY+CHPAN),h'80
+   1014    000D0B FD361820         LD (IY+CHEPAN),h'20
+   1015    000D0F FD361B40         LD (IY+CHEVOL),h'40
+   1016    000D13 FD3621FF         LD (IY+CHFADVL),h'FF
+   1017    000D17 FD3622FF         LD (IY+CHFADVH),h'FF
+   1018    000D1B FD19             ADD IY,DE
+   1019    000D1D 10B8             DJNZ RDLP1
+   1020    000D1F DD2EFF           LD IXL,h'FF
+   1021    000D22 3A3884           LD A,(h'8000+1080)      ;определен�
+                                                           �е сигнатур
+                                                           ы заголовк�
+                                                           �
+   1022    000D25 FE4D             CP 'M'
+   1023    000D27 280E             JR Z,TTY1
+   1024    000D29 FE34             CP '4'
+   1025    000D2B 280A             JR Z,TTY1
+   1026    000D2D FE46             CP 'F'
+   1027    000D2F 2806             JR Z,TTY1
+   1028    000D31 DD2E00           LD IXL,h'00
+   1029    000D34 C3....           JP TTY0
+   1030    000D37 3A3984   TTY1    LD A,(h'8000+1081)
+   1031    000D3A FE2E             CP '.'
+   1032    000D3C 2812             JR Z,TTY2
+   1033    000D3E FE4C             CP 'L'
+   1034    000D40 280E             JR Z,TTY2
+   1035    000D42 FE21             CP '!'
+   1036    000D44 280A             JR Z,TTY2
+   1037    000D46 FE43             CP 'C'
+   1038    000D48 2806             JR Z,TTY2
+   1039    000D4A DD2E00           LD IXL,h'00
+   1040    000D4D C3....           JP TTY0
+   1041    000D50 3A3A84   TTY2    LD A,(h'8000+1082)
+   1042    000D53 FE4B             CP 'K'
+   1043    000D55 280B             JR Z,TTY0
+   1044    000D57 FE54             CP 'T'
+   1045    000D59 2807             JR Z,TTY0
+   1046    000D5B FE48             CP 'H'
+   1047    000D5D 2803             JR Z,TTY0
+   1048    000D5F DD2E00           LD IXL,h'00
+   1049    000D62 DD7D     TTY0    LD A,IXL
+   1050    000D64 329F41           LD (MODTP),A
+   1051    000D67 21B883           LD HL,h'8000+952
+   1052    000D6A B7               OR A
+   1053    000D6B          ;---patched
+   1054    000D6B 113C04           LD DE,h'0000+1084
+   1055    000D6E 2006             JR NZ,TTY10
+   1056    000D70 115802           LD DE,h'0000+600                ;разме�
+                                                                   � загол
+                                                                   овка
+                                                                    файла
+   1057    000D73 21D881           LD HL,h'8000+472                ;смеще�
+                                                                   �ие до
+                                                                    табли�
+                                                                   �ы
+                                                                    патер�
+                                                                   �ов
+   1058    000D76 0680     TTY10   LD B,h'80               ;сканирова�
+                                                           �ие таблицы
+                                                            патернов
+   1059    000D78 97               SUB A
+   1060    000D79 BE       FDF2    CP (HL)
+   1061    000D7A 3001             JR NC,FDF
+   1062    000D7C 7E               LD A,(HL)
+   1063    000D7D 23       FDF     INC HL
+   1064    000D7E 10F9             DJNZ FDF2
+   1065    000D80 3C               INC A
+   1066    000D81 329E41           LD (PATTS),A            ;количеств�
+                                                           � патернов
+   1067    000D84 6F               LD L,A
+   1068    000D85 60               LD H,B
+   1069    000D86 29               ADD HL,HL
+   1070    000D87 29               ADD HL,HL               ;HL=кол-во
+                                                            патернов*4
+   1071    000D88 7C               LD A,H
+   1072    000D89 65               LD H,L
+   1073    000D8A 68               LD L,B
+   1074    000D8B 19               ADD HL,DE
+   1075    000D8C 88               ADC A,B
+   1076    000D8D CB34             DEFB h'CB,h'34;SLI H
+   1077    000D8F 17               RLA
+   1078    000D90 CB0C             RRC H
+   1079    000D92 5F               LD E,A
+   1080    000D93 229B41           LD (SMPS),HL
+   1081    000D96 329D41           LD (SMPS+2),A
+   1082    000D99                  DUPL 3,0
+   1082.1  000D99                          REPT 3
+   1082.2  000D99                          DEFB 0
+   1082.3  000D99                          ENDR
+   1082.4  000D99 00                       DEFB 0
+   1082.5  000D9C                          ENDM
+   1083    000D9C          ;---
+   1084    000D9C DD7D             LD A,IXL
+   1085    000D9E B7               OR A
+   1086    000D9F 01B683           LD BC,h'8000+950
+   1087    000DA2 2003             JR NZ,TTT11
+   1088    000DA4 01D681           LD BC,h'8000+470
+   1089    000DA7 0A       TTT11   LD A,(BC)
+   1090    000DA8 3D               DEC A
+   1091    000DA9 325C41           LD (MTSNGSZ),A
+   1092    000DAC 03               INC BC
+   1093    000DAD 0A               LD A,(BC)
+   1094    000DAE 325D41           LD (MTSNGLP),A
+   1095    000DB1 DD210054         LD IX,h'5400
+   1096    000DB5 FD211480         LD IY,h'8000+20         ;начало
+                                                            сэмплов
+   1097    000DB9 061F             LD B,31
+   1098    000DBB 4B               LD C,E
+   1099    000DBC C5       RDLP3   PUSH BC
+   1100    000DBD DD7100           LD (IX+SMPBEG),C
+   1101    000DC0 DD7501           LD (IX+SMPBEG+1),L
+   1102    000DC3 DD7402           LD (IX+SMPBEG+2),H
+   1103    000DC6 FD7E1C           LD A,(IY+28)
+   1104    000DC9 B7               OR A
+   1105    000DCA 2008             JR NZ,LPL
+   1106    000DCC FD7E1D           LD A,(IY+29)
+   1107    000DCF FE02             CP h'02
+   1108    000DD1 DA....           JP C,NLPL
+   1109    000DD4 E5       LPL     PUSH HL
+   1110    000DD5 C5               PUSH BC
+   1111    000DD6 FD6E1B           LD L,(IY+27)
+   1112    000DD9 FD661A           LD H,(IY+26)
+   1113    000DDC FD5E17           LD E,(IY+23)
+   1114    000DDF FD5616           LD D,(IY+22)
+   1115    000DE2 ED52             SBC HL,DE
+   1116    000DE4 C1               POP BC
+   1117    000DE5 E1               POP HL
+   1118    000DE6 D2....           JP NC,NLPL
+   1119    000DE9 E5               PUSH HL
+   1120    000DEA C5               PUSH BC
+   1121    000DEB FD5E1B           LD E,(IY+27)
+   1122    000DEE FD561A           LD D,(IY+26)
+   1123    000DF1 EB               EX DE,HL
+   1124    000DF2 29               ADD HL,HL
+   1125    000DF3 EB               EX DE,HL
+   1126    000DF4 0600             LD B,0
+   1127    000DF6 CB10             RL B
+   1128    000DF8 CB39             SRL C
+   1129    000DFA CB14             RL H
+   1130    000DFC CB0C             RRC H
+   1131    000DFE 19               ADD HL,DE
+   1132    000DFF 79               LD A,C
+   1133    000E00 88               ADC A,B
+   1134    000E01 4F               LD C,A
+   1135    000E02 CB34             DEFB h'CB,h'34;SLI H
+   1136    000E04 CB11             RL C
+   1137    000E06 CB0C             RRC H
+   1138    000E08 DD7108           LD (IX+SMPLPB),C
+   1139    000E0B DD7509           LD (IX+SMPLPB+1),L
+   1140    000E0E DD740A           LD (IX+SMPLPB+2),H
+   1141    000E11 CB39             SRL C
+   1142    000E13 CB14             RL H
+   1143    000E15 CB0C             RRC H
+   1144    000E17 FD5E1D           LD E,(IY+29)
+   1145    000E1A FD561C           LD D,(IY+28)
+   1146    000E1D EB               EX DE,HL
+   1147    000E1E 29               ADD HL,HL
+   1148    000E1F EB               EX DE,HL
+   1149    000E20 0600             LD B,0
+   1150    000E22 CB10             RL B
+   1151    000E24 19               ADD HL,DE
+   1152    000E25 79               LD A,C
+   1153    000E26 88               ADC A,B
+   1154    000E27 4F               LD C,A
+   1155    000E28 CB34             DEFB h'CB,h'34;SLI H
+   1156    000E2A CB11             RL C
+   1157    000E2C CB0C             RRC H
+   1158    000E2E DD710B           LD (IX+SMPLPE),C
+   1159    000E31 DD750C           LD (IX+SMPLPE+1),L
+   1160    000E34 DD740D           LD (IX+SMPLPE+2),H
+   1161    000E37 C1               POP BC
+   1162    000E38 E1               POP HL
+   1163    000E39 FD5E17           LD E,(IY+23)
+   1164    000E3C FD5616           LD D,(IY+22)
+   1165    000E3F EB               EX DE,HL
+   1166    000E40 29               ADD HL,HL
+   1167    000E41 EB               EX DE,HL
+   1168    000E42 0600             LD B,h'00
+   1169    000E44 CB10             RL B
+   1170    000E46 CB39             SRL C
+   1171    000E48 CB14             RL H
+   1172    000E4A CB0C             RRC H
+   1173    000E4C 19               ADD HL,DE
+   1174    000E4D 79               LD A,C
+   1175    000E4E 88               ADC A,B
+   1176    000E4F 4F               LD C,A
+   1177    000E50 CB34             DEFB h'CB,h'34;SLI H
+   1178    000E52 CB11             RL C
+   1179    000E54 CB0C             RRC H
+   1180    000E56 C3....           JP LPL2
+   1181    000E59          
+   1182    000E59 DD7E0B           LD A,(IX+SMPLPE)
+   1183    000E5C B9               CP C
+   1184    000E5D 3825             JR C,LPL2
+   1185    000E5F 200E             JR NZ,LPL1
+   1186    000E61 DD7E0D           LD A,(IX+SMPLPE+2)
+   1187    000E64 BC               CP H
+   1188    000E65 381D             JR C,LPL2
+   1189    000E67 2006             JR NZ,LPL1
+   1190    000E69 DD7E0C           LD A,(IX+SMPLPE+1)
+   1191    000E6C BD               CP L
+   1192    000E6D 3815             JR C,LPL2
+   1193    000E6F DD7E03   LPL1    LD A,(IX+SMPEND)
+   1194    000E72 DD770B           LD (IX+SMPLPE),A
+   1195    000E75 DD7E04           LD A,(IX+SMPEND+1)
+   1196    000E78 DD770C           LD (IX+SMPLPE+1),A
+   1197    000E7B DD7E05           LD A,(IX+SMPEND+2)
+   1198    000E7E DD770D           LD (IX+SMPLPE+2),A
+   1199    000E81 C3....           JP LPCNT
+   1200    000E84          
+   1201    000E84 DD7E0B   LPL2    LD A,(IX+SMPLPE)
+   1202    000E87 DD7703           LD (IX+SMPEND),A
+   1203    000E8A DD7E0C           LD A,(IX+SMPLPE+1)
+   1204    000E8D DD7704           LD (IX+SMPEND+1),A
+   1205    000E90 DD7E0D           LD A,(IX+SMPLPE+2)
+   1206    000E93 DD7705           LD (IX+SMPEND+2),A
+   1207    000E96 C3....           JP LPCNT
+   1208    000E99          
+   1209    000E99 DD3608FF NLPL    LD (IX+SMPLPB),h'FF
+   1210    000E9D FD5E17           LD E,(IY+23)
+   1211    000EA0 FD5616           LD D,(IY+22)
+   1212    000EA3 EB               EX DE,HL
+   1213    000EA4 29               ADD HL,HL
+   1214    000EA5 EB               EX DE,HL
+   1215    000EA6 0600             LD B,h'00
+   1216    000EA8 CB10             RL B
+   1217    000EAA CB39             SRL C
+   1218    000EAC CB14             RL H
+   1219    000EAE CB0C             RRC H
+   1220    000EB0 19               ADD HL,DE
+   1221    000EB1 79               LD A,C
+   1222    000EB2 88               ADC A,B
+   1223    000EB3 4F               LD C,A
+   1224    000EB4 CB34             DEFB h'CB,h'34;SLI H
+   1225    000EB6 CB11             RL C
+   1226    000EB8 CB0C             RRC H
+   1227    000EBA DD7504   RDLP2   LD (IX+SMPEND+1),L
+   1228    000EBD DD7405           LD (IX+SMPEND+2),H
+   1229    000EC0 DD7103           LD (IX+SMPEND),C
+   1230    000EC3 FD7E18   LPCNT   LD A,(IY+24)
+   1231    000EC6 87               ADD A,A
+   1232    000EC7 DD7706           LD (IX+SMPFT),A
+   1233    000ECA FD7E19           LD A,(IY+25)
+   1234    000ECD DD7707           LD (IX+SMPVOL),A
+   1235    000ED0 111000           LD DE,h'0010
+   1236    000ED3 DD19             ADD IX,DE
+   1237    000ED5 111E00           LD DE,30
+   1238    000ED8 FD19             ADD IY,DE
+   1239    000EDA 79               LD A,C
+   1240    000EDB C1               POP BC
+   1241    000EDC 4F               LD C,A
+   1242    000EDD 05               DEC B
+   1243    000EDE C2....           JP NZ,RDLP3
+   1244    000EE1 21B740           LD HL,CONVERT
+   1245    000EE4 7E               LD A,(HL)
+   1246    000EE5 B7               OR A
+   1247    000EE6 2039             JR NZ,NOCONV
+   1248    000EE8 36FF             LD (HL),h'FF
+   1249    000EEA 2A9B41           LD HL,(SMPS)
+   1250    000EED 3A9D41           LD A,(SMPS+2)
+   1251    000EF0 5F               LD E,A
+   1252    000EF1 1640             LD D,HIGH (RAMPG)
+   1253    000EF3                  ; LD A,(NUMPG)
+   1254    000EF3 3ADB40           LD A,(MEMBOT+2) ; No obsolete memory abusing
+                                                    patch (TSL)
+   1255    000EF6 3C                       INC A
+   1256    000EF7 87                       ADD A,A
+   1257    000EF8 47               LD B,A
+   1258    000EF9 1A       SMPMD2  LD A,(DE)
+   1259    000EFA D300             OUT (MPAG),A
+   1260    000EFC 7E       SMPMD1  LD A,(HL)               ;начало ADD
+                                                            A,h'80
+   1261    000EFD C680             ADD A,h'80
+   1262    000EFF 77               LD (HL),A
+   1263    000F00 2C               INC L
+   1264    000F01 C2....           JP NZ,SMPMD1
+   1265    000F04 24               INC H
+   1266    000F05 C2....           JP NZ,SMPMD1
+   1267    000F08 2680             LD H,h'80
+   1268    000F0A 1C               INC E
+   1269    000F0B 10EC             DJNZ SMPMD2
+   1270    000F0D 1A               LD A,(DE)
+   1271    000F0E D300             OUT (MPAG),A
+   1272    000F10 B7               OR A
+   1273    000F11 280E             JR Z,SMPMD4
+   1274    000F13 7E       SMPMD3  LD A,(HL)
+   1275    000F14 C680             ADD A,h'80
+   1276    000F16 77               LD (HL),A
+   1277    000F17 2C               INC L
+   1278    000F18 C2....           JP NZ,SMPMD3
+   1279    000F1B 24               INC H
+   1280    000F1C CB74             BIT 6,H
+   1281    000F1E CA....           JP Z,SMPMD3
+   1282    000F21          SMPMD4
+   1283    000F21 AF       NOCONV  XOR A
+   1284    000F22 328140           LD (CPAGE),A
+   1285    000F25 D300             OUT (MPAG),A
+   1286    000F27 C9               RET
+   1287    000F28          
+   1288    000F28 3A5B41   INITPAT LD A,(MTSNGPS)
+   1289    000F2B 5F               LD E,A
+   1290    000F2C 1600             LD D,0
+   1291    000F2E 3A9F41           LD A,(MODTP)
+   1292    000F31 3C               INC A
+   1293    000F32 21B883           LD HL,h'8000+952
+   1294    000F35 2803             JR Z,TTT13
+   1295    000F37 21D881           LD HL,h'8000+472
+   1296    000F3A 19       TTT13   ADD HL,DE
+   1297    000F3B 3A0040           LD A,(RAMPG)
+   1298    000F3E D300             OUT (MPAG),A
+   1299    000F40          ;---patched
+   1300    000F40 C3....           JP Patch11
+   1301    000F43          ;---
+   1302    000F43 5A               LD E,D
+   1303    000F44 57               LD D,A
+   1304    000F45 3A9F41           LD A,(MODTP)
+   1305    000F48 3C               INC A
+   1306    000F49 213C04           LD HL,h'0000+1084
+   1307    000F4C 2803             JR Z,TTT15
+   1308    000F4E 215802           LD HL,h'0000+600
+   1309    000F51 AF       TTT15   XOR A
+   1310    000F52 328140           LD (CPAGE),A
+   1311    000F55 D300             OUT (MPAG),A
+   1312    000F57 19               ADD HL,DE
+   1313    000F58 110050           LD DE,h'5000
+   1314    000F5B 010004           LD BC,h'400
+   1315    000F5E CD....           CALL LDMEM
+   1316    000F61 AF               XOR A
+   1317    000F62 D300             OUT (MPAG),A
+   1318    000F64 C9               RET
+   1319    000F65          
+   1320    000F65          ;***************************************************
+                           ***********
+   1321    000F65          ;* QUANTUM PROCEDURE                                
+                                     *
+   1322    000F65          ;***************************************************
+                           ***********
+   1323    000F65          
+   1324    000F65 3AA040   QUANTUM LD A,(FXCHNS)
+   1325    000F68 2F               CPL
+   1326    000F69 4F               LD C,A
+   1327    000F6A 3A9F40           LD A,(GSCHNS)
+   1328    000F6D A1               AND C
+   1329    000F6E 4F               LD C,A
+   1330    000F6F FD210046         LD IY,CHANS     ;CHANNELS
+   1331    000F73 3A5141           LD A,(MTSTAT)
+   1332    000F76 E6C0             AND h'C0
+   1333    000F78 201D             JR NZ,L221
+   1334    000F7A 79       L204    LD A,C
+   1335    000F7B FDA625           AND (IY+CHRDR)
+   1336    000F7E 280B             JR Z,L205
+   1337    000F80 FDCB007E         BIT 7,(IY+CHSTAT)
+   1338    000F84 2805             JR Z,L205
+   1339    000F86 C5               PUSH BC
+   1340    000F87 CD....           CALL GEN
+   1341    000F8A C1               POP BC
+   1342    000F8B FD7D     L205    LD A,IYL
+   1343    000F8D C640             ADD A,h'40
+   1344    000F8F FD6F             LD IYL,A
+   1345    000F91 D2....           JP NC,L204
+   1346    000F94 C3....           JP L221
+   1347    000F97          
+   1348    000F97 AF       L221    XOR A
+   1349    000F98 328140           LD (CPAGE),A
+   1350    000F9B D300             OUT (MPAG),A
+   1351    000F9D 214841           LD HL,VOLRQTB
+   1352    000FA0 3A8C40           LD A,(QTFREE)
+   1353    000FA3 C620             ADD A,LOW (VOLTAB)
+   1354    000FA5 5F               LD E,A
+   1355    000FA6 1641             LD D,HIGH (VOLTAB)
+   1356    000FA8 EDA0             LDI
+   1357    000FAA EDA0             LDI
+   1358    000FAC EDA0             LDI
+   1359    000FAE EDA0             LDI
+   1360    000FB0 2A8C40           LD HL,(QTFREE)
+   1361    000FB3 45               LD B,L
+   1362    000FB4 2C               INC L
+   1363    000FB5 C5               PUSH BC
+   1364    000FB6 E5               PUSH HL
+   1365    000FB7 3AB440           LD A,(CHANNEL)
+   1366    000FBA E60F             AND h'0F
+   1367    000FBC 21....           LD HL,INTTB
+   1368    000FBF 87               ADD A,A
+   1369    000FC0 85               ADD A,L
+   1370    000FC1 6F               LD L,A
+   1371    000FC2 7C               LD A,H
+   1372    000FC3 CE00             ADC A,h'00
+   1373    000FC5 67               LD H,A
+   1374    000FC6 4E               LD C,(HL)
+   1375    000FC7 23               INC HL
+   1376    000FC8 46               LD B,(HL)
+   1377    000FC9 3AB440           LD A,(CHANNEL)
+   1378    000FCC E60F             AND h'0F
+   1379    000FCE 21....           LD HL,INTOFF
+   1380    000FD1 85               ADD A,L
+   1381    000FD2 6F               LD L,A
+   1382    000FD3 7C               LD A,H
+   1383    000FD4 CE00             ADC A,h'00
+   1384    000FD6 67               LD H,A
+   1385    000FD7 3A8C40           LD A,(QTFREE)
+   1386    000FDA C660             ADD A,h'60
+   1387    000FDC 86               ADD A,(HL)
+   1388    000FDD E1               POP HL
+   1389    000FDE 77               LD (HL),A
+   1390    000FDF 2C               INC L
+   1391    000FE0 71               LD (HL),C
+   1392    000FE1 2C               INC L
+   1393    000FE2 70               LD (HL),B
+   1394    000FE3 C1               POP BC
+   1395    000FE4 2C               INC L
+   1396    000FE5 CBAD             RES 5,L
+   1397    000FE7 228C40           LD (QTFREE),HL
+   1398    000FEA 68               LD L,B
+   1399    000FEB 3AB340           LD A,(SGENOFF)
+   1400    000FEE 77               LD (HL),A
+   1401    000FEF 3A8540           LD A,(PLAYING)
+   1402    000FF2 B7               OR A
+   1403    000FF3 C2....           JP NZ,L224
+   1404    000FF6 228E40           LD (QTBUSY),HL
+   1405    000FF9 CD....           CALL QTPLAY
+   1406    000FFC 3AB340   L224    LD A,(SGENOFF)
+   1407    000FFF ED44             NEG
+   1408    001001 4F               LD C,A
+   1409    001002 0600             LD B,0
+   1410    001004 3A5141           LD A,(MTSTAT)
+   1411    001007 E6C0             AND h'C0
+   1412    001009 C0               RET NZ
+   1413    00100A 2A5541           LD HL,(TCKLEFT)
+   1414    00100D B7               OR A
+   1415    00100E ED42             SBC HL,BC
+   1416    001010 2804             JR Z,EFXINT
+   1417    001012 225541           LD (TCKLEFT),HL
+   1418    001015 C9               RET
+   1419    001016          
+   1420    001016 3A9E40   EFXINT  LD A,(MODUL)
+   1421    001019 B7               OR A
+   1422    00101A C8               RET Z
+   1423    00101B 2A5341           LD HL,(TICKLEN)
+   1424    00101E 225541           LD (TCKLEFT),HL
+   1425    001021 AF               XOR A
+   1426    001022 328140           LD (CPAGE),A
+   1427    001025 D300             OUT (MPAG),A
+   1428    001027 FD210046         LD IY,CHANS
+   1429    00102B 0604             LD B,h'04
+   1430    00102D 3A5941           LD A,(MTCOUNT)
+   1431    001030 3C               INC A
+   1432    001031 325941           LD (MTCOUNT),A
+   1433    001034 215841           LD HL,MTSPEED
+   1434    001037 BE               CP (HL)
+   1435    001038 3810             JR C,EFXNONT    ;NO NEW NOTE
+   1436    00103A AF               XOR A
+   1437    00103B 325941           LD (MTCOUNT),A
+   1438    00103E 3A5E41           LD A,(MTPDT2)
+   1439    001041 B7               OR A
+   1440    001042 2837             JR Z,EFXGTNT    ;GET NEW NOTE
+   1441    001044 CD....           CALL EFXNONT
+   1442    001047 C3....           JP EFXSKIP
+   1443    00104A          
+   1444    00104A FD210046 EFXNONT LD IY,CHANS
+   1445    00104E 0604             LD B,h'04
+   1446    001050 C5       EFXNON1 PUSH BC
+   1447    001051 FD7E2B           LD A,(IY+CHCOM)
+   1448    001054 FDB62C           OR (IY+CHPARM)
+   1449    001057 2006             JR NZ,EFXNON2
+   1450    001059 CD....           CALL FXNOP
+   1451    00105C C3....           JP EFXNON3
+   1452    00105F          
+   1453    00105F CD....   EFXNON2 CALL FXCHK_
+   1454    001062 014000   EFXNON3 LD BC,CHANLEN
+   1455    001065 FD09             ADD IY,BC
+   1456    001067 C1               POP BC
+   1457    001068 10E6             DJNZ EFXNON1
+   1458    00106A C9               RET
+   1459    00106B          
+   1460    00106B FD6E12   EFXNOP  LD L,(IY+CHPERL)        ;;not used!
+   1461    00106E FD6612           LD H,(IY+CHPERL)        ;;bug!
+   1462    001071 CD....           CALL EFXCNV
+   1463    001074 FD7510           LD (IY+CHFRQL),L
+   1464    001077 FD7411           LD (IY+CHFRQH),H
+   1465    00107A C9               RET
+   1466    00107B          
+   1467    00107B          EFXGTNT
+   1468    00107B          ;LD IY,CHANS
+   1469    00107B          ;---patched
+   1470    00107B C3....           JP Patch3
+   1471    00107E 46               DEFB h'46
+   1472    00107F          ;---
+   1473    00107F AF               XOR A
+   1474    001080 328140           LD (CPAGE),A
+   1475    001083 D300             OUT (MPAG),A
+   1476    001085 329B40           LD (CURCHN),A
+   1477    001088 AF       COMM1   XOR A
+   1478    001089 328140           LD (CPAGE),A
+   1479    00108C D300             OUT (MPAG),A
+   1480    00108E CD....           CALL GETROWS
+   1481    001091 FD702B           LD (IY+CHCOM),B
+   1482    001094 FD712C           LD (IY+CHPARM),C
+   1483    001097 7B               LD A,E
+   1484    001098 B7               OR A
+   1485    001099 280A             JR Z,COMM2
+   1486    00109B FD7329           LD (IY+CHINS),E
+   1487    00109E D5               PUSH DE
+   1488    00109F C5               PUSH BC
+   1489    0010A0 CD....           CALL EFXNEWI
+   1490    0010A3 C1               POP BC
+   1491    0010A4 D1               POP DE
+   1492    0010A5 7A       COMM2   LD A,D
+   1493    0010A6 FE7F             CP h'7F
+   1494    0010A8 CA....           JP Z,COMM5
+   1495    0010AB 78               LD A,B
+   1496    0010AC FE03             CP h'03
+   1497    0010AE CA....           JP Z,COMM4
+   1498    0010B1 FE05             CP h'05
+   1499    0010B3 CA....           JP Z,COMM4
+   1500    0010B6 FE0E             CP h'0E
+   1501    0010B8 201C             JR NZ,COMM3
+   1502    0010BA 79               LD A,C
+   1503    0010BB E6F0             AND h'F0
+   1504    0010BD FE50             CP h'50
+   1505    0010BF 280D             JR Z,COMM5_
+   1506    0010C1 FD7228           LD (IY+CHNOTE),D
+   1507    0010C4 FD7214           LD (IY+CHREAL),D
+   1508    0010C7 FED0             CP h'D0
+   1509    0010C9 2814             JR Z,COMM3__
+   1510    0010CB C3....           JP COMM3
+   1511    0010CE          
+   1512    0010CE 79       COMM5_  LD A,C
+   1513    0010CF E60F             AND h'0F
+   1514    0010D1 CB27             SLA A
+   1515    0010D3 FD7715           LD (IY+CHFINE),A
+   1516    0010D6 FD7228   COMM3   LD (IY+CHNOTE),D
+   1517    0010D9 FD7214           LD (IY+CHREAL),D
+   1518    0010DC CD....           CALL GETSMP
+   1519    0010DF FD5E28   COMM3__ LD E,(IY+CHNOTE)
+   1520    0010E2 CD....           CALL GETPER
+   1521    0010E5 FD7512           LD (IY+CHPERL),L
+   1522    0010E8 FD7413           LD (IY+CHPERH),H
+   1523    0010EB FD5E28           LD E,(IY+CHNOTE)
+   1524    0010EE CD....           CALL GETFRQ
+   1525    0010F1 FD7510           LD (IY+CHFRQL),L
+   1526    0010F4 FD7411           LD (IY+CHFRQH),H
+   1527    0010F7 FD7E2B           LD A,(IY+CHCOM)
+   1528    0010FA FE09             CP h'09
+   1529    0010FC C2....           JP NZ,COMM5
+   1530    0010FF FD7E2C           LD A,(IY+CHPARM)
+   1531    001102 B7               OR A
+   1532    001103 2003             JR NZ,FX9_
+   1533    001105 FD7E36           LD A,(IY+CHOFFST)
+   1534    001108 FD7736   FX9_    LD (IY+CHOFFST),A
+   1535    00110B 67               LD H,A
+   1536    00110C 2E00             LD L,h'00
+   1537    00110E AF               XOR A
+   1538    00110F 8F               ADC A,A
+   1539    001110 EB               EX DE,HL
+   1540    001111 FD6E02           LD L,(IY+CHCURL)
+   1541    001114 FD6603           LD H,(IY+CHCURH)
+   1542    001117 FD4604           LD B,(IY+CHCURP)
+   1543    00111A CB14             RL H
+   1544    00111C CB38             SRL B
+   1545    00111E CB1C             RR H
+   1546    001120 19               ADD HL,DE
+   1547    001121 88               ADC A,B
+   1548    001122 CB34             DEFB h'CB,h'34;SLI H
+   1549    001124 17               RLA
+   1550    001125 CB0C             RRC H
+   1551    001127 FD7502           LD (IY+CHCURL),L
+   1552    00112A FD7403           LD (IY+CHCURH),H
+   1553    00112D FD7704           LD (IY+CHCURP),A
+   1554    001130 FDBE07           CP (IY+CHENDP)
+   1555    001133 DA....           JP C,COMM5
+   1556    001136 2010             JR NZ,COMM3_
+   1557    001138 7C               LD A,H
+   1558    001139 FDBE06           CP (IY+CHENDH)
+   1559    00113C DA....           JP C,COMM5
+   1560    00113F 2007             JR NZ,COMM3_
+   1561    001141 7D               LD A,L
+   1562    001142 FDBE05           CP (IY+CHENDL)
+   1563    001145 DA....           JP C,COMM5
+   1564    001148          COMM3_  
+   1565    001148 FD7E0A           LD A,(IY+CHLPBP)
+   1566    00114B 3C               INC A
+   1567    00114C CA....           JP Z,Patch6e
+   1568    00114F 3D               DEC A
+   1569    001150 FD6E08           LD L,(IY+CHLPBL)
+   1570    001153 FD6609           LD H,(IY+CHLPBH)
+   1571    001156 FD7502           LD (IY+CHCURL),L
+   1572    001159 FD7403           LD (IY+CHCURH),H
+   1573    00115C FD7704           LD (IY+CHCURP),A
+   1574    00115F C3....           JP COMM5
+   1575    001162          Patch6e
+   1576    001162 FDCB00BE         RES 7,(IY+CHSTAT)
+   1577    001166 C3....           JP COMM5
+   1578    001169                  
+   1579    001169 FD722F   COMM4   LD (IY+CHWNT),D
+   1580    00116C AF       COMM5   XOR A
+   1581    00116D 328140           LD (CPAGE),A
+   1582    001170 D300             OUT (MPAG),A
+   1583    001172 CD....           CALL FXCHK
+   1584    001175 014000   COMM6   LD BC,CHANLEN
+   1585    001178 FD09             ADD IY,BC
+   1586    00117A 3A9B40           LD A,(CURCHN)
+   1587    00117D 3C               INC A
+   1588    00117E 329B40           LD (CURCHN),A
+   1589    001181 FE04             CP h'04
+   1590    001183 C2....           JP NZ,COMM1
+   1591    001186 215A41   EFXSKIP LD HL,MTPATPS
+   1592    001189 34               INC (HL)
+   1593    00118A 3A5F41           LD A,(MTPDT)
+   1594    00118D B7               OR A
+   1595    00118E 2807             JR Z,EFXSKP2
+   1596    001190 325E41           LD (MTPDT2),A
+   1597    001193 AF               XOR A
+   1598    001194 325F41           LD (MTPDT),A
+   1599    001197 3A5E41   EFXSKP2 LD A,(MTPDT2)
+   1600    00119A B7               OR A
+   1601    00119B 2807             JR Z,EFXSKP3
+   1602    00119D 3D               DEC A
+   1603    00119E 325E41           LD (MTPDT2),A
+   1604    0011A1 2801             JR Z,EFXSKP3
+   1605    0011A3 35               DEC (HL)
+   1606    0011A4 3A6041   EFXSKP3 LD A,(MTBRKFL)
+   1607    0011A7 B7               OR A
+   1608    0011A8 280E             JR Z,EFXSKP4
+   1609    0011AA 3A6141           LD A,(MTBRKPS)
+   1610    0011AD 77               LD (HL),A
+   1611    0011AE AF               XOR A
+   1612    0011AF 326141           LD (MTBRKPS),A
+   1613    0011B2 326041           LD (MTBRKFL),A
+   1614    0011B5 C3....           JP EFXSKP5
+   1615    0011B8          
+   1616    0011B8 7E       EFXSKP4 LD A,(HL)
+   1617    0011B9 B7               OR A
+   1618    0011BA 2006             JR NZ,EFXSKP5
+   1619    0011BC 3A5E41           LD A,(MTPDT2)
+   1620    0011BF B7               OR A
+   1621    0011C0 2806             JR Z,EFXSKP6
+   1622    0011C2 3A6441   EFXSKP5 LD A,(MTROWS)
+   1623    0011C5 BE               CP (HL)
+   1624    0011C6 304A             JR NC,EFXSKPX
+   1625    0011C8 3A6141   EFXSKP6 LD A,(MTBRKPS)
+   1626    0011CB 325A41           LD (MTPATPS),A
+   1627    0011CE AF               XOR A
+   1628    0011CF 326141           LD (MTBRKPS),A
+   1629    0011D2 326241           LD (MTJMPFL),A
+   1630    0011D5 215B41           LD HL,MTSNGPS
+   1631    0011D8 34               INC (HL)
+   1632    0011D9 2807             JR Z,EFXSKP7
+   1633    0011DB 3A5C41           LD A,(MTSNGSZ)
+   1634    0011DE BE               CP (HL)
+   1635    0011DF D2....           JP NC,INITPAT
+   1636    0011E2 3A5C41   EFXSKP7 LD A,(MTSNGSZ)
+   1637    0011E5 215D41           LD HL,MTSNGLP
+   1638    0011E8 BE               CP (HL)
+   1639    0011E9 3E00             LD A,h'00
+   1640    0011EB 3801             JR C,EFXSKP8
+   1641    0011ED 7E               LD A,(HL)
+   1642    0011EE 325B41   EFXSKP8 LD (MTSNGPS),A
+   1643    0011F1          
+   1644    0011F1 3E06             LD A,6
+   1645    0011F3                  DUPL 3,0        ;LD (MTSPEED),A
+   1645.1  0011F3                          REPT 3
+   1645.2  0011F3                          DEFB 0
+   1645.3  0011F3                          ENDR
+   1645.4  0011F3 00                       DEFB 0
+   1645.5  0011F6                          ENDM
+   1646    0011F6 21EE02           LD HL,750
+   1647    0011F9                  DUPL 3,0        ;LD (TICKLEN),HL
+   1647.1  0011F9                          REPT 3
+   1647.2  0011F9                          DEFB 0
+   1647.3  0011F9                          ENDR
+   1647.4  0011F9 00                       DEFB 0
+   1647.5  0011FC                          ENDM
+   1648    0011FC                  DUPL 3,0        ;LD (TCKLEFT),HL
+   1648.1  0011FC                          REPT 3
+   1648.2  0011FC                          DEFB 0
+   1648.3  0011FC                          ENDR
+   1648.4  0011FC 00                       DEFB 0
+   1648.5  0011FF                          ENDM
+   1649    0011FF                  ;CALL STOPMOD
+   1650    0011FF          
+   1651    0011FF AF               XOR A
+   1652    001200 326141           LD (MTBRKPS),A
+   1653    001203 326241           LD (MTJMPFL),A
+   1654    001206 326041           LD (MTBRKFL),A
+   1655    001209 325F41           LD (MTPDT),A
+   1656    00120C 325E41           LD (MTPDT2),A
+   1657    00120F C3....           JP INITPAT
+   1658    001212          
+   1659    001212 3A6241   EFXSKPX LD A,(MTJMPFL)
+   1660    001215 B7               OR A
+   1661    001216 C2....           JP NZ,EFXSKP6
+   1662    001219 C9               RET
+   1663    00121A          
+   1664    00121A FDCB00FE GETSMP  SET 7,(IY+CHSTAT)
+   1665    00121E FD7E29           LD A,(IY+CHINS)
+   1666    001221 B7               OR A
+   1667    001222 2877             JR Z,GETSMP2
+   1668    001224 3D               DEC A
+   1669    001225 87               ADD A,A
+   1670    001226 87               ADD A,A
+   1671    001227 87               ADD A,A
+   1672    001228 87               ADD A,A
+   1673    001229 5F               LD E,A
+   1674    00122A 3E54             LD A,h'54
+   1675    00122C CE00             ADC A,h'00
+   1676    00122E 57               LD D,A
+   1677    00122F 1A               LD A,(DE)
+   1678    001230 FD7704           LD (IY+CHCURP),A
+   1679    001233 13               INC DE
+   1680    001234 1A               LD A,(DE)
+   1681    001235 FD7702           LD (IY+CHCURL),A
+   1682    001238 13               INC DE
+   1683    001239 1A               LD A,(DE)
+   1684    00123A FD7703           LD (IY+CHCURH),A
+   1685    00123D FD3402           INC (IY+CHCURL)
+   1686    001240 CC....           CALL Z,GETSMP3
+   1687    001243 FD3402           INC (IY+CHCURL)
+   1688    001246 CC....           CALL Z,GETSMP3
+   1689    001249 13               INC DE
+   1690    00124A 1A               LD A,(DE)
+   1691    00124B FD7707           LD (IY+CHENDP),A
+   1692    00124E 13               INC DE
+   1693    00124F 1A               LD A,(DE)
+   1694    001250 FD7705           LD (IY+CHENDL),A
+   1695    001253 13               INC DE
+   1696    001254 1A               LD A,(DE)
+   1697    001255 FD7706           LD (IY+CHENDH),A
+   1698    001258 13               INC DE
+   1699    001259 13               INC DE
+   1700    00125A 13               INC DE
+   1701    00125B 1A               LD A,(DE)
+   1702    00125C FD770A           LD (IY+CHLPBP),A
+   1703    00125F 13               INC DE
+   1704    001260 1A               LD A,(DE)
+   1705    001261 FD7708           LD (IY+CHLPBL),A
+   1706    001264 13               INC DE
+   1707    001265 1A               LD A,(DE)
+   1708    001266 FD7709           LD (IY+CHLPBH),A
+   1709    001269 13               INC DE
+   1710    00126A 1A               LD A,(DE)
+   1711    00126B FD770D           LD (IY+CHLPEP),A
+   1712    00126E 13               INC DE
+   1713    00126F 1A               LD A,(DE)
+   1714    001270 FD770B           LD (IY+CHLPEL),A
+   1715    001273 13               INC DE
+   1716    001274 1A               LD A,(DE)
+   1717    001275 FD770C           LD (IY+CHLPEH),A
+   1718    001278 FD360E00         LD (IY+CHCNTL),h'00
+   1719    00127C FD360F07         LD (IY+CHCNTH),h'07
+   1720    001280 FD7E04           LD A,(IY+CHCURP)
+   1721    001283 FDBE07           CP (IY+CHENDP)
+   1722    001286 D8               RET C
+   1723    001287 C2....           JP NZ,GETSMP2
+   1724    00128A FD7E03           LD A,(IY+CHCURH)
+   1725    00128D FDBE06           CP (IY+CHENDH)
+   1726    001290 D8               RET C
+   1727    001291 C2....           JP NZ,GETSMP2
+   1728    001294 FD7E02           LD A,(IY+CHCURL)
+   1729    001297 FDBE05           CP (IY+CHENDL)
+   1730    00129A D8               RET C
+   1731    00129B FDCB00BE GETSMP2 RES 7,(IY+CHSTAT)
+   1732    00129F C9               RET
+   1733    0012A0 FD3403   GETSMP3 INC (IY+CHCURH)
+   1734    0012A3 C0               RET NZ
+   1735    0012A4 FD360380         LD (IY+CHCURH),h'80
+   1736    0012A8 FD3404           INC (IY+CHCURP)
+   1737    0012AB C9               RET
+   1738    0012AC          
+   1739    0012AC FD7E29   EFXNEWI LD A,(IY+CHINS)
+   1740    0012AF 3D               DEC A
+   1741    0012B0 87               ADD A,A
+   1742    0012B1 87               ADD A,A
+   1743    0012B2 87               ADD A,A
+   1744    0012B3 87               ADD A,A
+   1745    0012B4 5F               LD E,A
+   1746    0012B5 3E54             LD A,h'54
+   1747    0012B7 CE00             ADC A,h'00
+   1748    0012B9 57               LD D,A
+   1749    0012BA 13               INC DE
+   1750    0012BB 13               INC DE
+   1751    0012BC 13               INC DE
+   1752    0012BD 13               INC DE
+   1753    0012BE 13               INC DE
+   1754    0012BF 13               INC DE
+   1755    0012C0 1A               LD A,(DE)
+   1756    0012C1 FD7715           LD (IY+CHFINE),A
+   1757    0012C4 13               INC DE
+   1758    0012C5 1A               LD A,(DE)
+   1759    0012C6 FE40             CP h'40
+   1760    0012C8 3802             JR C,GETSMP1
+   1761    0012CA 3E40             LD A,h'40
+   1762    0012CC FD7719   GETSMP1 LD (IY+CHVOL),A
+   1763    0012CF FDBE1A           CP (IY+CHMVOL)
+   1764    0012D2 FD771A           LD (IY+CHMVOL),A
+   1765    0012D5 C8               RET Z
+   1766    0012D6 FDCB00C6         SET 0,(IY+CHSTAT)
+   1767    0012DA C9               RET
+   1768    0012DB          
+   1769    0012DB 3A5A41   GETROWS LD A,(MTPATPS)
+   1770    0012DE E63F             AND h'3F
+   1771    0012E0 87               ADD A,A
+   1772    0012E1 87               ADD A,A
+   1773    0012E2 6F               LD L,A
+   1774    0012E3 2600             LD H,h'00
+   1775    0012E5 29               ADD HL,HL
+   1776    0012E6 29               ADD HL,HL
+   1777    0012E7 3A9B40           LD A,(CURCHN)
+   1778    0012EA 87               ADD A,A
+   1779    0012EB 87               ADD A,A
+   1780    0012EC 85               ADD A,L
+   1781    0012ED 6F               LD L,A
+   1782    0012EE 7C               LD A,H
+   1783    0012EF CE50             ADC A,h'50
+   1784    0012F1 67               LD H,A
+   1785    0012F2 7E               LD A,(HL)
+   1786    0012F3 E610             AND h'10
+   1787    0012F5 F5               PUSH AF
+   1788    0012F6 7E               LD A,(HL)
+   1789    0012F7 E60F             AND h'0F
+   1790    0012F9 57               LD D,A
+   1791    0012FA 23               INC HL
+   1792    0012FB 5E               LD E,(HL)
+   1793    0012FC B3               OR E
+   1794    0012FD 3E7F             LD A,h'7F
+   1795    0012FF 2805             JR Z,GETRWS2
+   1796    001301 E5               PUSH HL
+   1797    001302 CD....           CALL NOTEID
+   1798    001305 E1               POP HL
+   1799    001306 23       GETRWS2 INC HL
+   1800    001307 C1               POP BC
+   1801    001308 57               LD D,A
+   1802    001309 7E               LD A,(HL)
+   1803    00130A E6F0             AND h'F0
+   1804    00130C 0F               RRCA
+   1805    00130D 0F               RRCA
+   1806    00130E 0F               RRCA
+   1807    00130F 0F               RRCA
+   1808    001310 B0               OR B
+   1809    001311 5F               LD E,A
+   1810    001312 7E               LD A,(HL)
+   1811    001313 E60F             AND h'0F
+   1812    001315 47               LD B,A
+   1813    001316 23               INC HL
+   1814    001317 4E               LD C,(HL)
+   1815    001318 C9               RET
+   1816    001319          
+   1817    001319          ;***************************************************
+                           ********
+   1818    001319          ;* INTERRUPT HANDLING PROCEDURES                    
+                                  *
+   1819    001319          ;***************************************************
+                           ********
+   1820    001319          
+   1821    001319                  ALIGN256
+   1821.1  001400                  org (($ - 1) & h'FF00) + h'100
+   1821.2  001400                  ENDM
+   1822    001400          
+   1823    001400 C9       INTZ    RET
+   1824    001401          
+   1825    001401 08       INT0    EX AF,AF'
+   1826    001402 3C               INC A
+   1827    001403 280F             JR Z,INT0_
+   1828    001405 08               EX AF,AF'
+   1829    001406 FB               EI
+   1830    001407 C9               RET
+   1831    001408                  DUPL 11,0
+   1831.1  001408                          REPT 11
+   1831.2  001408                          DEFB 0
+   1831.3  001408                          ENDR
+   1831.4  001408 00                       DEFB 0
+   1831.5  001413                          ENDM
+   1832    001413 C9               RET
+   1833    001414          
+   1834    001414 D5       INT0_   PUSH DE
+   1835    001415 C3....           JP QTDONE
+   1836    001418          
+   1837    001418 08       INT1    EX AF,AF'
+   1838    001419 D5               PUSH DE
+   1839    00141A 5F               LD E,A
+   1840    00141B DD54             LD D,IXH
+   1841    00141D 1A               LD A,(DE)
+   1842    00141E 1C               INC E
+   1843    00141F 280B             JR Z,INT1_
+   1844    001421 7B               LD A,E
+   1845    001422 D1               POP DE
+   1846    001423 08               EX AF,AF'
+   1847    001424 FB               EI
+   1848    001425 C9               RET
+   1849    001426                  DUPL 4,0
+   1849.1  001426                          REPT 4
+   1849.2  001426                          DEFB 0
+   1849.3  001426                          ENDR
+   1849.4  001426 00                       DEFB 0
+   1849.5  00142A                          ENDM
+   1850    00142A C9               RET
+   1851    00142B          
+   1852    00142B D5               PUSH DE
+   1853    00142C C3....   INT1_   JP QTDONE
+   1854    00142F          
+   1855    00142F 08       INT2    EX AF,AF'
+   1856    001430 D5               PUSH DE
+   1857    001431 5F               LD E,A
+   1858    001432 DD54             LD D,IXH
+   1859    001434 1A               LD A,(DE)
+   1860    001435 14               INC D
+   1861    001436 1A               LD A,(DE)
+   1862    001437 1C               INC E
+   1863    001438 2809             JR Z,INT2_
+   1864    00143A 7B               LD A,E
+   1865    00143B D1               POP DE
+   1866    00143C 08               EX AF,AF'
+   1867    00143D FB               EI
+   1868    00143E C9               RET
+   1869    00143F          
+   1870    00143F                  DUPL 2,0
+   1870.1  00143F                          REPT 2
+   1870.2  00143F                          DEFB 0
+   1870.3  00143F                          ENDR
+   1870.4  00143F 00                       DEFB 0
+   1870.5  001441                          ENDM
+   1871    001441 C9               RET
+   1872    001442          
+   1873    001442 D5               PUSH DE
+   1874    001443 C3....   INT2_   JP QTDONE
+   1875    001446          
+   1876    001446 08       INT3    EX AF,AF'
+   1877    001447 D5               PUSH DE
+   1878    001448 5F               LD E,A
+   1879    001449 DD54             LD D,IXH
+   1880    00144B 1A               LD A,(DE)
+   1881    00144C 14               INC D
+   1882    00144D 14               INC D
+   1883    00144E 1A               LD A,(DE)
+   1884    00144F 1C               INC E
+   1885    001450 2808             JR Z,INT3_
+   1886    001452 7B               LD A,E
+   1887    001453 D1               POP DE
+   1888    001454 08               EX AF,AF'
+   1889    001455 FB               EI
+   1890    001456 C9               RET
+   1891    001457          
+   1892    001457                  DUPL 1,0
+   1892.1  001457                          REPT 1
+   1892.2  001457                          DEFB 0
+   1892.3  001457                          ENDR
+   1892.4  001457 00                       DEFB 0
+   1892.5  001458                          ENDM
+   1893    001458 C9               RET
+   1894    001459          
+   1895    001459 D5               PUSH DE
+   1896    00145A C3....   INT3_   JP QTDONE
+   1897    00145D          
+   1898    00145D 08       INT4    EX AF,AF'
+   1899    00145E D5               PUSH DE
+   1900    00145F 5F               LD E,A
+   1901    001460 DD54             LD D,IXH
+   1902    001462 1A               LD A,(DE)
+   1903    001463 14               INC D
+   1904    001464 1A               LD A,(DE)
+   1905    001465 14               INC D
+   1906    001466 1A               LD A,(DE)
+   1907    001467 1C               INC E
+   1908    001468 2807             JR Z,INT4_
+   1909    00146A 7B               LD A,E
+   1910    00146B D1               POP DE
+   1911    00146C 08               EX AF,AF'
+   1912    00146D FB               EI
+   1913    00146E C9               RET
+   1914    00146F          
+   1915    00146F C9               RET
+   1916    001470          
+   1917    001470 D5               PUSH DE
+   1918    001471 C3....   INT4_   JP QTDONE
+   1919    001474          
+   1920    001474 08       INT5    EX AF,AF'
+   1921    001475 D5               PUSH DE
+   1922    001476 5F               LD E,A
+   1923    001477 DD54             LD D,IXH
+   1924    001479 1A               LD A,(DE)
+   1925    00147A 14               INC D
+   1926    00147B 14               INC D
+   1927    00147C 14               INC D
+   1928    00147D 1A               LD A,(DE)
+   1929    00147E 1C               INC E
+   1930    00147F 2807             JR Z,INT5_
+   1931    001481 7B               LD A,E
+   1932    001482 D1               POP DE
+   1933    001483 08               EX AF,AF'
+   1934    001484 FB               EI
+   1935    001485 C9               RET
+   1936    001486          
+   1937    001486 C9               RET
+   1938    001487          
+   1939    001487 D5               PUSH DE
+   1940    001488 C3....   INT5_   JP QTDONE
+   1941    00148B          
+   1942    00148B 08       INT6    EX AF,AF'
+   1943    00148C D5               PUSH DE
+   1944    00148D 5F               LD E,A
+   1945    00148E DD54             LD D,IXH
+   1946    001490 1A               LD A,(DE)
+   1947    001491 14               INC D
+   1948    001492 1A               LD A,(DE)
+   1949    001493 14               INC D
+   1950    001494 14               INC D
+   1951    001495 1A               LD A,(DE)
+   1952    001496 1C               INC E
+   1953    001497 2806             JR Z,INT6_
+   1954    001499 7B               LD A,E
+   1955    00149A D1               POP DE
+   1956    00149B 08               EX AF,AF'
+   1957    00149C FB               EI
+   1958    00149D C9               RET
+   1959    00149E          
+   1960    00149E D5               PUSH DE
+   1961    00149F C3....   INT6_   JP QTDONE
+   1962    0014A2          
+   1963    0014A2 08       INT7    EX AF,AF'
+   1964    0014A3 D5               PUSH DE
+   1965    0014A4 5F               LD E,A
+   1966    0014A5 DD54             LD D,IXH
+   1967    0014A7 1A               LD A,(DE)
+   1968    0014A8 14               INC D
+   1969    0014A9 14               INC D
+   1970    0014AA 1A               LD A,(DE)
+   1971    0014AB 14               INC D
+   1972    0014AC 1A               LD A,(DE)
+   1973    0014AD 1C               INC E
+   1974    0014AE 2806             JR Z,INT7_
+   1975    0014B0 7B               LD A,E
+   1976    0014B1 D1               POP DE
+   1977    0014B2 08               EX AF,AF'
+   1978    0014B3 FB               EI
+   1979    0014B4 C9               RET
+   1980    0014B5          
+   1981    0014B5 D5               PUSH DE
+   1982    0014B6 C3....   INT7_   JP QTDONE
+   1983    0014B9          
+   1984    0014B9 ED5B8E40 QTFAULT LD DE,(QTBUSY)
+   1985    0014BD 12               LD (DE),A
+   1986    0014BE 328540           LD (PLAYING),A
+   1987    0014C1 D1               POP DE
+   1988    0014C2 08               EX AF,AF'
+   1989    0014C3 C9               RET
+   1990    0014C4          
+   1991    0014C4 ED56     INT_IM1 IM 1
+   1992    0014C6 FB               EI
+   1993    0014C7 EB               EX DE,HL
+   1994    0014C8 2A8E40           LD HL,(QTBUSY)
+   1995    0014CB 77               LD (HL),A
+   1996    0014CC 7D               LD A,L
+   1997    0014CD C604             ADD A,h'04
+   1998    0014CF E61C             AND h'1C
+   1999    0014D1 6F               LD L,A
+   2000    0014D2 228E40           LD (QTBUSY),HL
+   2001    0014D5 CBED             SET 5,L
+   2002    0014D7 7E               LD A,(HL)
+   2003    0014D8 D306             OUT (VOL1),A
+   2004    0014DA 2C               INC L
+   2005    0014DB 7E               LD A,(HL)
+   2006    0014DC D307             OUT (VOL2),A
+   2007    0014DE 2C               INC L
+   2008    0014DF 7E               LD A,(HL)
+   2009    0014E0 D308             OUT (VOL3),A
+   2010    0014E2 2C               INC L
+   2011    0014E3 7E               LD A,(HL)
+   2012    0014E4 D309             OUT (VOL4),A
+   2013    0014E6 F1               POP AF
+   2014    0014E7 E1               POP HL
+   2015    0014E8 EB               EX DE,HL
+   2016    0014E9 C9               RET
+   2017    0014EA          
+   2018    0014EA 3A8E40   QTDONE  LD A,(QTBUSY)
+   2019    0014ED C604             ADD A,h'04
+   2020    0014EF E61C             AND h'1C
+   2021    0014F1 5F               LD E,A
+   2022    0014F2 1641             LD D,HIGH (QTMAP)
+   2023    0014F4 1A               LD A,(DE)
+   2024    0014F5 B7               OR A
+   2025    0014F6 28C1             JR Z,QTFAULT
+   2026    0014F8 08               EX AF,AF'
+   2027    0014F9 F5               PUSH AF
+   2028    0014FA 1C               INC E
+   2029    0014FB 1A               LD A,(DE)
+   2030    0014FC DD67             LD IXH,A
+   2031    0014FE 1C               INC E
+   2032    0014FF 1A               LD A,(DE)
+   2033    001500 B7               OR A
+   2034    001501 28C1             JR Z,INT_IM1
+   2035    001503 ED5E             IM 2
+   2036    001505 EB               EX DE,HL
+   2037    001506 215A42           LD HL,INTAREA+h'18
+   2038    001509 BE               CP (HL)
+   2039    00150A 2860             JR Z,INT_I1
+   2040    00150C 77               LD (HL),A
+   2041    00150D 211815           LD HL,h'1518
+   2042    001510 224242           LD (INTAREA),HL
+   2043    001513 FB               EI
+   2044    001514 3D               DEC A
+   2045    001515 2879             JR Z,INT_I0
+   2046    001517 C603             ADD A,h'03
+   2047    001519 6F               LD L,A
+   2048    00151A 26..             LD H,HIGH (INT0)
+   2049    00151C D5               PUSH DE
+   2050    00151D C5               PUSH BC
+   2051    00151E 114442           LD DE,INTAREA+2
+   2052    001521 EDA0             LDI
+   2053    001523 EDA0             LDI
+   2054    001525 EDA0             LDI
+   2055    001527 EDA0             LDI
+   2056    001529 EDA0             LDI
+   2057    00152B EDA0             LDI
+   2058    00152D EDA0             LDI
+   2059    00152F EDA0             LDI
+   2060    001531 EDA0             LDI
+   2061    001533 EDA0             LDI
+   2062    001535 EDA0             LDI
+   2063    001537 EDA0             LDI
+   2064    001539 EDA0             LDI
+   2065    00153B EDA0             LDI
+   2066    00153D EDA0             LDI
+   2067    00153F EDA0             LDI
+   2068    001541 2108D5           LD HL,h'D508
+   2069    001544 224242           LD (INTAREA),HL
+   2070    001547 C1               POP BC
+   2071    001548 D1               POP DE
+   2072    001549 2A8E40           LD HL,(QTBUSY)
+   2073    00154C 3600             LD (HL),h'00
+   2074    00154E 7D               LD A,L
+   2075    00154F C604             ADD A,h'04
+   2076    001551 E61C             AND h'1C
+   2077    001553 6F               LD L,A
+   2078    001554 228E40           LD (QTBUSY),HL
+   2079    001557 CBED             SET 5,L
+   2080    001559 7E               LD A,(HL)
+   2081    00155A D306             OUT (VOL1),A
+   2082    00155C 2C               INC L
+   2083    00155D 7E               LD A,(HL)
+   2084    00155E D307             OUT (VOL2),A
+   2085    001560 2C               INC L
+   2086    001561 7E               LD A,(HL)
+   2087    001562 D308             OUT (VOL3),A
+   2088    001564 2C               INC L
+   2089    001565 7E               LD A,(HL)
+   2090    001566 D309             OUT (VOL4),A
+   2091    001568 F1               POP AF
+   2092    001569 E1               POP HL
+   2093    00156A EB               EX DE,HL
+   2094    00156B C9               RET
+   2095    00156C          
+   2096    00156C FB       INT_I1  EI
+   2097    00156D 3E04             LD A,h'04
+   2098    00156F 2A8E40           LD HL,(QTBUSY)
+   2099    001572 3600             LD (HL),h'00
+   2100    001574 85               ADD A,L
+   2101    001575 E61C             AND h'1C
+   2102    001577 6F               LD L,A
+   2103    001578 228E40           LD (QTBUSY),HL
+   2104    00157B CBED             SET 5,L
+   2105    00157D 7E               LD A,(HL)
+   2106    00157E D306             OUT (VOL1),A
+   2107    001580 2C               INC L
+   2108    001581 7E               LD A,(HL)
+   2109    001582 D307             OUT (VOL2),A
+   2110    001584 2C               INC L
+   2111    001585 7E               LD A,(HL)
+   2112    001586 D308             OUT (VOL3),A
+   2113    001588 2C               INC L
+   2114    001589 7E               LD A,(HL)
+   2115    00158A D309             OUT (VOL4),A
+   2116    00158C F1               POP AF
+   2117    00158D E1               POP HL
+   2118    00158E EB               EX DE,HL
+   2119    00158F C9               RET
+   2120    001590          
+   2121    001590 21....   INT_I0  LD HL,INT0+2
+   2122    001593 D5               PUSH DE
+   2123    001594 C5               PUSH BC
+   2124    001595 114442           LD DE,INTAREA+2
+   2125    001598 EDA0             LDI
+   2126    00159A EDA0             LDI
+   2127    00159C EDA0             LDI
+   2128    00159E EDA0             LDI
+   2129    0015A0 EDA0             LDI
+   2130    0015A2 21083C           LD HL,h'3C08
+   2131    0015A5 224242           LD (INTAREA),HL
+   2132    0015A8 C1               POP BC
+   2133    0015A9 D1               POP DE
+   2134    0015AA 2A8E40           LD HL,(QTBUSY)
+   2135    0015AD 77               LD (HL),A
+   2136    0015AE 7D               LD A,L
+   2137    0015AF C604             ADD A,h'04
+   2138    0015B1 E61C             AND h'1C
+   2139    0015B3 6F               LD L,A
+   2140    0015B4 228E40           LD (QTBUSY),HL
+   2141    0015B7 CBED             SET 5,L
+   2142    0015B9 7E               LD A,(HL)
+   2143    0015BA D306             OUT (VOL1),A
+   2144    0015BC 2C               INC L
+   2145    0015BD 7E               LD A,(HL)
+   2146    0015BE D307             OUT (VOL2),A
+   2147    0015C0 2C               INC L
+   2148    0015C1 7E               LD A,(HL)
+   2149    0015C2 D308             OUT (VOL3),A
+   2150    0015C4 2C               INC L
+   2151    0015C5 7E               LD A,(HL)
+   2152    0015C6 D309             OUT (VOL4),A
+   2153    0015C8 F1               POP AF
+   2154    0015C9 E1               POP HL
+   2155    0015CA EB               EX DE,HL
+   2156    0015CB C9               RET
+   2157    0015CC          
+   2158    0015CC F3       QTPLAY  DI
+   2159    0015CD 3EFF             LD A,h'FF
+   2160    0015CF 328540           LD (PLAYING),A
+   2161    0015D2 2A8E40           LD HL,(QTBUSY)
+   2162    0015D5 7E               LD A,(HL)
+   2163    0015D6 08               EX AF,AF'
+   2164    0015D7 2C               INC L
+   2165    0015D8 7E               LD A,(HL)
+   2166    0015D9 DD67             LD IXH,A
+   2167    0015DB 2C               INC L
+   2168    0015DC 7E               LD A,(HL)
+   2169    0015DD ED56             IM 1
+   2170    0015DF B7               OR A
+   2171    0015E0 2814             JR Z,QTPLAY_
+   2172    0015E2 ED5E             IM 2
+   2173    0015E4 215A42           LD HL,INTAREA+h'18
+   2174    0015E7 BE               CP (HL)
+   2175    0015E8 280C             JR Z,QTPLAY_
+   2176    0015EA 77               LD (HL),A
+   2177    0015EB 6F               LD L,A
+   2178    0015EC 26..             LD H,HIGH (INT0)
+   2179    0015EE 114242           LD DE,INTAREA
+   2180    0015F1 011200           LD BC,h'0012
+   2181    0015F4 EDB0             LDIR
+   2182    0015F6 2A8E40   QTPLAY_ LD HL,(QTBUSY)
+   2183    0015F9 CBED             SET 5,L
+   2184    0015FB 7E               LD A,(HL)
+   2185    0015FC D306             OUT (VOL1),A
+   2186    0015FE 2C               INC L
+   2187    0015FF 7E               LD A,(HL)
+   2188    001600 D307             OUT (VOL2),A
+   2189    001602 2C               INC L
+   2190    001603 7E               LD A,(HL)
+   2191    001604 D308             OUT (VOL3),A
+   2192    001606 2C               INC L
+   2193    001607 7E               LD A,(HL)
+   2194    001608 D309             OUT (VOL4),A
+   2195    00160A FB               EI
+   2196    00160B C9               RET
+   2197    00160C          
+   2198    00160C DB04     WTCM    IN A,(ZXSTAT)
+   2199    00160E 0F               RRCA
+   2200    00160F 30FB             JR NC,WTCM
+   2201    001611 DB01             IN A,(ZXCMD)
+   2202    001613 FE12             CP h'12
+   2203    001615 2815             JR Z,CM12
+   2204    001617 FE18             CP h'18
+   2205    001619 281A             JR Z,CM18
+   2206    00161B FE1A             CP h'1A
+   2207    00161D 2827             JR Z,CM1A
+   2208    00161F FE1B             CP h'1B
+   2209    001621 282B             JR Z,CM1B
+   2210    001623 FE20             CP h'20
+   2211    001625 282D             JR Z,CM20
+   2212    001627 D305             OUT (CLRCBIT),A
+   2213    001629 C3....           JP WTCM
+   2214    00162C          
+   2215    00162C DB02     CM12    IN A,(ZXDATRD)
+   2216    00162E D305             OUT (CLRCBIT),A
+   2217    001630 D300             OUT (MPAG),A
+   2218    001632 C3....           JP WTCM
+   2219    001635          
+   2220    001635 DB02     CM18    IN A,(ZXDATRD)
+   2221    001637 5F               LD E,A
+   2222    001638 D305             OUT (CLRCBIT),A
+   2223    00163A DB04     CM18_1  IN A,(ZXSTAT)
+   2224    00163C B7               OR A
+   2225    00163D F2....           JP P,CM18_1
+   2226    001640 DB02             IN A,(ZXDATRD)
+   2227    001642 57               LD D,A
+   2228    001643 C3....           JP WTCM
+   2229    001646          
+   2230    001646 1A       CM1A    LD A,(DE)
+   2231    001647 D303             OUT (ZXDATWR),A
+   2232    001649 D305             OUT (CLRCBIT),A
+   2233    00164B C3....           JP WTCM
+   2234    00164E          
+   2235    00164E 13       CM1B    INC DE
+   2236    00164F D305             OUT (CLRCBIT),A
+   2237    001651 C3....           JP WTCM
+   2238    001654          
+   2239    001654 D305     CM20    OUT (CLRCBIT),A
+   2240    001656 C9               RET
+   2241    001657          
+   2242    001657 3A8C40   GEN     LD A,(QTFREE)
+   2243    00165A C660             ADD A,HIGH (DAC0)
+   2244    00165C FD8627           ADD A,(IY+CHRDN)
+   2245    00165F 57               LD D,A
+   2246    001660 3AB340           LD A,(SGENOFF)
+   2247    001663 5F               LD E,A
+   2248    001664 3AB440           LD A,(CHANNEL)
+   2249    001667 FDB625           OR (IY+CHRDR)
+   2250    00166A 32B440           LD (CHANNEL),A
+   2251    00166D FD6E02   GEN_    LD L,(IY+CHCURL)
+   2252    001670 FD6603           LD H,(IY+CHCURH)
+   2253    001673 FD460E           LD B,(IY+CHCNTL)
+   2254    001676 D9       GENLP   EXX
+   2255    001677 2640             LD H,HIGH (RAMPG)
+   2256    001679 FD6E04           LD L,(IY+CHCURP)
+   2257    00167C FD560F           LD D,(IY+CHCNTH)
+   2258    00167F FD5E11           LD E,(IY+CHFRQH)
+   2259    001682 46               LD B,(HL)
+   2260    001683 78               LD A,B
+   2261    001684 328140           LD (CPAGE),A
+   2262    001687 D300             OUT (MPAG),A
+   2263    001689 7D               LD A,L
+   2264    00168A D9               EXX
+   2265    00168B FDBE07           CP (IY+CHENDP)
+   2266    00168E DA....           JP C,GENTP
+   2267    001691 D5               PUSH DE
+   2268    001692 EB               EX DE,HL
+   2269    001693 FD6E05           LD L,(IY+CHENDL)
+   2270    001696 FD6606           LD H,(IY+CHENDH)
+   2271    001699 2B               DEC HL
+   2272    00169A ED52             SBC HL,DE
+   2273    00169C 23               INC HL
+   2274    00169D EB               EX DE,HL
+   2275    00169E DD6B             LD IXL,E
+   2276    0016A0 7A               LD A,D
+   2277    0016A1 D1               POP DE
+   2278    0016A2 3809             JR C,GENCHK
+   2279    0016A4 B7               OR A
+   2280    0016A5 2868             JR Z,GENENT
+   2281    0016A7 DD2EFF           LD IXL,h'FF
+   2282    0016AA C3....           JP GENENT
+   2283    0016AD          
+   2284    0016AD FDCB00BE GENCHK  RES 7,(IY+CHSTAT)
+   2285    0016B1 FD7E0A           LD A,(IY+CHLPBP)
+   2286    0016B4 3C               INC A
+   2287    0016B5 CA....           JP Z,GENCHK2
+   2288    0016B8 3D               DEC A
+   2289    0016B9 FD7704           LD (IY+CHCURP),A
+   2290    0016BC FD6E08           LD L,(IY+CHLPBL)
+   2291    0016BF FD6609           LD H,(IY+CHLPBH)
+   2292    0016C2 FD7E0D           LD A,(IY+CHLPEP)
+   2293    0016C5 FD7707           LD (IY+CHENDP),A
+   2294    0016C8 FD7E0B           LD A,(IY+CHLPEL)
+   2295    0016CB FD7705           LD (IY+CHENDL),A
+   2296    0016CE FD7E0C           LD A,(IY+CHLPEH)
+   2297    0016D1 FD7706           LD (IY+CHENDH),A
+   2298    0016D4 FDCB00FE         SET 7,(IY+CHSTAT)
+   2299    0016D8 C3....           JP GENLP
+   2300    0016DB          
+   2301    0016DB FD36147F GENCHK2 LD (IY+CHREAL),h'7F
+   2302    0016DF FDCB0076         BIT 6,(IY+CHSTAT)
+   2303    0016E3 CA....           JP Z,GENZERO
+   2304    0016E6 FDE5             PUSH IY
+   2305    0016E8 D5               PUSH DE
+   2306    0016E9 FD210046         LD IY,CHANS
+   2307    0016ED 0608             LD B,h'08
+   2308    0016EF 114000           LD DE,CHANLEN
+   2309    0016F2 FDCB00C6 GENCHK3 SET 0,(IY+CHSTAT)
+   2310    0016F6 FD19             ADD IY,DE
+   2311    0016F8 10F8             DJNZ GENCHK3
+   2312    0016FA D1               POP DE
+   2313    0016FB FDE1             POP IY
+   2314    0016FD C3....           JP GENZERO
+   2315    001700          
+   2316    001700 DD2EFF   GENTP   LD IXL,h'FF
+   2317    001703 7C               LD A,H
+   2318    001704 3C               INC A
+   2319    001705 FA....           JP M,GENENT
+   2320    001708 B5               OR L
+   2321    001709 2804             JR Z,GENENT
+   2322    00170B ED44             NEG
+   2323    00170D DD6F             LD IXL,A
+   2324    00170F FD4E10   GENENT  LD C,(IY+CHFRQL)
+   2325    001712 FD7E3F           LD A,(IY+CHOLDV)
+   2326    001715 FDE5             PUSH IY
+   2327    001717 CD3020           CALL h'2030
+   2328    00171A FDE1             POP  IY
+   2329    00171C FD773F           LD (IY+CHOLDV),A
+   2330    00171F FD710F           LD (IY+CHCNTH),C
+   2331    001722 7C               LD A,H
+   2332    001723 B7               OR A
+   2333    001724 FA....           JP M,GENJ2
+   2334    001727 2680             LD H,h'80
+   2335    001729 FD3404           INC (IY+CHCURP)
+   2336    00172C 7B       GENJ2   LD A,E
+   2337    00172D B7               OR A
+   2338    00172E CA....           JP Z,GENRET
+   2339    001731 FDCB007E         BIT 7,(IY+CHSTAT)
+   2340    001735 C2....           JP NZ,GENLP
+   2341    001738 C3....           JP GENZERO
+   2342    00173B          
+   2343    00173B FD7502   GENRET  LD (IY+CHCURL),L
+   2344    00173E FD7403           LD (IY+CHCURH),H
+   2345    001741 FD700E           LD (IY+CHCNTL),B
+   2346    001744 C3....           JP  GENEXT
+   2347    001747          
+   2348    001747 7B       GENZERO LD A,E
+   2349    001748 FEFF             CP h'FF
+   2350    00174A 304A             JR NC,GENZENT
+   2351    00174C FD463F           LD B,(IY+CHOLDV)
+   2352    00174F 0E80             LD C,h'80
+   2353    001751 FEFD             CP h'FD
+   2354    001753 303C             JR NC,GENZ_1
+   2355    001755 FEF9             CP h'F9
+   2356    001757 3026             JR NC,GENZ_2
+   2357    001759 79               LD A,C
+   2358    00175A 80               ADD A,B
+   2359    00175B 1F               RRA
+   2360    00175C 67               LD H,A
+   2361    00175D 80               ADD A,B
+   2362    00175E 1F               RRA
+   2363    00175F 6F               LD L,A
+   2364    001760 80               ADD A,B
+   2365    001761 1F               RRA
+   2366    001762 12               LD (DE),A
+   2367    001763 1C               INC E
+   2368    001764 7D               LD A,L
+   2369    001765 12               LD (DE),A
+   2370    001766 1C               INC E
+   2371    001767 84               ADD A,H
+   2372    001768 1F               RRA
+   2373    001769 12               LD (DE),A
+   2374    00176A 1C               INC E
+   2375    00176B 7C               LD A,H
+   2376    00176C 12               LD (DE),A
+   2377    00176D 1C               INC E
+   2378    00176E 81               ADD A,C
+   2379    00176F 1F               RRA
+   2380    001770 6F               LD L,A
+   2381    001771 84               ADD A,H
+   2382    001772 1F               RRA
+   2383    001773 12               LD (DE),A
+   2384    001774 1C               INC E
+   2385    001775 7D               LD A,L
+   2386    001776 12               LD (DE),A
+   2387    001777 1C               INC E
+   2388    001778 81               ADD A,C
+   2389    001779 1F               RRA
+   2390    00177A 12               LD (DE),A
+   2391    00177B 1C               INC E
+   2392    00177C C3....           JP GENZENT
+   2393    00177F          
+   2394    00177F 79       GENZ_2  LD A,C
+   2395    001780 80               ADD A,B
+   2396    001781 1F               RRA
+   2397    001782 67               LD H,A
+   2398    001783 80               ADD A,B
+   2399    001784 1F               RRA
+   2400    001785 12               LD (DE),A
+   2401    001786 1C               INC E
+   2402    001787 7C               LD A,H
+   2403    001788 12               LD (DE),A
+   2404    001789 1C               INC E
+   2405    00178A 81               ADD A,C
+   2406    00178B 1F               RRA
+   2407    00178C 12               LD (DE),A
+   2408    00178D 1C               INC E
+   2409    00178E C3....           JP GENZENT
+   2410    001791          
+   2411    001791 78       GENZ_1  LD A,B
+   2412    001792 81               ADD A,C
+   2413    001793 1F               RRA
+   2414    001794 12               LD (DE),A
+   2415    001795 1C               INC E
+   2416    001796 3E80     GENZENT LD A,h'80
+   2417    001798 CB43             BIT 0,E
+   2418    00179A 2804             JR Z,GENZJP1
+   2419    00179C 12               LD (DE),A
+   2420    00179D 1C               INC E
+   2421    00179E 282B             JR Z,GENZEXT
+   2422    0017A0 CB4B     GENZJP1 BIT 1,E
+   2423    0017A2 2806             JR Z,GENZJP2
+   2424    0017A4 12               LD (DE),A
+   2425    0017A5 1C               INC E
+   2426    0017A6 12               LD (DE),A
+   2427    0017A7 1C               INC E
+   2428    0017A8 2821             JR Z,GENZEXT
+   2429    0017AA CB53     GENZJP2 BIT 2,E
+   2430    0017AC 280A             JR Z,GENZLP
+   2431    0017AE 12               LD (DE),A
+   2432    0017AF 1C               INC E
+   2433    0017B0 12               LD (DE),A
+   2434    0017B1 1C               INC E
+   2435    0017B2 12               LD (DE),A
+   2436    0017B3 1C               INC E
+   2437    0017B4 12               LD (DE),A
+   2438    0017B5 1C               INC E
+   2439    0017B6 2813             JR Z,GENZEXT
+   2440    0017B8 12       GENZLP  LD (DE),A
+   2441    0017B9 1C               INC E
+   2442    0017BA 12               LD (DE),A
+   2443    0017BB 1C               INC E
+   2444    0017BC 12               LD (DE),A
+   2445    0017BD 1C               INC E
+   2446    0017BE 12               LD (DE),A
+   2447    0017BF 1C               INC E
+   2448    0017C0 12               LD (DE),A
+   2449    0017C1 1C               INC E
+   2450    0017C2 12               LD (DE),A
+   2451    0017C3 1C               INC E
+   2452    0017C4 12               LD (DE),A
+   2453    0017C5 1C               INC E
+   2454    0017C6 12               LD (DE),A
+   2455    0017C7 1C               INC E
+   2456    0017C8 C2....           JP NZ,GENZLP
+   2457    0017CB 3A8C40   GENZEXT LD A,(QTFREE)
+   2458    0017CE C660             ADD A,HIGH (DAC0)
+   2459    0017D0 FD8627           ADD A,(IY+CHRDN)
+   2460    0017D3 57               LD D,A
+   2461    0017D4 1EFF             LD E,h'FF
+   2462    0017D6 3E80             LD A,h'80
+   2463    0017D8 12               LD (DE),A
+   2464    0017D9 AF       GENEXT  XOR A
+   2465    0017DA 328140           LD (CPAGE),A
+   2466    0017DD D300             OUT (MPAG),A
+   2467    0017DF FDCB0046         BIT 0,(IY+CHSTAT)
+   2468    0017E3 C8               RET Z
+   2469    0017E4 C3....           JP CALCVOL
+   2470    0017E7          
+   2471    0017E7          
+   2472    0017E7                  ALIGN256
+   2472.1  001800                  org (($ - 1) & h'FF00) + h'100
+   2472.2  001800                  ENDM
+   2473    001800          #include "tables_l.asm"
+   2474    001B31          
+   2475    001B31          
+   2476    001B31          Free1
+   2477    001B31          ;---patched
+   2478    001B31          Patch11
+   2479    001B31 66               LD H,(HL)
+   2480    001B32 6A               LD L,D
+   2481    001B33 29               ADD HL,HL
+   2482    001B34 29               ADD HL,HL
+   2483    001B35 3001             JR NC,$+3
+   2484    001B37 14               INC D
+   2485    001B38 3A9F41           LD A,(MODTP)
+   2486    001B3B 3C               INC A
+   2487    001B3C 013C04           LD BC,h'0000+1084
+   2488    001B3F 2803             JR Z,TTT15x
+   2489    001B41 015802           LD BC,h'0000+600
+   2490    001B44 09       TTT15x  ADD HL,BC
+   2491    001B45 3001             JR NC,$+3
+   2492    001B47 14               INC D
+   2493    001B48 AF               XOR A
+   2494    001B49 328140           LD (CPAGE),A
+   2495    001B4C D300             OUT (MPAG),A
+   2496    001B4E 7A               LD A,D
+   2497    001B4F 110050           LD DE,h'5000
+   2498    001B52 010004           LD BC,h'400
+   2499    001B55 CD....           CALL LDMEM
+   2500    001B58 AF               XOR A
+   2501    001B59 D300             OUT (h'00),A
+   2502    001B5B C9               RET
+   2503    001B5C          
+   2504    001B5C          ; new cmd h'6A - Set player mode
+   2505    001B5C 3AA041   COM6A   LD A,(PlMode)   ;command
+   2506    001B5F D303             OUT (ZXDATWR),A
+   2507    001B61 DB02             IN A,(ZXDATRD)
+   2508    001B63 D305             OUT (CLRCBIT),A
+   2509    001B65 32A041           LD (PlMode),A
+   2510    001B68 C9               RET
+   2511    001B69          
+   2512    001B69 3AA041   Patch2x LD A,(PlMode)
+   2513    001B6C B7               OR A
+   2514    001B6D C0               RET NZ
+   2515    001B6E 215141           LD HL,MTSTAT
+   2516    001B71 CBFE             SET 7,(HL)
+   2517    001B73 C9               RET
+   2518    001B74          
+   2519    001B74          ; last note speed
+   2520    001B74 3A5B41   Patch3  LD A,(MTSNGPS)
+   2521    001B77 B7                       OR A
+   2522    001B78 2014                     JR NZ,Patch3e   ;1st pattern
+   2523    001B7A 3A5A41           LD A,(MTPATPS)
+   2524    001B7D B7                       OR A
+   2525    001B7E 200E                     JR NZ,Patch3e   ;1st row
+   2526    001B80 3E06             LD A,6          ;init speed at start of
+                                                    MOD
+   2527    001B82 325841           LD (MTSPEED),A
+   2528    001B85 21EE02           LD HL,750
+   2529    001B88 225341           LD (TICKLEN),HL
+   2530    001B8B 225541           LD (TCKLEFT),HL
+   2531    001B8E FD210046 Patch3e LD IY,CHANS
+   2532    001B92 C3....           JP EFXGTNT+4
+   2533    001B95          
+   2534    001B95          ; initial note
+   2535    001B95 FD360E00 Patch4  LD (IY+CHCNTL),h'00
+   2536    001B99 FD36147F         LD (IY+CHREAL),h'7F
+   2537    001B9D C9               RET
+   2538    001B9E          
+   2539    001B9E          ;MOD relooper
+   2540    001B9E          ; new cmd h'6B - Set minimal loop length (turn on
+                            relooper)
+   2541    001B9E          
+   2542    001B9E DB02     COM6B   IN A,(ZXDATRD)
+   2543    001BA0 6F                       LD L,A
+   2544    001BA1 D305             OUT (CLRCBIT),A
+   2545    001BA3 DB04             IN A,(ZXSTAT)
+   2546    001BA5 E681             AND h'81
+   2547    001BA7 28FA             JR Z,$-4
+   2548    001BA9 F2....           JP P,Patch5s
+   2549    001BAC DB02             IN A,(ZXDATRD)
+   2550    001BAE 67               LD H,A
+   2551    001BAF 110140           LD DE,16385
+   2552    001BB2 B7               OR A
+   2553    001BB3 ED52             SBC HL,DE
+   2554    001BB5 19               ADD HL,DE
+   2555    001BB6 3803             JR C,Patch5s+3
+   2556    001BB8 210002   Patch5s LD HL,h'0200
+   2557    001BBB 22A141           LD (MODLLEN),HL
+   2558    001BBE C9               RET
+   2559    001BBF          
+   2560    001BBF          ;reconstruct MOD after load
+   2561    001BBF CD....   Patch5x CALL PLAYMD             ;init MOD
+   2562    001BC2 2AA141           LD HL,(MODLLEN)
+   2563    001BC5 7C               LD A,H
+   2564    001BC6 B5               OR L
+   2565    001BC7 C8               RET Z   ;relooper off
+   2566    001BC8 3A9F41           LD A,(MODTP)
+   2567    001BCB B7               OR A
+   2568    001BCC 3E1F             LD A,31
+   2569    001BCE 213C04           LD HL,1084
+   2570    001BD1 2005             JR NZ,$+7
+   2571    001BD3 3E0F             LD A,15
+   2572    001BD5 215802           LD HL,600
+   2573    001BD8 320050           LD (MODSMPS),A
+   2574    001BDB 220150           LD (MODPTST),HL
+   2575    001BDE CD....           CALL CHIP
+   2576    001BE1 C3....       JP PLAYMD           ;init MOD again
+   2577    001BE4          
+   2578    001BE4          ;-----(c)Evgeny Muchkin
+   2579    001BE4          
+   2580    001BE4          ;MODSMPS        equ h'5000
+   2581    001BE4          ;MODPTST        equ h'5001
+   2582    001BE4          ;ChipSP_        equ h'5005
+   2583    001BE4          ;CHIP246 equ h'5007
+   2584    001BE4          ;TOcip_ equ h'5009
+   2585    001BE4          ;CHIPLN  equ h'5010     ; НА4АЛО СЕМПЛОВ
+                            (pointer)
+   2586    001BE4          ;CHIPPP  equ h'5013     ; ДЛИНА МОДУЛЯ
+   2587    001BE4          ;CIP1    equ h'5016     ; ОТКУДА ПЕРЕНО�
+                           �ИТЬ
+   2588    001BE4          ;CIP2    equ h'5019     ; КУДА ПЕРЕНОСИ�
+                           �Ь
+   2589    001BE4          ;CIP3    equ h'501c     ; КОНЕЦ БЛОКА
+   2590    001BE4          
+   2591    001BE4 F3       CHIP    DI
+   2592    001BE5 3A0040           LD A,(RAMPG)
+   2593    001BE8 D300             OUT (MPAG),A
+   2594    001BEA ED5B0150         LD DE,(MODPTST) ;patts data!
+   2595    001BEE 3A9E41           LD A,(PATTS)
+   2596    001BF1 6F               LD L,A
+   2597    001BF2 60               LD H,B
+   2598    001BF3 29               ADD HL,HL
+   2599    001BF4 29               ADD HL,HL
+   2600    001BF5 7C               LD A,H
+   2601    001BF6 65               LD H,L
+   2602    001BF7 68               LD L,B
+   2603    001BF8 19               ADD HL,DE
+   2604    001BF9 88               ADC A,B
+   2605    001BFA 221050           LD (CHIPLN),HL
+   2606    001BFD 321250           LD (CHIPLN+2),A
+   2607    001C00 ED730550         LD (ChipSP_),SP
+   2608    001C04 211050           LD HL,CHIPLN
+   2609    001C07 111350           LD DE,CHIPPP
+   2610    001C0A D5               PUSH DE
+   2611    001C0B EDA0             LDI
+   2612    001C0D EDA0             LDI
+   2613    001C0F EDA0             LDI
+   2614    001C11 FDE1             POP IY
+   2615    001C13 3A0050           LD A,(MODSMPS)
+   2616    001C16 47               LD B,A          ;smps!
+   2617    001C17 111E00           LD DE,30
+   2618    001C1A DD211480         LD IX,h'8014
+   2619    001C1E DD6616   ChIp    LD H,(IX+22)    ;len
+   2620    001C21 DD6E17           LD L,(IX+23)
+   2621    001C24 CD....           CALL TOCip
+   2622    001C27 DD19             ADD IX,DE
+   2623    001C29 10F3             DJNZ ChIp
+   2624    001C2B DD212A80         LD IX,h'802A
+   2625    001C2F 3A0050           LD A,(MODSMPS)
+   2626    001C32 47               LD B,A          ;smps!
+   2627    001C33 3A0040   CHIP1   LD A,(RAMPG)
+   2628    001C36 D300             OUT (MPAG),A
+   2629    001C38 DD6606           LD H,(IX+6)     ;loop len
+   2630    001C3B DD6E07           LD L,(IX+7)
+   2631    001C3E 220750           LD (CHIP246),HL
+   2632    001C41 DD7E00           LD A,(IX+0)     ;len
+   2633    001C44 DDB601           OR (IX+1)
+   2634    001C47 CA....           JP Z,CHIP2      ;skip if no smp
+   2635    001C4A 110200           LD DE,2
+   2636    001C4D CD....           CALL CP_DDE
+   2637    001C50 DA....           JP C,CHIP2      ;skip if loop len <2
+   2638    001C53 ED5BA141 LUP_LEN LD DE,(MODLLEN)
+   2639    001C57 CD....           CALL CP_DDE
+   2640    001C5A D2....           JP NC,CHIP2     ;skip if loop len>=LUP_LEN
+   2641    001C5D C5               PUSH BC
+   2642    001C5E 44               LD B,H
+   2643    001C5F 4D               LD C,L
+   2644    001C60 D9               EXX
+   2645    001C61 010000           LD BC,0         ;reloop counter
+   2646    001C64 D9       CHIP3   EXX
+   2647    001C65 09               ADD HL,BC
+   2648    001C66 CD....           CALL CP_DDE
+   2649    001C69 D9               EXX
+   2650    001C6A 03               INC BC
+   2651    001C6B 38F7             JR C,CHIP3
+   2652    001C6D C5               PUSH BC
+   2653    001C6E D9               EXX
+   2654    001C6F          ;!!!!!!!!!!!!!!!!!!!!!!!!!!
+   2655    001C6F E5               PUSH HL         ;new loop len
+   2656    001C70 DD4606           LD B,(IX+6)     ;loop len
+   2657    001C73 DD4E07           LD C,(IX+7)
+   2658    001C76 A7               AND A
+   2659    001C77 ED42             SBC HL,BC
+   2660    001C79 111350           LD DE,CHIPPP
+   2661    001C7C ED530950         LD (TOcip_),DE
+   2662    001C80 FD211650         LD IY,CIP1
+   2663    001C84 CD....           CALL TOCIP
+   2664    001C87 111050           LD DE,CHIPLN
+   2665    001C8A ED530950         LD (TOcip_),DE
+   2666    001C8E 0603             LD B,3          ;check if free mem
+   2667    001C90 111850           LD DE,CIP1+2
+   2668    001C93 21FF40           LD HL,RAMTOP+2
+   2669    001C96 1A       ChipLP  LD A,(DE)
+   2670    001C97 BE               CP (HL)
+   2671    001C98 2B               DEC HL
+   2672    001C99 1B               DEC DE
+   2673    001C9A 3805             JR C,ChipOK
+   2674    001C9C C2....           JP NZ,ChipSP
+   2675    001C9F 10F5             DJNZ ChipLP
+   2676    001CA1 E1       ChipOK  POP HL
+   2677    001CA2 EB               EX DE,HL        ;DE=new loop len
+   2678    001CA3 DD6600           LD H,(IX+0)     ;len
+   2679    001CA6 DD6E01           LD L,(IX+1)
+   2680    001CA9 DD4606           LD B,(IX+6)     ;loop len
+   2681    001CAC DD4E07           LD C,(IX+7)
+   2682    001CAF A7               AND A
+   2683    001CB0 ED42             SBC HL,BC
+   2684    001CB2 19               ADD HL,DE
+   2685    001CB3 DD7400           LD (IX+0),H     ;new smp len
+   2686    001CB6 DD7501           LD (IX+1),L
+   2687    001CB9 DD7206           LD (IX+6),D     ;new loop len
+   2688    001CBC DD7307           LD (IX+7),E
+   2689    001CBF FD211650         LD IY,CIP1
+   2690    001CC3 DD6604           LD H,(IX+4)     ;loop start
+   2691    001CC6 DD6E05           LD L,(IX+5)
+   2692    001CC9 E5               PUSH HL
+   2693    001CCA E5               PUSH HL
+   2694    001CCB E5               PUSH HL
+   2695    001CCC 09               ADD HL,BC
+   2696    001CCD CD....           CALL TOCIP
+   2697    001CD0 FD211950         LD IY,CIP2
+   2698    001CD4 E1               POP HL
+   2699    001CD5 19               ADD HL,DE
+   2700    001CD6 CD....           CALL TOCIP
+   2701    001CD9 211350           LD HL,CHIPPP
+   2702    001CDC 111C50           LD DE,CIP3
+   2703    001CDF EDA0             LDI
+   2704    001CE1 EDA0             LDI
+   2705    001CE3 EDA0             LDI
+   2706    001CE5 CD....           CALL DIRER
+   2707    001CE8 FD211650         LD IY,CIP1
+   2708    001CEC E1               POP HL
+   2709    001CED CD....           CALL TOCIP
+   2710    001CF0 E1               POP HL
+   2711    001CF1 ED5B0750 CHIP4   LD DE,(CHIP246) ;orig loop len
+   2712    001CF5 19               ADD HL,DE
+   2713    001CF6 FD211950         LD IY,CIP2
+   2714    001CFA CD....           CALL TOCIP
+   2715    001CFD 211950           LD HL,CIP2
+   2716    001D00 111C50           LD DE,CIP3
+   2717    001D03 EDA0             LDI
+   2718    001D05 EDA0             LDI
+   2719    001D07 EDA0             LDI
+   2720    001D09 C1               POP BC
+   2721    001D0A C5       CHIP5   PUSH BC
+   2722    001D0B CD....           CALL DIRER
+   2723    001D0E 2A0750   CHIP6   LD HL,(CHIP246) ;orig loop len
+   2724    001D11 FD211950         LD IY,CIP2
+   2725    001D15 CD....           CALL TOCip
+   2726    001D18 C1               POP BC
+   2727    001D19 0B               DEC BC
+   2728    001D1A 78               LD A,B
+   2729    001D1B B1               OR C
+   2730    001D1C 20EC             JR NZ,CHIP5
+   2731    001D1E C1               POP BC
+   2732    001D1F ED5B0750 CHIP2   LD DE,(CHIP246) ;orig loop len
+   2733    001D23 3A0040           LD A,(RAMPG)
+   2734    001D26 D300             OUT (MPAG),A
+   2735    001D28 DD6606           LD H,(IX+6)     ;new loop len
+   2736    001D2B DD6E07           LD L,(IX+7)
+   2737    001D2E A7               AND A
+   2738    001D2F ED52             SBC HL,DE
+   2739    001D31 FD211350         LD IY,CHIPPP    ;corr mod len
+   2740    001D35 CD....           CALL TOCip
+   2741    001D38 DD6600           LD H,(IX+0)
+   2742    001D3B DD6E01           LD L,(IX+1)
+   2743    001D3E FD211050         LD IY,CHIPLN    ;add pointer
+   2744    001D42 CD....           CALL TOCip
+   2745    001D45 111E00           LD DE,30
+   2746    001D48 DD19             ADD IX,DE
+   2747    001D4A 05               DEC B
+   2748    001D4B C2....           JP NZ,CHIP1
+   2749    001D4E ED7B0550 ChipSP  LD SP,(ChipSP_)
+   2750    001D52 FB               EI
+   2751    001D53 C9               RET
+   2752    001D54          
+   2753    001D54 FD211650 DIRER   LD IY,CIP1
+   2754    001D58 FD6E03           LD L,(IY+3)
+   2755    001D5B FD6604           LD H,(IY+4)
+   2756    001D5E FD4605           LD B,(IY+5)
+   2757    001D61 D9               EXX
+   2758    001D62 FD6E00           LD L,(IY+0)
+   2759    001D65 FD6601           LD H,(IY+1)
+   2760    001D68 FD4602           LD B,(IY+2)
+   2761    001D6B FD5E06           LD E,(IY+6)
+   2762    001D6E FD5607           LD D,(IY+7)
+   2763    001D71 FD4E08           LD C,(IY+8)
+   2764    001D74 DDE5             PUSH IX
+   2765    001D76 CD....           CALL RESI10_
+   2766    001D79 DDE1             POP IX
+   2767    001D7B C9               RET
+   2768    001D7C          
+   2769    001D7C E5       TOCIP   PUSH HL
+   2770    001D7D D5               PUSH DE
+   2771    001D7E FDE5             PUSH IY
+   2772    001D80 D1               POP DE
+   2773    001D81 2A0950   TOcip   LD HL,(TOcip_)  ;CHIPLN
+   2774    001D84 EDA0             LDI
+   2775    001D86 EDA0             LDI
+   2776    001D88 EDA0             LDI
+   2777    001D8A D1               POP DE
+   2778    001D8B E1               POP HL
+   2779    001D8C CD....   TOCip   CALL ADD_IY
+   2780    001D8F FD7E00   ADD_IY  LD A,(IY+0)
+   2781    001D92 85               ADD A,L
+   2782    001D93 FD7700           LD (IY+0),A
+   2783    001D96 FD7E01           LD A,(IY+1)
+   2784    001D99 8C               ADC A,H
+   2785    001D9A FD7701           LD (IY+1),A
+   2786    001D9D FD7E02           LD A,(IY+2)
+   2787    001DA0 CE00             ADC A,0
+   2788    001DA2 FD7702           LD (IY+2),A
+   2789    001DA5 C9               RET
+   2790    001DA6          
+   2791    001DA6 E5       CP_DDE  PUSH HL
+   2792    001DA7 A7               AND A
+   2793    001DA8 ED52             SBC HL,DE
+   2794    001DAA E1               POP HL
+   2795    001DAB C9               RET
+   2796    001DAC          
+   2797    001DAC          ;RESID10 ; MOVE BLOCK IN GS
+   2798    001DAC          ;          BHL - FROM
+   2799    001DAC          ;          CDE - END
+   2800    001DAC          ;         'BHL - TO
+   2801    001DAC          
+   2802    001DAC 97       RESI10_ SUB A
+   2803    001DAD D300                     OUT (MPAG),A
+   2804    001DAF 328240                   LD (SYSTEM),A
+   2805    001DB2 78                       LD A,B
+   2806    001DB3 E5                       PUSH HL
+   2807    001DB4 D9                       EXX
+   2808    001DB5 D1                       POP DE
+   2809    001DB6 E5                       PUSH HL
+   2810    001DB7 C5                       PUSH BC
+   2811    001DB8 4F                       LD C,A
+   2812    001DB9 B7                       OR A
+   2813    001DBA ED52                     SBC HL,DE
+   2814    001DBC 78                       LD A,B
+   2815    001DBD 99                       SBC A,C
+   2816    001DBE EB                       EX DE,HL
+   2817    001DBF C1                       POP BC
+   2818    001DC0 E1                       POP HL
+   2819    001DC1 4F                       LD C,A
+   2820    001DC2 B3                       OR E
+   2821    001DC3 B2                       OR D
+   2822    001DC4 C8                       RET Z
+   2823    001DC5 D9                       EXX
+   2824    001DC6 EB                       EX DE,HL
+   2825    001DC7 ED52                     SBC HL,DE
+   2826    001DC9 79                       LD A,C
+   2827    001DCA 98                       SBC A,B
+   2828    001DCB DD6F                     LD IXL,A
+   2829    001DCD B5                       OR L
+   2830    001DCE B4                       OR H
+   2831    001DCF D9                       EXX
+   2832    001DD0 C8                       RET Z
+   2833    001DD1 D5                       PUSH DE
+   2834    001DD2 C5                       PUSH BC
+   2835    001DD3 CB79                     BIT 7,C
+   2836    001DD5 D9                       EXX
+   2837    001DD6 C2....                   JP NZ,MOVL
+   2838    001DD9 C3....                   JP MOVH
+   2839    001DDC          ;-----
+   2840    001DDC          
+   2841    001DDC          ;store settings
+   2842    001DDC 3AA041   Patch5i1        LD A,(PlMode)
+   2843    001DDF 4F                       LD C,A
+   2844    001DE0 ED5BA141                 LD DE,(MODLLEN)
+   2845    001DE4 3AB240                   LD A,(ERRCODE)
+   2846    001DE7 C9                       RET
+   2847    001DE8          
+   2848    001DE8          ;restore settings
+   2849    001DE8 32B240   Patch5i2        LD (ERRCODE),A
+   2850    001DEB 79                       LD A,C
+   2851    001DEC 32A041                   LD (PlMode),A
+   2852    001DEF ED53A141                 LD (MODLLEN),DE
+   2853    001DF3 C9                       RET
+   2854    001DF4          
+   2855    001DF4          ;clear vars after full reset!
+   2856    001DF4 AF       Patch5i3        XOR A
+   2857    001DF5 67                       LD H,A
+   2858    001DF6 6F                       LD L,A
+   2859    001DF7 32A041                   LD (PlMode),A
+   2860    001DFA 22A141                   LD (MODLLEN),HL
+   2861    001DFD C3....                   JP INITVAR
+   2862    001E00          
+   2863    001E00          CP_END_MOD
+   2864    001E00                  ;LD HL,MTSNGPS
+   2865    001E00                  ;INC (HL)
+   2866    001E00                  ;CP (HL)
+   2867    001E00                  ;CALL C,STOPMOD
+   2868    001E00                  ;LD (MTSNGPS),A
+   2869    001E00                  ;RET
+   2870    001E00          
+   2871    001E00          ;       display $
+   2872    001E00          ;---
+   2873    001E00          ;emptyobl1
+   2874    001E00          
+   2875    001E00          ;       ORG GSRomBaseL+h'1D00
+   2876    001E00          
+   2877    001E00          ;       IN A,(ZXDATRD)
+   2878    001E00          ;       OUT (CLRCBIT),A
+   2879    001E00          ;       LD A,h'7F
+   2880    001E00          ;       OUT (ZXDATWR),A
+   2881    001E00          ;       JP COMINT_
+   2882    001E00          
+   2883    001E00          ;WDY    IN A,(ZXSTAT)
+   2884    001E00          ;       RLA
+   2885    001E00          ;       JR NC,$-3
+   2886    001E00          ;       RET
+   2887    001E00          
+   2888    001E00          ;WDN    IN A,(ZXSTAT)
+   2889    001E00          ;       RLA
+   2890    001E00          ;       JR C,$-3
+   2891    001E00          ;       RET
+   2892    001E00          
+   2893    002000                  ORG GSRomBaseL+h'2000
+   2894    002000          #include "sgen.asm"
+   2895    003D5F          
+   2896    003E00                  ORG GSRomBaseL+h'3E00
+   2897    003E00          #include "divtab3.asm"                          ;   
+                               h'10*h'20=h'200
+   2898    004000          
+   2899    00E000                      ORG GSRomBaseH+h'2000
+   2900    00E000          #include "gsfrqtb.asm"
+   2901    010000          
+   2902    00C000                  ORG GSRomBaseH
+   2903    00C000          #include "high_ngs.asm"
+   2904    00DB93          
+   2905    00DB93              end
+##############################
+#          CRC:8BD2          #
+#        Errors:   0         #
+#        Warnings: 0         #
+#        Bytes: 30148        #
+##############################
+
+
+
+

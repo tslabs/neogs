@@ -1,0 +1,195 @@
+ AS V1.42 Beta [Bld 78] - source file create_update.a80 - page 1 - 8/7/2014 4:01:39
+
+
+       1/       0 :                     
+       2/       0 :                     		include macros.a80
+(1)    1/       0 :                     
+(1)    2/       0 :                     		RELAXED ON
+(1)    3/       0 :                     		CPU Z80UNDOC
+(1)    4/       0 :                     
+(1)    5/       0 :                     DZ		MACRO DEFZ
+(1)    6/       0 :                     		DB DEFZ,0
+(1)    7/       0 :                     		ENDM 
+(1)    8/       0 :                     
+(1)    9/       0 :                     DC		MACRO DEFC
+(1)   10/       0 :                     		IF STRLEN(DEFC)>1
+(1)   11/       0 :                     		DB SUBSTR(DEFC,0,STRLEN(DEFC)-1)
+(1)   12/       0 :                     		ENDIF
+(1)   13/       0 :                     		IF STRLEN(DEFC)>0
+(1)   14/       0 :                     		DB CHARFROMSTR(DEFC,STRLEN(DEFC)-1)|80H
+(1)   15/       0 :                     		ENDIF
+(1)   16/       0 :                     		ENDM
+(1)   17/       0 :                     
+(1)   18/       0 :                     SUM_HOB		MACRO STR,AA,BB,CC
+(1)   19/       0 :                     		DB STR
+(1)   20/       0 :                     		DW AA
+(1)   21/       0 :                     		DW BB
+(1)   22/       0 :                     		DW CC
+(1)   23/       0 :                     $$I := 0
+(1)   24/       0 :                     $$S := 0
+(1)   25/       0 :                     		REPT 9
+(1)   26/       0 :                     $$N := CHARFROMSTR (STR,STRLEN(STR)+$$S-9)
+(1)   27/       0 :                     $$I := ($$I+$$S+$$N+($$N*256))&0XFFFF
+(1)   28/       0 :                     $$S := $$S+1
+(1)   29/       0 :                     		ENDM
+(1)   30/       0 :                     $$I := ($$I+$$S+LOW (AA)+(LOW (AA)*0X100))&0XFFFF
+(1)   31/       0 :                     $$S := $$S+1
+(1)   32/       0 :                     $$I := ($$I+$$S+HIGH (AA)+(HIGH (AA)*0X100))&0XFFFF
+(1)   33/       0 :                     $$S := $$S+1
+(1)   34/       0 :                     $$I := ($$I+$$S+LOW (BB)+(LOW (BB)*0X100))&0XFFFF
+(1)   35/       0 :                     $$S := $$S+1
+(1)   36/       0 :                     $$I := ($$I+$$S+HIGH (BB)+(HIGH (BB)*0X100))&0XFFFF
+(1)   37/       0 :                     $$S := $$S+1
+(1)   38/       0 :                     $$I := ($$I+$$S+LOW (CC)+(LOW (CC)*0X100))&0XFFFF
+(1)   39/       0 :                     $$S := $$S+1
+(1)   40/       0 :                     $$I := ($$I+$$S+HIGH (CC)+(HIGH (CC)*0X100))&0XFFFF
+(1)   41/       0 :                     $$S := $$S+1
+(1)   42/       0 :                     		DW $$I
+(1)   43/       0 :                     		ENDM
+(1)   44/       0 :                     
+(1)   45/       0 :                     DUPL		MACRO LEN,FILL
+(1)   46/       0 :                     DUPL:
+(1)   47/       0 :                     $$N		EQU (LEN) / 1024
+(1)   48/       0 :                     $$M		EQU (LEN) # 1024
+(1)   49/       0 :                     		REPT $$N
+(1)   50/       0 :                     		DB 1024 DUP(FILL)
+(1)   51/       0 :                     		ENDM
+(1)   52/       0 :                     		IF $$M <> 0
+(1)   53/       0 :                     		DB $$M DUP(FILL)
+(1)   54/       0 :                     		ENDIF
+(1)   55/       0 :                     		ENDM
+(1)   56/       0 :                     
+(1)   57/       0 :                     HIGH		FUNCTION X,((X >> 8) & 0XFF)
+(1)   58/       0 :                     LOW		FUNCTION X,(X & 0XFF)
+ AS V1.42 Beta [Bld 78] - source file create_update.a80(macros.a80) - page 2 - 8/7/2014 4:01:39
+
+
+(1)   59/       0 :                     
+       3/       0 :                     		CPU Z180			;êÄáåÖê îÄâãÄ åéÜÖí èéãìóàíúëü ÅéãÖÖ 64äÅ
+       4/       0 :                     
+       5/       0 : =9H                 DD		EQU 9
+       6/       0 : =2H                 MM		EQU 2
+       7/       0 : =BH                 YY		EQU 11
+       8/       0 : =9649H              DATA		EQU DD+MM<<5+YY<<9+0X8000		;ÑÄíÄ ëÅéêäà éÅçéÇãÖçàü
+       9/       0 :                     
+      10/       0 : =FH                 DD_P0		EQU 15					;óàëãé ëíêÄçàñõ 0
+      11/       0 : =1H                 MM_P0		EQU 1					;åÖëüñ ëíêÄçàñõ 0
+      12/       0 : =BH                 YY_P0		EQU 11					;ÉéÑ ëíêÄçàñõ 0
+      13/       0 : =7H                 DD_P1		EQU 7					;óàëãé ëíêÄçàñõ 1
+      14/       0 : =8H                 MM_P1		EQU 8 					;åÖëüñ ëíêÄçàñõ 1
+      15/       0 : =EH                 YY_P1		EQU 14					;ÉéÑ ëíêÄçàñõ 1
+      16/       0 : =13H                DD_P7		EQU 19					;óàëãé ëíêÄçàñõ 7
+      17/       0 : =1H                 MM_P7		EQU 1 					;åÖëüñ ëíêÄçàñõ 7
+      18/       0 : =BH                 YY_P7		EQU 11					;ÉéÑ ëíêÄçàñõ 7.
+      19/       0 : =962FH              DATA_P0		EQU DD_P0+MM_P0<<5+YY_P0<<9+0X8000	;ìèÄäéÇÄççÄü ÑÄíÄ ëéáÑÄçàü ëíêÄçàñõ 0
+      20/       0 : =9D07H              DATA_P1		EQU DD_P1+MM_P1<<5+YY_P1<<9+0X8000	;ìèÄäéÇÄççÄü ÑÄíÄ ëéáÑÄçàü ëíêÄçàñõ 1
+      21/       0 : =9633H              DATA_P7		EQU DD_P7+MM_P7<<5+YY_P7<<9+0X8000	;ìèÄäéÇÄççÄü ÑÄíÄ ëéáÑÄçàü ëíêÄçàñõ 7
+      22/       0 :                     
+      23/       0 :                     
+      24/       0 : =0H                 LOADER_PAGE	EQU 0
+      25/       0 : =1H                 MAINROM_PAGE	EQU 1
+      26/       0 : =7H                 FPGA_PAGE	EQU 7
+      27/       0 :                     
+      28/       0 :                     		ORG 0
+      29/       0 : 38 00               HEADER		DW EHEADER-HEADER
+      30/       2 : 4E 47 53 46         		DB "NGSF"
+      31/       6 : 49 96               		DW DATA
+      32/       8 :                     
+      33/       8 :                     ;BLOK0
+      34/       8 : 00 38 00 00         		DD BLOK0*0X100+LOADER_PAGE
+      35/       C : 0A 09               		DW BLOK1-BLOK0
+      36/       E :                     		binclude loader.crc
+      37/      10 : 4C 4F 41 44 45 52   		DB "LOADER"
+      38/      16 : 2F 96               		DW DATA_P0
+      39/      18 :                     
+      40/      18 :                     ;BLOK1		
+      41/      18 : 01 42 09 00         		DD BLOK1*0X100+MAINROM_PAGE
+      42/      1C : 00 80               		DW BLOK7-BLOK1
+      43/      1E :                     		binclude neogs.crc
+      44/      20 : 4D 41 49 4E 20 20   		DB "MAIN  "
+      45/      26 : 07 9D               		DW DATA_P1
+      46/      28 :                     
+      47/      28 :                     ;BLOK7
+      48/      28 : 07 42 89 00         		DD BLOK7*0X100+FPGA_PAGE
+      49/      2C : F4 43               		DW BLOKE-BLOK7
+      50/      2E :                     		binclude fpga.crc
+      51/      30 : 46 50 47 41 20 20   		DB "FPGA  "
+      52/      36 : 33 96               		DW DATA_P7
+      53/      38 :                     EHEADER
+      54/      38 :                     
+      55/      38 :                     BLOK0		binclude loader_ngs.rom
+      56/     942 :                     BLOK1		binclude neogs.rom
+      57/    8942 :                     BLOK7		binclude fpga.bin
+      58/    CD36 :                     BLOKE
+      59/    CD36 :                     
+ AS V1.42 Beta [Bld 78] - source file create_update.a80 - page 3 - 8/7/2014 4:01:39
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
+ BLOK0 :                         38 C |  BLOK1 :                        942 C |
+ BLOK7 :                       8942 C |  BLOKE :                       CD36 C |
+*BRANCHEXT :                      0 - | *CASESENSITIVE :                  1 - |
+*CONSTPI :        3.141592653589793 - |  DATA :                        9649 - |
+ DATA_P0 :                     962F - |  DATA_P1 :                     9D07 - |
+ DATA_P7 :                     9633 - | *DATE :                    8/7/2014 - |
+ DD :                             9 - |  DD_P0 :                          F - |
+ DD_P1 :                          7 - |  DD_P7 :                         13 - |
+ EHEADER :                       38 C | *FALSE :                          0 - |
+ FPGA_PAGE :                      7 - | *FULLPMMU :                       1 - |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+ HEADER :                         0 C | *INEXTMODE :                      0 - |
+*INLWORDMODE :                    0 - | *INMAXMODE :                      0 - |
+*INSRCMODE :                      0 - | *INSUPMODE :                      0 - |
+*LISTON :                         1 - |  LOADER_PAGE :                    0 - |
+*MACEXP :                         1 - |  MAINROM_PAGE :                   1 - |
+ MM :                             2 - |  MM_P0 :                          1 - |
+ MM_P1 :                          8 - |  MM_P7 :                          1 - |
+*MOMCPU :                       180 - | *MOMCPUNAME :                  Z180 - |
+*NESTMAX :                      100 - | *PACKING :                        0 - |
+*PADDING :                        1 - | *RELAXED :                        1 - |
+*TIME :                     4:01:39 - | *TRUE :                           1 - |
+*VERSION :                     142F - |  YY :                             B - |
+ YY_P0 :                          B - |  YY_P1 :                          E - |
+ YY_P7 :                          B - |
+
+     53 symbols
+     28 unused symbols
+
+ AS V1.42 Beta [Bld 78] - source file create_update.a80 - page 4 - 8/7/2014 4:01:39
+
+
+  defined macros:
+  ---------------
+
+DC                                    | DUPL                                 
+DZ                                    | SUM_HOB                              
+
+      4 macros
+
+ AS V1.42 Beta [Bld 78] - source file create_update.a80 - page 5 - 8/7/2014 4:01:39
+
+
+  defined functions:
+  ------------------
+
+LOW                                   | HIGH                                 
+
+ AS V1.42 Beta [Bld 78] - source file create_update.a80 - page 6 - 8/7/2014 4:01:39
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.00 seconds assembly time
+
+    118 lines source file
+      2 passes
+      0 errors
+      0 warnings

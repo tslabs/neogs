@@ -1,0 +1,40 @@
+работа на 24мгц на 14мгц шине зетника (IORQ удлинён до длительности 7мгц: 350ns)
+
+T24 = 42ns.
+2sync: 42*3 = 126 ns, остаток 224ns.
+
+
+
+тормознутость пзушек: 150ns - 4 такта 24мгц. Делаю 5 -- для надёжности.
+
+
+ресеты и иниты:
+
+1. startup reset:
+   происходит, когда залили прошу.
+2. host reset:
+   происходит по запросу от хоста.
+3. dbus reset:
+   отпускается, когда набортный цпу выдал /busak
+
+правила ресетов:
+1. startup ресет также дёргает host reset и dbus reset
+2. host reset дёргает dbus reset
+
+куда идут:
+dbus reset на модуль rom.
+host reset на модуль zxbus
+
+тестирование записей и чтений ром:
+1. в iord/iowr эмулятор записи в адреса (инкременты декременты етценты) и покладивание/проверка данных фифов
+2. в rom_emu тоже покладывание/проверка данных фифов.
+
+rom read lags 1 byte: to read addr0 you set b3 to 000000, then read bb twice: second read gives you value read from 000000, first read -- previously
+read value.
+
+wr fifo: single fifo, what's written to bb (with address) put in iowr, rom_emu checks its own writes against fifo.
+
+rd fifo: two address fifos and data fifo:
+one address fifos is filled in iord, one of them checked in rom_emu, then read data returned back via data and addr fifos.
+end of iord checks for correct return address and read data (with a lag of 1 byte)
+

@@ -1,0 +1,35 @@
+PORTS_INC=../../docs/ports.inc
+
+ASL=../../tools/asw/asw.exe -U -L
+P2BIN=../../tools/asw/p2bin.exe
+P2BIN_OPTS= -r \$$-$$ -k
+MHMT=../../tools/mhmt/mhmt.exe -mlz
+
+all: npl044.scl npl044.$$C
+
+ports_ngs.a80: $(PORTS_INC)
+	cat $(PORTS_INC) | sed  s/#/0x/ >ports_ngs.a80
+
+unp_play4ngs.rom: ports_ngs.a80 macros.a80 play4ngs.a80 sd4ngs.a80 fat4ngs.a80 dec40.a80 unp_play4ngs.a80
+	$(ASL)   play4ngs.a80
+	$(P2BIN) play4ngs.p play4ngs.rom $(P2BIN_OPTS)
+	$(MHMT)  play4ngs.rom play4ngs_pack.rom
+	$(ASL)   unp_play4ngs.a80
+	$(P2BIN) unp_play4ngs.p unp_play4ngs.rom $(P2BIN_OPTS)
+
+play_ngs_pack.rom: unp_play4ngs.rom macros.a80 play_ngs.a80 altstd.bin
+	$(ASL)   play_ngs.a80
+	$(P2BIN) play_ngs.p play_ngs.rom $(P2BIN_OPTS)
+	$(MHMT)  play_ngs.rom play_ngs_pack.rom
+
+npl044.scl: make_scl.a80 macros.a80 basic4monoloader.a80 dec40.a80 play_ngs_pack.rom
+	$(ASL)   make_scl.a80
+	$(P2BIN) make_scl.p npl044.scl $(P2BIN_OPTS)
+
+npl044.$$C: make_hobeta.a80 macros.a80 dec40.a80 play_ngs_pack.rom
+	$(ASL)   make_hobeta.a80
+	$(P2BIN) make_hobeta.p npl044.\$$C $(P2BIN_OPTS)
+
+clean:
+	rm ports_ngs.a80 *.lst *.rom npl044.scl npl044.\$$C
+

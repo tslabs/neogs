@@ -161,6 +161,12 @@ set_global_assignment -name ROUTER_EFFORT_MULTIPLIER 4.0
 set_global_assignment -name VERILOG_INPUT_VERSION VERILOG_2001
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
 set_global_assignment -name GENERATE_HEX_FILE OFF
+
+
+set_global_assignment -name VERILOG_FILE ../dma/dma_sequencer.v
+set_global_assignment -name VERILOG_FILE ../dma/dma_fifo_oneshot.v
+set_global_assignment -name VERILOG_FILE ../dma/dma_mp3.v
+set_global_assignment -name VERILOG_FILE ../dma/dma_sd.v
 set_global_assignment -name VERILOG_FILE ../dma/dma_zx.v
 set_global_assignment -name VERILOG_FILE ../dma/dma_access.v
 set_global_assignment -name VERILOG_FILE ../common/spi.v
@@ -172,5 +178,6 @@ set_global_assignment -name VERILOG_FILE ../sound/sound_mulacc.v
 set_global_assignment -name VERILOG_FILE ../ports/ports.v
 set_global_assignment -name VERILOG_FILE ../memmap/memmap.v
 set_global_assignment -name VERILOG_FILE ../interrupts/interrupts.v
+set_global_assignment -name VERILOG_FILE ../interrupts/timer.v
 set_global_assignment -name VERILOG_FILE ../common/mem512b.v
 set_global_assignment -name VERILOG_FILE ../top.v

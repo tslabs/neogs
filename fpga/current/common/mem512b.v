@@ -18,44 +18,30 @@
 //
 // simultaneous write and read to the same memory address lead to undefined read data.
 
-module mem512b(
+module mem512b
+(
+	input  wire clk,
 
-	rdaddr, // read address
-	wraddr, // write address
+	input  wire re,
+	input  wire [8:0] rdaddr,
+	output reg  [7:0] dataout,
 
-	datain,  // write data
-	dataout, // read data
-
-	we, // write enable
-
-	clk
+	input  wire we,
+	input  wire [8:0] wraddr,
+	input  wire [7:0] datain
 );
-
-	input [8:0] rdaddr;
-	input [8:0] wraddr;
-
-	input      [7:0] datain;
-	output reg [7:0] dataout;
-
-	input we;
-
-	input clk;
-
 
 	reg [7:0] mem[0:511]; // memory block
 
 
 
 	always @(posedge clk)
-	begin
-		dataout <= mem[rdaddr]; // reading data
+	if( re )
+		dataout <= mem[rdaddr];
 
-		if( we ) // writing data
-		begin
-			mem[wraddr] <= datain;
-		end
-	end
-
+	always @(posedge clk)
+	if( we )
+		mem[wraddr] <= datain;
 
 endmodule
 

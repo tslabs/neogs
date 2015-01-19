@@ -1,0 +1,7 @@
+
+this is FPGA firmware to program NGS flash from ZX it is inserted in.
+
+Needs to be programmed into FPGA via JTAG interface.
+
+(c) 2014 lvd^nedopc
+

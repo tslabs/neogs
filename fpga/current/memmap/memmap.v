@@ -36,8 +36,10 @@ module memmap(
 
 	mode_ramro, // 1 - zero page (32k) of ram is R/O
 	mode_norom, // 0 - ROM instead of RAM at everything except $4000-$7FFF
-	mode_pg0,   // page at $8000-$BFFF
-	mode_pg1    // page at $C000-$FFFF (128x16kb = 2Mb max)
+	mode_pg0,   // page at $0000-$3FFF
+	mode_pg1,   // page at $4000-$7FFF
+	mode_pg2,   // page at $8000-$BFFF
+	mode_pg3    // page at $C000-$FFFF
 );
 
 // inputs and outputs
@@ -55,7 +57,7 @@ module memmap(
 	output reg memoe_n,memwe_n;
 
 	input mode_ramro,mode_norom;
-	input [7:0] mode_pg0,mode_pg1;
+	input [7:0] mode_pg0,mode_pg1,mode_pg2,mode_pg3;
 
 
 // internal vars and regs
@@ -70,13 +72,13 @@ module memmap(
 	begin
         case( {a15,a14} )
 			2'b00: // $0000-$3FFF
-				high_addr <= 8'b0000000;
-			2'b01: // $4000-$7FFF
-				high_addr <= 8'b0000011;
-			2'b10: // $8000-$BFFF
 				high_addr <= mode_pg0;
-			2'b11: // $C000-$FFFF
+			2'b01: // $4000-$7FFF
 				high_addr <= mode_pg1;
+			2'b10: // $8000-$BFFF
+				high_addr <= mode_pg2;
+			2'b11: // $C000-$FFFF
+				high_addr <= mode_pg3;
         endcase
 	end
 

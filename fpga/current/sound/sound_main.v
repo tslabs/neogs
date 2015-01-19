@@ -126,15 +126,6 @@ module sound_main(
 
 
 
-	// for simulation purposes
-	initial
-	begin
-		bf_wraddr <= 0;
-		bf_datnvol <= 0;
-		bf_data <= 0;
-		do_write <= 0;
-		cur_st <= START;
-	end
 
 
 
@@ -158,6 +149,7 @@ module sound_main(
 
 	// DAT-VOL memory block
 	mem512b my_mem( .clk(clock),
+	                .re(1'b1),
 	                .rdaddr(mem_rdaddr),
 	                .dataout(mem_do),
 	                .wraddr({5'b0,bf_datnvol,bf_wraddr}),
@@ -249,6 +241,20 @@ module sound_main(
 	localparam START_MUL  = 5;
 	localparam WAIT_STOP  = 6;
 	localparam LOOP       = 7;
+
+
+
+	// for simulation purposes
+	initial
+	begin
+		bf_wraddr <= 0;
+		bf_datnvol <= 0;
+		bf_data <= 0;
+		do_write <= 0;
+		cur_st <= START;
+	end
+
+
 
 	// FSM!
 	always @(posedge clock)

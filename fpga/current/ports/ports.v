@@ -5,84 +5,104 @@
 
 module ports(
 
-	din,  // NGS z80 cpu DATA BUS inputs
-	dout, // NGS z80 cpu DATA BUS outputs
-	busin, // direction of bus: =1 - input, =0 - output
-	a, // NSG z80 cpu ADDRESS BUS
-
-	iorq_n,mreq_n,rd_n,wr_n, // NGS z80 cpu control signals
+	input  wire rst_n,
+	input  wire cpu_clock, // Z80 CPU clock (clk_fpga on schematics)
 
 
-	data_port_input, // data_port input from zxbus module (async)
-	data_port_output, // data_port output to zxbus module (async to zxbus, sync here)
-	command_port_input, // command_port input from zxbus (async)
+	input  wire [ 7:0] din,   // NGS z80 cpu DATA BUS inputs
+	output reg  [ 7:0] dout,  // NGS z80 cpu DATA BUS outputs
+	output reg         busin, // direction of bus: =1 - input, =0 - output
+	input  wire [15:0] a,     // NSG z80 cpu ADDRESS BUS
 
-	data_bit_input, // data_bit from zxbus module (sync)
-	command_bit_input, // --//-- (sync)
+	input  wire iorq_n,
+	input  wire mreq_n,
+	input  wire rd_n,
+	input  wire wr_n, // NGS z80 cpu control signals
 
-	data_bit_output, // output to zxbus module
-	command_bit_output,
+	input  wire [ 7:0] data_port_input, // data_port input from zxbus module (async)
+	output reg  [ 7:0] data_port_output, // data_port output to zxbus module (async to zxbus, sync here)
+	input  wire [ 7:0] command_port_input, // command_port input from zxbus (async)
 
-	data_bit_wr, // strobes (positive) to zxbus module, synchronous
-	command_bit_wr,
+	input  wire data_bit_input, // data_bit from zxbus module (sync)
+	input  wire command_bit_input, // --//-- (sync)
 
+	output reg  data_bit_output, // output to zxbus module
+	output reg  command_bit_output,
 
-	mode_8chans, // mode outputs for sound_main module
-	mode_pan4ch, //
-	mode_inv7b,  //
-
-	mode_ramro, // mode outputs for memmap module
-	mode_norom,
-
-	mode_pg0, // page registers for memmap module
-	mode_pg1,
-
-
-	clksel0, // clock select (output from FPGA)
-	clksel1,
+	output reg  data_bit_wr, // strobes (positive) to zxbus module, synchronous
+	output reg  command_bit_wr,
 
 
-	snd_wrtoggle, // toggle to write sound data to sound system memory
-	snd_datnvol,  // whether it's for volume (=0) or for samples (=1)
-	snd_addr,     // address: which channel to be written (0-7)
-	snd_data,     // actual 8-bit data to be written
+	output reg  mode_8chans, // mode outputs for sound_main module
+	output reg  mode_pan4ch, //
+	output reg  mode_inv7b,  //
+
+	output reg  mode_ramro, // mode outputs for memmap module
+	output reg  mode_norom,
+
+	output reg  [7:0] mode_pg0, // page registers for memmap module
+	output reg  [7:0] mode_pg1,
+	output reg  [7:0] mode_pg2,
+	output reg  [7:0] mode_pg3,
 
 
-	md_din, // mp3 data interface
-	md_start,
-	md_dreq,
-	md_halfspeed,
-
-	mc_ncs, // mp3 control interface
-	mc_xrst,
-	mc_dout,
-	mc_din,
-	mc_start,
-	mc_speed,
-	mc_rdy,
-
-	sd_ncs, // SD card interface
-	sd_dout,
-	sd_din,
-	sd_start,
-	sd_det,
-	sd_wp,
-
-	led, // LED control
-	led_toggle,
+	output reg  clksel0, // clock select (output from FPGA)
+	output reg  clksel1,
 
 
-	dma_din_modules, // DMA control
+	output reg         snd_wrtoggle, // toggle to write sound data to sound system memory
+	output reg         snd_datnvol,  // whether it's for volume (=0) or for samples (=1)
+	output reg  [ 2:0] snd_addr,     // address: which channel to be written (0-7)
+	output reg  [ 7:0] snd_data,     // actual 8-bit data to be written
+
+
+	output wire [ 7:0] md_din, // mp3 data interface
+	output wire        md_start,
+	input  wire        md_dreq,
+	output reg         md_halfspeed,
+
+	output reg         mc_ncs, // mp3 control interface
+	output reg         mc_xrst,
+	input  wire [ 7:0] mc_dout,
+	output wire [ 7:0] mc_din,
+	output wire        mc_start,
+	output reg  [ 1:0] mc_speed,
+	input  wire        mc_rdy,
+
+	output reg         sd_ncs, // SD card interface
+	input  wire [ 7:0] sd_dout,
+	output wire [ 7:0] sd_din,
+	output wire        sd_start,
+	input  wire        dma_sd_start,
+	input  wire        sd_det,
+	input  wire        sd_wp,
+
+	output reg  led, // LED control
+	input  wire led_toggle,
+
+
+	output reg  [7:0] dma_din_modules, // DMA control
 	//
-	dma_select_zx,
-	dma_dout_zx,
+	output reg        dma_select_zx,
+	output reg        dma_select_sd,
+	output reg        dma_select_mp3,
 	//
-	dma_wrstb,
-	dma_regsel,
+	input  wire [7:0] dma_dout_zx,
+	input  wire [7:0] dma_dout_sd,
+	input  wire [7:0] dma_dout_mp3,
+	//
+	output reg        dma_wrstb,
+	output reg  [1:0] dma_regsel,
 
-	rst_n,
 
-	cpu_clock // Z80 CPU clock (clk_fpga on schematics)
+	// timer freq selector
+	output reg  [2:0] timer_rate,
+
+	// intena/intreq related
+	output wire       intena_wr,
+	output wire       intreq_wr,
+	input  wire [7:0] intreq_rd
+
 );
 
 
@@ -131,119 +151,17 @@ module ports(
 
 	localparam DMA_PORTS = 6'h1c; // mask for _HAD, _MAD, _LAD and _CST ports, two LSBs must be zero
 
-	// FREE PORT ADDRESSES: $0C-$0E, $1A, $20-$3F
+	localparam TIM_FREQ  = 6'h0e;
 
+	localparam INTENA    = 6'h0c;
+	localparam INTREQ    = 6'h0d;
 
-	// inputs/outputs description
+	localparam PG0       = 6'h20;
+	localparam PG1       = 6'h21;
+	localparam PG2       = 6'h22;
+	localparam PG3       = 6'h23;
 
-	input      [7:0] din;
-	output reg [7:0] dout;
-
-	output reg busin; // =1 - dbus ins, =0 - dbus outs
-
-	input [15:0] a;
-
-	input iorq_n,mreq_n,rd_n,wr_n;
-
-	input      [7:0] data_port_input;
-	input      [7:0] command_port_input;
-	output reg [7:0] data_port_output;
-
-	input data_bit_input;
-	input command_bit_input;
-
-	output reg data_bit_output;
-
-	output reg command_bit_output;
-
-	output reg data_bit_wr;
-
-	output reg command_bit_wr;
-
-	output reg mode_inv7b,
-	           mode_8chans,
-	           mode_pan4ch;
-
-	output reg mode_ramro;
-
-	output reg mode_norom;
-
-	output reg [7:0] mode_pg0;
-	output reg [7:0] mode_pg1;
-
-	output reg clksel0;
-	output reg clksel1;
-
-
-	output reg snd_wrtoggle;
-	output reg snd_datnvol;
-	output reg [2:0] snd_addr;
-	output reg [7:0] snd_data;
-
-
-	input rst_n;
-
-	input cpu_clock;
-
-
-
-
-	// SPI interfaces related
-
-	// MP3 data interface
-	output [7:0] md_din; // data to MP3 data SPI interface
-
-	output md_start; // start toggle for mp3 data spi
-
-	input md_dreq; // data request from mp3 decoder
-
-	output reg md_halfspeed;
-
-
-	// MP3 control interface
-	output reg mc_ncs; // nCS signal
-
-	output reg mc_xrst; // xRESET signal
-
-	output mc_start; // start toggle
-
-	output reg [1:0] mc_speed;
-
-	input mc_rdy;
-
-	output [7:0] mc_din; // data to send
-
-	input [7:0] mc_dout; // received data
-
-
-      // SDcard interface
-	output reg sd_ncs;
-
-	output sd_start;
-
-	output [7:0] sd_din;
-
-	input [7:0] sd_dout;
-
-	input sd_det;
-
-	input sd_wp;
-
-
-	// DMA modules control
-	//
-	output reg [7:0] dma_din_modules;
-	//
-	input [7:0] dma_dout_zx;
-	output reg dma_select_zx;
-	//
-	output reg dma_wrstb;
-	output reg [1:0] dma_regsel;
-
-
-	// LED control register
-	output reg led;
-	input led_toggle;
+	// FREE PORT ADDRESSES: $1A, $24-$3F
 
 
 
@@ -296,6 +214,14 @@ module ports(
 	wire p_dmamod_wr;
 	wire p_dmaports_wr;
 
+	wire p_timfreq_wr;
+
+	wire pg0_wr;
+	wire pg1_wr;
+	wire pg2_wr;
+	wire pg3_wr;
+
+
 
 	reg [2:0] volnum; // volume register number from port address
 
@@ -303,7 +229,9 @@ module ports(
 	reg [2:0] dma_module_select; // which dma module selected: zero - none selected
 	localparam DMA_NONE_SELECTED = 3'd0;
 	localparam DMA_MODULE_ZX     = 3'd1;
-//	localparam DMA_MODULE_...    = 3'd2;
+	localparam DMA_MODULE_SD     = 3'd2;
+	localparam DMA_MODULE_MP3    = 3'd3;
+//	localparam DMA_MODULE_...    = 3'd4;
 
 	reg [7:0] dma_dout_modules; // select in data from different modules
 
@@ -419,7 +347,15 @@ module ports(
 	assign p_dmamod_wr   = ( a[5:0]==DMA_MOD && port_wr );
 	assign p_dmaports_wr = ( {a[5:2],2'b00}==DMA_PORTS && port_wr );
 
+	assign p_timfreq_wr = ( a[5:0]==TIM_FREQ && port_wr );
 
+	assign intena_wr = ( a[5:0]==INTENA && port_wr );
+	assign intreq_wr = ( a[5:0]==INTREQ && port_wr );
+
+	assign pg0_wr = ( a[5:0]==PG0 && port_wr );
+	assign pg1_wr = ( a[5:0]==PG1 && port_wr );
+	assign pg2_wr = ( a[5:0]==PG2 && port_wr );
+	assign pg3_wr = ( a[5:0]==PG3 && port_wr );
 
 
 	// read from fpga to Z80
@@ -446,6 +382,9 @@ module ports(
 		MC_READ:
 			dout <= mc_dout;
 
+		INTREQ:
+			dout <= intreq_rd;
+
 
 		DMA_MOD:
 			dout <= { 5'd0, dma_module_select };
@@ -468,22 +407,40 @@ module ports(
 
 
 
-	// write to $00 and $10 ports ++
+	// write to $00 and $10 ports -- old mem mapping control,
+	// also new mapping control (pg2 and pg3 ports)
 	always @(posedge cpu_clock)
+	if( port00_wr ) // port 00
 	begin
-		if( port00_wr==1'b1 ) // port 00
-		begin
-			if( mode_expag==1'b0 ) // normal paging
-				mode_pg0[7:0] <= { din[6:0], 1'b0 };
-			else // extended paging
-				mode_pg0[7:0] <= { din[6:0], din[7] };
-		end
-
-		if( mode_expag==1'b0 && port00_wr==1'b1 ) // port 10 (when in normal mode, part of port 00)
-			mode_pg1[7:0] <= { din[6:0], 1'b1 };
-		else if( mode_expag==1'b1 && port10_wr==1'b1 )
-			mode_pg1[7:0] <= { din[6:0], din[7] };
+		if( !mode_expag ) // normal paging
+			mode_pg2[7:0] <= { din[6:0], 1'b0 };
+		else // extended paging
+			mode_pg2[7:0] <= { din[6:0], din[7] };
 	end
+	else if( pg2_wr )
+		mode_pg2 <= din;
+	//
+	always @(posedge cpu_clock)
+	if( !mode_expag && port00_wr ) // port 10 (when in normal mode, part of port 00)
+		mode_pg3[7:0] <= { din[6:0], 1'b1 };
+	else if( mode_expag && port10_wr )
+		mode_pg3[7:0] <= { din[6:0], din[7] };
+	else if( pg3_wr )
+		mode_pg3 <= din;
+
+	// write to pg0 and pg1 ports
+	always @(posedge cpu_clock, negedge rst_n)
+	if( !rst_n )
+		mode_pg0 <= 8'b00000000;
+	else if( pg0_wr )
+		mode_pg0 <= din;
+	//
+	always @(posedge cpu_clock, negedge rst_n)
+	if( !rst_n )
+		mode_pg1 <= 8'b00000011;
+	else if( pg1_wr )
+		mode_pg1 <= din;
+
 
 	// port $03 write ++
 	always @(posedge cpu_clock)
@@ -530,7 +487,7 @@ module ports(
 
 		3'b001:
 		begin
-			data_bit_output <= ~mode_pg0[0];
+			data_bit_output <= ~mode_pg2[0];
 			data_bit_wr <= 1'b1;
 		end
 
@@ -619,7 +576,7 @@ module ports(
 
 	//SPI (mp3, SD) interfaces
 
-	assign sd_din = (a[5:0]==SD_RSTR) ? 8'hFF : din;
+	assign sd_din = (a[5:0]==SD_RSTR || dma_sd_start) ? 8'hFF : din;
 	assign mc_din = din;
 	assign md_din = din;
 
@@ -687,26 +644,18 @@ module ports(
 	// DMA control
 	//
 	always @(posedge cpu_clock, negedge rst_n) // selection of modules
-	begin
-		if( !rst_n )
-			dma_module_select <= DMA_NONE_SELECTED;
-		else if( p_dmamod_wr )
-			dma_module_select <= din[2:0];
-	end
+	if( !rst_n )
+		dma_module_select <= DMA_NONE_SELECTED;
+	else if( p_dmamod_wr )
+		dma_module_select <= din[2:0];
 	//
 	always @* dma_din_modules = din; // translate Z80 bus out to all DMA modules
 	//
 	always @* // select modules by individual signals
 	begin
-		dma_select_zx = 1'b0;
-		//dma_select_... = 1'b0;
-
-		case( dma_module_select )
-		DMA_MODULE_ZX:
-			dma_select_zx = 1'b1;
-		//DMA_MODULE_...:
-		//	dma_select_... = 1'b1;
-		endcase
+		dma_select_zx  = ( dma_module_select==DMA_MODULE_ZX  );
+		dma_select_sd  = ( dma_module_select==DMA_MODULE_SD  );
+		dma_select_mp3 = ( dma_module_select==DMA_MODULE_MP3 );
 	end
 	//
 	always @* dma_wrstb = p_dmaports_wr; // translate dma write strobe
@@ -715,15 +664,29 @@ module ports(
 	//
 	always @* // route data from modules to the common module bus
 	begin
-		case( dma_regsel )
+		case( dma_module_select )
 		DMA_MODULE_ZX:
 			dma_dout_modules <= dma_dout_zx;
+		DMA_MODULE_SD:
+			dma_dout_modules <= dma_dout_sd;
+		DMA_MODULE_MP3:
+			dma_dout_modules <= dma_dout_mp3;
 		//DMA_MODULE_...:
 		//	dma_dout_modules <= dma_dout_...;
 		default:
 			dma_dout_modules <= 8'bxxxxxxxx;
 		endcase
 	end
+
+
+
+	// timer rate
+	//
+	always @(posedge cpu_clock,negedge rst_n)
+	if( !rst_n )
+		timer_rate <= 3'b000;
+	else if( p_timfreq_wr )
+		timer_rate <= din[2:0];
 
 
 endmodule

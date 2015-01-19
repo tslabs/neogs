@@ -1,0 +1,47 @@
+#!/bin/bash
+
+FILES=""
+FILES="${FILES} ../dma/dma_sequencer.v"
+FILES="${FILES} ../dma/dma_access.v"
+FILES="${FILES} ../dma/dma_zx.v"
+FILES="${FILES} ../dma/dma_sd.v"
+FILES="${FILES} ../dma/dma_mp3.v"
+FILES="${FILES} ../dma/dma_fifo_oneshot.v"
+FILES="${FILES} ../common/spi.v"
+FILES="${FILES} ../sound/sound_main.v"
+FILES="${FILES} ../sound/sound_dac.v"
+FILES="${FILES} ../common/resetter.v"
+FILES="${FILES} ../zxbus/zxbus.v"
+FILES="${FILES} ../sound/sound_mulacc.v"
+FILES="${FILES} ../ports/ports.v"
+FILES="${FILES} ../memmap/memmap.v"
+FILES="${FILES} ../interrupts/interrupts.v"
+FILES="${FILES} ../interrupts/timer.v"
+FILES="${FILES} ../common/mem512b.v"
+FILES="${FILES} ../top.v"
+
+BENCH="tb.v ram.v rom.v z80/z80.v sd.v mp3.v"
+
+TV80=""
+TV80="${TV80} z80/tv80_alu.v" 
+TV80="${TV80} z80/tv80_core.v" 
+TV80="${TV80} z80/tv80_mcode.v" 
+TV80="${TV80} z80/tv80_reg.v" 
+TV80="${TV80} z80/tv80s.v" 
+
+VHDL=""
+VHDL="${VHDL} z80/T80_Pack.vhd "
+VHDL="${VHDL} z80/T80_ALU.vhd  "
+VHDL="${VHDL} z80/T80a.vhd     "
+VHDL="${VHDL} z80/T80_Reg.vhd  "
+VHDL="${VHDL} z80/T80.vhd      "
+VHDL="${VHDL} z80/T80_MCode.vhd"
+
+#vcom -novopt $VHDL
+
+if (( $#>0 )); then
+	vlog +define+$1 -sv -novopt -incr $FILES $BENCH $TV80
+else
+	vlog -sv -novopt -incr $FILES $BENCH $TV80
+fi
+

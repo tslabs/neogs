@@ -1,0 +1,21 @@
+	
+;LAST UPDATE: 05.06.2013 savelij
+
+		include macros.a80
+		include global_vars.a80
+
+ADRWORK		EQU 0X6000
+
+		ORG ADRWORK-0X11
+		SUM_HOB "RD_CLS  C",ADRWORK,EBINAR-BINAR,SIZE_SECTORS
+
+BINAR		binclude reader_cluster.rom
+EBINAR
+
+		DUPL 0X100-LOW ($),0
+		IF (EBINAR-BINAR)&0XFF
+SIZE_SECTORS	EQU ((EBINAR-BINAR)>>8)+1
+		ELSE
+SIZE_SECTORS	EQU ((EBINAR-BINAR)>>8)
+		ENDIF
+

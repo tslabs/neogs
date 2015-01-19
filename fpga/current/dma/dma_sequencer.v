@@ -1,4 +1,4 @@
-// part of NeoGS project (c) 2008-2009 NedoPC
+// part of NeoGS project (c) 2008-2013 NedoPC
 
 // dma sequencer
 
@@ -59,16 +59,12 @@ module dma_sequencer(
 	output wire end2,
 	output wire end3,
 
-	output wire [7:0] rd,
-
-
 //	dma controller connection
 	output wire        dma_req,
 	output wire [21:0] dma_addr,
 	output wire        dma_rnw,
 	output wire  [7:0] dma_wd,
 
-	input  wire  [7:0] dma_rd,
 	input  wire        dma_ack,
 	input  wire        dma_end
 );
@@ -128,7 +124,7 @@ module dma_sequencer(
 	begin
 		if( !rst_n )
 		begin
-			cur_input_mux  = {DEVNUM{1'b0}};
+			cur_input_mux  = {DEVNUM{1'b0}}; // to remove static priority selection after idle -- have here 'd1!
 		end
 		else // posedge clk
 		begin
@@ -196,8 +192,6 @@ module dma_sequencer(
 	//
 	assign acks = cur_input_mux  & {DEVNUM{dma_ack}};
 	assign ends = cur_output_mux & {DEVNUM{dma_end}};
-	//
-	assign   rd = dma_rd; // read data does not need (de)muxing
 
 endmodule
 

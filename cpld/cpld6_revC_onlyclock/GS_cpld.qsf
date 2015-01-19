@@ -1,0 +1,121 @@
+# Copyright (C) 1991-2006 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+
+
+# The default values for assignments are stored in the file
+#		GS_cpld_assignment_defaults.qdf
+# If this file doesn't exist, and for assignments not listed, see file
+#		assignment_defaults.qdf
+
+# Altera recommends that you do not modify this file. This
+# file is updated automatically by the Quartus II software
+# and any changes you make may be lost or overwritten.
+
+
+set_global_assignment -name DEVICE "EPM3064ATC100-10"
+set_global_assignment -name FAMILY MAX3000A
+set_global_assignment -name TOP_LEVEL_ENTITY GS_cpld
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 6.1
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "01:14:09  MARCH 18, 2010"
+set_global_assignment -name LAST_QUARTUS_VERSION "7.2 SP3"
+set_global_assignment -name DEVICE_FILTER_PACKAGE "ANY QFP"
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 100
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 10
+set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE test1.cvwf
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim (Verilog)"
+set_global_assignment -name EDA_INCLUDE_VHDL_CONFIGURATION_DECLARATION ON -section_id eda_simulation
+set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VERILOG -section_id eda_simulation
+set_global_assignment -name OPTIMIZE_HOLD_TIMING OFF
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name EDA_NETLIST_WRITER_OUTPUT_DIR sim/gate -section_id eda_simulation
+set_global_assignment -name MAX7000_DEVICE_IO_STANDARD "3.3-V LVTTL"
+
+set_location_assignment PIN_6 -to config_n
+set_location_assignment PIN_8 -to romcs_n
+set_location_assignment PIN_9 -to cs
+
+set_location_assignment PIN_10 -to warmres_n
+set_location_assignment PIN_13 -to in_ramcs0_n
+set_location_assignment PIN_14 -to in_ramcs1_n
+set_location_assignment PIN_16 -to in_ramcs2_n
+set_location_assignment PIN_17 -to in_ramcs3_n
+set_location_assignment PIN_19 -to mreq_n
+
+set_location_assignment PIN_20 -to rd_n
+set_location_assignment PIN_21 -to wr_n
+set_location_assignment PIN_23 -to iorq_n
+set_location_assignment PIN_25 -to a15
+set_location_assignment PIN_29 -to a14
+
+set_location_assignment PIN_30 -to a13
+set_location_assignment PIN_31 -to a12
+set_location_assignment PIN_32 -to a11
+set_location_assignment PIN_35 -to a10
+set_location_assignment PIN_36 -to a7
+set_location_assignment PIN_37 -to a6
+
+set_location_assignment PIN_40 -to d[6]
+set_location_assignment PIN_41 -to d[7]
+set_location_assignment PIN_42 -to d[4]
+set_location_assignment PIN_44 -to d[5]
+set_location_assignment PIN_45 -to d[1]
+set_location_assignment PIN_46 -to d[3]
+set_location_assignment PIN_47 -to d[2]
+set_location_assignment PIN_48 -to d[0]
+
+set_location_assignment PIN_52 -to rd[2]
+set_location_assignment PIN_54 -to rd[3]
+set_location_assignment PIN_56 -to mema14
+set_location_assignment PIN_57 -to ra13
+set_location_assignment PIN_58 -to ra12
+
+set_location_assignment PIN_60 -to ra11
+set_location_assignment PIN_61 -to ra10
+set_location_assignment PIN_63 -to rd[1]
+set_location_assignment PIN_64 -to rd[0]
+set_location_assignment PIN_67 -to mema15
+set_location_assignment PIN_68 -to mema19
+set_location_assignment PIN_69 -to memwe_n
+
+set_location_assignment PIN_71 -to out_ramcs1_n
+set_location_assignment PIN_75 -to memoe_n
+set_location_assignment PIN_76 -to ra7
+set_location_assignment PIN_79 -to ra6
+
+set_location_assignment PIN_80 -to rd[4]
+set_location_assignment PIN_81 -to rd[5]
+set_location_assignment PIN_83 -to out_ramcs0_n
+set_location_assignment PIN_84 -to rd[7]
+set_location_assignment PIN_85 -to rd[6]
+set_location_assignment PIN_87 -to clkin
+set_location_assignment PIN_88 -to clk24in
+set_location_assignment PIN_89 -to coldres_n
+
+set_location_assignment PIN_90 -to clk20in
+set_location_assignment PIN_92 -to clksel0
+set_location_assignment PIN_93 -to clksel1
+set_location_assignment PIN_96 -to clkout
+set_location_assignment PIN_98 -to conf_done
+set_location_assignment PIN_99 -to init_done
+
+set_location_assignment PIN_100 -to status_n
+
+
+set_global_assignment -name SLOW_SLEW_RATE ON
+set_global_assignment -name BDF_FILE clocker.bdf
+set_global_assignment -name VERILOG_FILE GS_cpld.v
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
+set_global_assignment -name SAVE_DISK_SPACE OFF
+set_global_assignment -name AUTO_TURBO_BIT OFF

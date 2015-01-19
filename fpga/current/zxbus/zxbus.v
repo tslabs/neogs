@@ -77,7 +77,7 @@ module zxbus(
 
 // INPUTS/OUTPUTS of module
 
-	inout reg [7:0] zxid;
+	inout wire [7:0] zxid;
 
 	input [7:0] zxa;
 	input zxa14,zxa15;
@@ -170,13 +170,15 @@ module zxbus(
 	assign dbin[7:0] = zxid;
 
 	// control tri-state in-outs of internal zx data bus (zxid)
-	always @*
+/*	always @*
 	begin
 		if( (!zxbusin) && (!zxbusena_n) )
 			zxid <= dbout[7:0];
 		else
 			zxid <= 8'bZZZZZZZZ;
 	end
+*/
+	assign zxid = ( !zxbusin && !zxbusena_n ) ? dbout : 8'bZZZZ_ZZZZ;
 
 
 	// control both state of zxid and state of external '245 buffer

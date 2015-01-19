@@ -1,0 +1,1504 @@
+
+;LAST UPDATE: 25.05.2013 savelij
+;version 15.11.08
+
+;éÅôÄü íéóäÄ ÇïéÑÄ Ñãü êÄÅéíõ ë FAT
+		EXX
+		PUSH IX
+		PUSH IY
+		LD (ERORDRV),SP
+		PUSH HL
+		LD HL,EXITDRV
+		EX (SP),HL
+		PUSH HL
+		PUSH DE
+		ADD A,A
+		LD L,A
+		LD H,0
+		LD DE,TABLFAT
+		ADD HL,DE
+		EX AF,AF'
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		EX DE,HL
+		POP DE
+		EX (SP),HL
+		EXX
+		RET
+
+ERR_DRV		LD SP,(ERORDRV)
+EXITDRV		POP IY
+		POP IX
+		RET
+
+TABLFAT		DW WC_FAT	;00  INIT FAT
+		DW GETFZAP	;01 HL=FILE OPISATEL
+		DW GETLONG	;02 GET LONGNAME
+		DW FINDDIR	;03 FIND ALL DIR
+		DW FINDMP3	;04 FIND ALL MP3
+		DW SET_MP3	;05 SET NUMBER FILES
+		DW NEXTSEC	;06 PLAY NEXT SECTOR
+		DW OPENFIL	;07 OPEN FILE
+		DW PRVDIR	;08 NEXT DIR 4 PLAY
+		DW NXTDIR	;09 PREVIOUS DIR 4 PLAY
+
+BUF_512		EQU 0X4200
+;0X200 ÅìîÖê ëÖäíéêÄ
+DIR_CEP		EQU 0X4400
+;0X100 ñÖèéóäÄ äãÄëíÖêéÇ èéÑÑàêÖäíéêàâ
+ERORDRV		EQU 0X4500
+;2 ÇéáÇêÄí ë éòàÅäéâ Ç A
+CAL_FAT		EQU ERORDRV+2
+;1 äÄãàÅê FAT
+MANYFAT		EQU CAL_FAT+1
+;1 äéãàóÖëíÇé FAT-íÄÅãàñ
+BYTSSEC		EQU MANYFAT+1
+;1 äéãàóÖëíÇé ëÖäíéêéÇ Ç äãÄëíÖêÖ
+ROOTCLS		EQU BYTSSEC+1
+;4 ëÖäíéê çÄóÄãÄ ROOT ÑàêÖäíéêàà
+ROOTSEC		EQU ROOTCLS+4
+;2 êÄáåÖê Ç ëÖäíéêÄï ROOT ÑàêÖäíéêàà
+SEC_FAT		EQU ROOTSEC+2
+;4 äéãàóÖëíÇé ëÖäíéêéÇ éÑçéâ îÄí
+RSVDSEC		EQU SEC_FAT+4
+;2 êÄáåÖê êÖáÖêÇçéâ éÅãÄëíà
+STARTRZ		EQU RSVDSEC+2
+;4 çÄóÄãé ÑàëäÄ/êÄáÑÖãÄ
+FRSTDAT		EQU STARTRZ+4
+;4 ÄÑêÖë èÖêÇéÉé ëÖäíéêÄ ÑÄççõï éí BPB
+SEC_DSC		EQU FRSTDAT+4
+;4 äéãàóÖëíÇé ëÖäíéêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+CLS_DSC		EQU SEC_DSC+4
+;4 äéãàóÖëíÇé äãÄëíÖêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+FATSTAR		EQU CLS_DSC+4
+;2 ÄÑêÖë íÖäìôÖÉé FAT
+FATSTR0		EQU FATSTAR+2
+;4 çÄóÄãé èÖêÇéâ FAT íÄÅãàñõ
+FATSTR1		EQU FATSTR0+4
+;4 çÄóÄãé Çíéêéâ FAT íÄÅãàñõ
+FILE_SZ		EQU FATSTR1+4
+;4 êÄáåÖê îÄâãÄ Ç ÅÄâíÄï
+KOLWCLS		EQU FILE_SZ+4
+;4 äéãàóÖëíÇé ëÇéÅéÑçõï äãÄëíÖêéÇ
+LST0ZAP		EQU KOLWCLS+4
+;4 èÖêÇõâ ëÇéÅéÑçõâ äãÄëíÖê
+LSTLOAD		EQU LST0ZAP+4
+;4 çéåÖê ëÖäíéêÄ áÄÉêìÜÖççéÉé Ç ÅìîÖê
+TEK_DIR		EQU LSTLOAD+4
+;4 äãÄëíÖê íÖäìôÖâ DIR
+TEK_ZAP		EQU TEK_DIR+4
+;2 íÖäìôÄü áÄèàëú Ç DIR
+SAVEZAP		EQU TEK_ZAP+2
+;2 ëéïêÄçÖççÄü íÖäìôÄü èéáàñàü
+TEK_LVL		EQU SAVEZAP+2
+;1 íÖäìôàâ ìêéÇÖçú äÄíÄãéÉÄ
+KCLSDIR		EQU TEK_LVL+1
+;1 äéã-Çé äãÄëíÖêéÇ ÑàêÖäíéêàà
+TEK_LEV		EQU KCLSDIR+1
+;1 ÉãìÅàçÄ çÄïéÜÑÖçàü Ç ÑàêÖäíéêàüï
+NUMSECK		EQU TEK_LEV+1
+;1 ëóÖíóàä ëÖäíéêéÇ Ç äãÄëíÖêÖ
+PAGEDIR		EQU NUMSECK+1
+;2 ÄÑêÖë ìäãÄÑÄçàü Ç ëíêÄçàñÖ ÑàêéÇ
+PAGEMP3		EQU PAGEDIR+2
+;2 ÄÑêÖë ìäãÄÑÄçàü Ç ëíêÄçàñÖ îÄâãéÇ
+TFILCLS		EQU PAGEMP3+2
+;4 íÖäìôàâ äãÄëíÖê
+TEKNUMC		EQU TFILCLS+4
+;2 ÄÑêÖë íÖäìôÖÉé äãÄëíÖêÄ
+MPHWOST		EQU TEKNUMC+2
+;1 éëíÄíéä ëÖäíéêéÇ Ç èéëãÖÑçÖå äãÄëíÖêÖ
+KOL_CLS		EQU MPHWOST+1
+;4 äéã-Çé èéãçõï äãÄëíÖêéÇ îÄâãÄ
+KOLVMP3		EQU KOL_CLS+4
+;2 äéã-Çé çÄâÑÖççõï îÄâãéÇ
+KOLVDIR		EQU KOLVMP3+2
+;2 äéã-Çé çÄâÑÖççõï ÑàêéÇ
+
+NO_LNG		POP DE
+		LD BC,8
+		LDIR
+		LD A,(HL)
+		CP 0X20
+		JR Z,NO_LNG1
+		EX DE,HL
+		LD (HL),0X2E
+		INC HL
+		EX DE,HL
+		LDI
+		LDI
+		LDI
+NO_LNG1		EX DE,HL
+		LD (HL),0
+		POP HL
+		RET
+
+GETLONG		PUSH HL
+		PUSH HL
+		CALL SET_MP3
+		CALL GETFZAP
+		BIT 0,E
+		JR Z,NO_LNG
+		EXX
+		LD C,0
+		EXX
+GETLNG2		DEC BC
+		CALL GETRZAP
+		LD A,(HL)
+		INC HL
+		EXX
+		BIT 6,C
+		POP HL
+		JR NZ,GETLNGE+1
+		LD C,A
+		EXX
+		LD A,5
+		CALL GETLNG1
+		AND A
+		JR Z,GETLNGE
+		INC HL
+		INC HL
+		INC HL
+		LD A,6
+		CALL GETLNG1
+		AND A
+		JR Z,GETLNGE
+		INC HL
+		INC HL
+		LD A,2
+		CALL GETLNG1
+		AND A
+		JR Z,GETLNGE
+		EXX
+		PUSH HL
+		EXX
+		JR GETLNG2
+
+GETLNGE		EXX
+		LD (HL),0
+		EXX
+		POP HL
+		RET
+
+GETLNG1		EXX
+		LD B,A
+		EXX
+		LD D,(HL)
+		INC HL
+		LD E,(HL)
+		INC HL
+		LD A,D
+		OR E
+		RET Z
+		LD A,E
+		AND A
+		JR NZ,GETLNG3
+		LD A,D
+		CP 0X80
+		JR C,GETLNG5
+		LD D,0X5F
+		JR GETLNG5
+
+GETLNG3		CP 4
+		LD A,0X5F
+		JR NZ,GETLNG5
+		LD A,D
+		LD E,0XEF
+		LD D,0X5F
+		CP 1
+		JR Z,GETLNG4
+		LD E,0XA0
+		CP 0X51
+		JR Z,GETLNG4
+		SUB 0X10
+		LD E,0X80
+		JR NC,GETLNG6
+		LD A,D
+		JR GETLNG5
+
+GETLNG6		CP 0X30
+		JR C,GETLNG4
+		LD E,0XB0
+		CP 0X40
+		JR C,GETLNG4
+		LD A,D
+		JR GETLNG5
+
+GETLNG4		ADD A,E
+GETLNG5		EXX
+		LD (HL),A
+		INC HL
+		DEC B
+		EXX
+		RET Z
+		JR GETLNG1+3
+;401,410-44F,451
+
+LOADLST		LD HL,BUF_512
+		PUSH HL
+		EX AF,AF'
+		LD A,2
+		CALL COM__SD
+		AND A
+		JP NZ,ERR_DRV
+		POP HL
+		RET
+
+ENT_DIR		CALL GETFZAP
+		BIT 4,A
+		EX AF,AF'
+		LD A,E
+		EX AF,AF'
+		LD E,A
+		LD D,(HL)
+		RET Z
+		EXX
+		EX AF,AF'
+		BIT 7,A
+		JR Z,ENT_DI2
+		LD HL,TEK_LEV
+		LD A,(HL)
+		AND A
+		EXX
+		RET Z
+		EXX
+		DEC A
+		LD (HL),A
+		ADD A,A
+		LD H,HIGH (DIR_CEP);
+		LD L,A
+		LD A,(HL)
+		INC L
+		LD H,(HL)
+		LD L,A
+		CALL ENT_DI1
+		EXX
+		LD (TEK_ZAP),HL
+		EXX
+		RET
+
+ENT_DI2		LD HL,TEK_LEV
+		LD A,(HL)
+		INC A
+		CP 0X80
+		EXX
+		RET Z
+		EXX
+		LD (HL),A
+		DEC A
+		ADD A,A
+		LD H,HIGH (DIR_CEP)
+		LD L,A
+		LD BC,(TEK_ZAP)
+		LD (HL),C
+		INC L
+		LD (HL),B
+ENT_DI1		EXX
+		LD DE,20
+		ADD HL,DE
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		LD E,5
+		ADD HL,DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		LD A,B
+		OR C
+		OR D
+		OR E
+		JR NZ,ENT_DI0
+		LD DE,(ROOTCLS)
+		LD BC,(ROOTCLS+2)
+ENT_DI0		LD (TEK_DIR),DE
+		LD (TEK_DIR+2),BC
+		CALL INIRTSC
+		XOR A
+		INC A
+		RET
+
+GETFZAP		LD BC,(TEK_ZAP)
+		LD A,B
+		OR C
+		JR Z,GETRZAP
+		PUSH BC
+		DEC BC
+		CALL GETRZAP
+		POP BC
+		LD E,A
+GETRZAP		PUSH DE
+		CALL RDDIRSC
+		POP DE
+		CP 0XFF
+		LD A,E
+		RET Z
+		EX AF,AF'
+GETFZA1		LD A,C
+		AND 0X0F
+		LD E,A
+		LD D,0
+		EX DE,HL
+		REPT 5
+		ADD HL,HL
+		ENDM
+		ADD HL,DE
+		LD DE,11
+		EX DE,HL
+		ADD HL,DE
+		LD L,(HL)
+		LD H,0
+		EX DE,HL
+		CALL CP_TWOT
+		JR NZ,$+4
+		LD D,0X80
+		EX AF,AF'
+		CP 0X0F
+		LD A,E
+		LD E,D
+		RET NZ
+		SET 0,E
+		RET
+
+;óíÖçàÖ ëÖäíéêÄ DIR èé çéåÖêì BC
+;çÄ ÇõïéÑÖ: A=0XFF-ÇõïéÑ áÄ èêÖÑÖãõ DIR
+RDDIRSC		PUSH BC
+		LD D,B
+		LD E,C
+		LD BC,0
+		LD A,0X10
+		CALL BCDE_A
+		LD A,E
+		PUSH AF
+		LD A,(BYTSSEC)
+		PUSH AF
+		CALL BCDE_A
+		LD A,(KCLSDIR)
+		DEC A
+		CP E
+		JR NC,RDDIRS3
+		POP BC
+		POP BC
+		POP BC
+		LD A,0XFF
+		AND A
+		RET
+
+RDDIRS3		LD BC,(TEK_DIR+2)
+		LD A,E
+		AND A
+		LD DE,(TEK_DIR)
+		JR Z,RDDIRS1
+RDDIRS2		PUSH AF
+		CALL RDFATZP
+		POP AF
+		DEC A
+		JR NZ,RDDIRS2
+RDDIRS1		CALL REALSEC
+		POP AF
+		DEC A
+		LD L,A
+		POP AF
+		AND L
+		LD L,A
+		LD H,0
+		ADD HL,DE
+		EX DE,HL
+		LD HL,0
+		ADC HL,BC
+		LD B,H
+		LD C,L
+		CALL LOADLST
+		POP BC
+		XOR A
+		RET
+
+INIRTSC		PUSH AF
+		LD H,1
+		LD A,D
+		OR E
+		OR B
+		OR C
+		JR Z,LASTCLS
+NEXTCLS		PUSH HL
+		CALL RDFATZP
+		CALL LST_CLS
+		POP HL
+		JR Z,LASTCLS
+		INC H
+		JR NEXTCLS
+
+LASTCLS		LD A,H
+		LD (KCLSDIR),A
+		LD BC,0
+		CALL RDDIRSC
+		LD A,(HL)
+		CP 0X2E
+		JR NZ,INIRTS1
+		INC HL
+		LD A,(HL)
+		CP 0X2E
+		JR Z,INIRTS1
+		INC BC
+INIRTS1		LD (TEK_ZAP),BC
+		POP AF
+		RET
+
+CP_TWOT		LD A,(HL)
+		CP 0X2E
+		RET NZ
+		INC HL
+		LD A,(HL)
+		DEC HL
+		CP 0X2E
+		RET NZ
+		XOR A
+		RET
+
+LST_CLS		LD A,(CAL_FAT)
+		AND A
+		JR NZ,LST_CL1
+		LD HL,0X0FFF
+		SBC HL,DE
+		RET
+
+LST_CL1		DEC A
+		JR NZ,LST_CL2
+		LD HL,0XFFFF
+		SBC HL,DE
+		RET
+
+LST_CL2		LD HL,0X0FFF
+		SBC HL,BC
+		RET NZ
+		LD HL,0XFFFF
+		SBC HL,DE
+		RET
+
+RDFATZP		LD A,(CAL_FAT)
+		AND A
+		JR Z,RDFATS0
+		DEC A
+		JR Z,RDFATS1
+		EX DE,HL
+		ADD HL,HL
+		EX DE,HL
+		LD HL,0
+		ADC HL,BC
+		ADC HL,BC
+		LD A,E
+		LD E,D
+		LD D,L
+		LD C,H
+		LD B,0
+		CALL RDFATS2
+		INC HL
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		RET
+
+RDFATS1		LD BC,0
+		LD A,E
+		LD E,D
+		LD D,C
+RDFATS2		PUSH AF
+		PUSH BC
+		LD HL,FATSTR0
+		CALL BCDEHLP
+		CALL LOADLST
+		POP BC
+		POP AF
+		LD E,A
+		LD D,0
+		ADD HL,DE
+		ADD HL,DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		RET
+
+RDFATS0		LD H,D
+		LD L,E
+		ADD HL,HL
+		ADD HL,DE
+		SRL H
+		RR L
+		LD A,E
+		LD E,H
+		LD D,0
+		LD B,D
+		LD C,D
+		SRL E
+		PUSH AF
+		PUSH HL
+		LD HL,FATSTR0
+		CALL BCDEHLP
+		CALL LOADLST
+		POP BC
+		LD A,B
+		AND 1
+		LD B,A
+		ADD HL,BC
+		LD B,(HL)
+		INC HL
+		LD A,H
+		CP HIGH (BUF_512)+2
+		JR NZ,RDFATS4
+		PUSH BC
+		LD BC,0
+		INC DE
+		CALL LOADLST
+		POP BC
+RDFATS4		POP AF
+		LD D,(HL)
+		LD E,B
+		LD BC,0
+		RRA
+		JR NC,RDFATS3
+		REPT 4
+		SRL D
+		RR E
+		ENDM
+RDFATS3		LD A,D
+		AND 0X0F
+		LD D,A
+		RET
+
+;ÇõóàëãÖçàÖ êÖÄãúçéÉé ëÖäíéêÄ
+;çÄ ÇïéÑÖ BCDE=çéåÖê FAT
+;çÄ ÇõïéÑÖ BCDE=ÄÑêÖë ëÖäíéêÄ
+REALSEC		LD A,B
+		OR C
+		OR D
+		OR E
+		JR NZ,REALSE1
+		LD HL,FATSTR1
+		LD DE,(SEC_FAT)
+		LD BC,(SEC_FAT+2)
+		JP BCDEHLP
+
+REALSE1		LD HL,0XFFFE
+		EX DE,HL
+		ADD HL,DE
+		EX DE,HL
+		INC HL
+		ADC HL,BC
+;çéåÖê äãÄëíÖêÄ-2
+		LD A,(BYTSSEC)
+		JR REALSE2
+
+REALSE3		SLA E
+		RL D
+		RL L
+		RL H
+REALSE2		RRCA
+		JR NC,REALSE3
+;ìåçéÜàãà çÄ êÄáåÖê äãÄëíÖêÄ
+		LD B,H
+		LD C,L
+		LD HL,STARTRZ
+		CALL BCDEHLP
+;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ ÑàëäÄ
+		LD HL,FRSTDAT
+		JP BCDEHLP
+;èêàÅÄÇàãà ëåÖôÖçàÖ éí çÄóÄãÄ êÄáÑÖãÄ
+
+BCDE200		LD E,D
+		LD D,C
+		LD C,B
+		LD B,0
+		LD A,2
+		JR BCDE_A
+
+;BCDE>>A=BCDE
+BCDE_A1		SRL B
+		RR C
+		RR D
+		RR E
+BCDE_A		RRCA
+		JR NC,BCDE_A1
+		RET
+
+;(ADR)-BCDE=BCDE
+BCDEHLM		LD A,(HL)
+		INC HL
+		SUB E
+		LD E,A
+		LD A,(HL)
+		INC HL
+		SBC A,D
+		LD D,A
+		LD A,(HL)
+		INC HL
+		SBC A,C
+		LD C,A
+		LD A,(HL)
+		SBC A,B
+		LD B,A
+		RET
+
+;(ADR)+BCDE=BCDE
+BCDEHLP		LD A,(HL)
+		INC HL
+		ADD A,E
+		LD E,A
+		LD A,(HL)
+		INC HL
+		ADC A,D
+		LD D,A
+		LD A,(HL)
+		INC HL
+		ADC A,C
+		LD C,A
+		LD A,(HL)
+		ADC A,B
+		LD B,A
+		RET
+
+;HLDE+BC=HLDE
+HLDEPBC		EX DE,HL
+		ADD HL,BC
+		EX DE,HL
+		LD BC,0
+		ADC HL,BC
+		RET
+
+FAT_ERR		LD A,0XFF
+		LD (CAL_FAT),A
+		RET
+
+;àçàñàÄãàáÄñàü èÖêÖåÖççõï FAT
+WC_FAT		LD DE,0
+		LD B,D
+		LD C,E
+		CALL LOADLST
+		PUSH HL
+		POP IY
+		LD DE,0X01BE
+		ADD HL,DE
+		LD A,(HL)
+		AND A
+		JR NZ,RDFAT05
+		LD DE,4
+		ADD HL,DE
+		LD A,(HL)
+		LD B,0
+		CP 1
+		JR Z,RDFAT06
+		LD B,2
+		CP 0X0B
+		JR Z,RDFAT06
+		CP 0X0C
+		JR Z,RDFAT06
+		LD B,1
+		CP 6
+		JR Z,RDFAT06
+		CP 0X0E
+		JR NZ,RDFAT05
+RDFAT06		LD A,B
+		LD (CAL_FAT),A
+		ADD HL,DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		INC HL
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		JR RDFAT00
+
+RDFAT05		LD C,(IY+0X0D)
+		XOR A
+		LD E,A
+		LD B,8
+		RR C
+		ADC A,0
+		DJNZ $-4
+		DEC A
+		JR NZ,$+3
+		INC E
+		LD A,(IY+0X0E)
+		OR (IY+0X0F)
+		JR Z,$+3
+		INC E
+		LD A,(IY+0X13)
+		OR (IY+0X14)
+		JR NZ,$+3
+		INC E
+		LD A,(IY+0X20)
+		OR (IY+0X21)
+		OR (IY+0X22)
+		OR (IY+0X23)
+		JR NZ,$+3
+		INC E
+		LD A,(IY+0X15)
+		AND 0XF0
+		CP 0XF0
+		JR NZ,$+3
+		INC E
+		LD A,E
+		CP 4
+		JP NZ,FAT_ERR
+		LD A,0XFF
+		LD (CAL_FAT),A
+		LD DE,0
+		LD B,D
+		LD C,E
+
+RDFAT00		LD (STARTRZ),DE
+		LD (STARTRZ+2),BC
+		CALL LOADLST
+		PUSH HL
+		POP IX
+		LD HL,0
+		LD E,(IX+22)
+		LD D,(IX+23)
+;BPB_FATSZ16
+		LD A,D
+		OR E
+		JR NZ,RDFAT01
+;Öëãà çÖ FAT12/16 (BPB_FATSZ16=0)
+		LD E,(IX+36)
+		LD D,(IX+37)
+		LD L,(IX+38)
+		LD H,(IX+39)
+;BPB_FATSZ32
+;íé ÅÖêÖå àá ëåÖôÖçàü +36
+RDFAT01		LD (SEC_FAT+2),HL
+		LD (SEC_FAT),DE
+;óàëãé ëÖäíéêéÇ çÄ FAT-íÄÅãàñì
+		LD HL,0
+		LD E,(IX+19)
+		LD D,(IX+20)
+;BPB_TOTSEC16
+		LD A,D
+		OR E
+		JR NZ,RDFAT02
+;Öëãà çÖ FAT12/16 (BPB_TOTSEC16=0)
+		LD E,(IX+32)
+		LD D,(IX+33)
+		LD L,(IX+34)
+		LD H,(IX+35)
+;BPB_TOTSEC32
+;íé ÅÖêÖå àá ëåÖôÖçàü +32
+RDFAT02		LD (SEC_DSC+2),HL
+		LD (SEC_DSC),DE
+;ä-Çé ëÖäíéêéÇ çÄ ÑàëäÖ/êÄáÑÖãÖ
+
+;ÇõóàëãüÖå ROOTDIRSECTORS
+		LD C,(IX+11)
+		LD B,(IX+12)
+;BPB_BYTSPERSEC
+		LD E,(IX+17)
+		LD D,(IX+18)
+;BPB_ROOTENTCNT
+		LD HL,0
+		LD A,D
+		OR E
+		JR Z,RDFAT03
+		LD B,H
+		LD C,L
+		LD A,0X10
+		CALL BCDE_A
+		EX DE,HL
+
+;ùíé êÖÄãàáéÇÄçÄ îéêåìãÄ
+;ROOTDIRSECTORS=((BPB_ROOTENTCNT*32)+
+;+(BPB_BYTSPERSEC-1))/BPB_BYTSPERSEC
+;Ç HL ROOTDIRSECTORS
+;Öëãà FAT32, íé HL=0 ÇëÖÉÑÄ
+
+RDFAT03		PUSH HL;ROOTDIRSECTORS
+		LD (ROOTSEC),HL
+		LD A,(IX+16)
+;BPB_NUMFATS
+		LD (MANYFAT),A
+		LD DE,(SEC_FAT)
+		LD HL,(SEC_FAT+2)
+		DEC A
+		EX DE,HL
+		ADD HL,HL
+		EX DE,HL
+		ADC HL,HL
+		DEC A
+		JR NZ,$-6
+		POP BC
+;èéãçõâ êÄáåÖê FAT-éÅãÄëíà Ç ëÖäíéêÄï
+		CALL HLDEPBC
+;èêàÅÄÇàãà ROOTDIRSECTORS
+		LD C,(IX+14)
+		LD B,(IX+15)
+;BPB_RSVDSECCNT
+		LD (RSVDSEC),BC
+		CALL HLDEPBC
+;èêàÅÄÇàãà BPB_RESVDSECCNT
+		LD (FRSTDAT),DE
+		LD (FRSTDAT+2),HL
+;èéãéÜàãà çéåÖê èÖêÇéÉé ëÖäíéêÄ ÑÄççõï
+		LD B,H
+		LD C,L
+		LD HL,SEC_DSC
+;BCDE+32-Æ• óàëãé èé ÄÑêÖëì HL
+		CALL BCDEHLM
+;Çõóãà àá èéãçéÉé ä-ÇÄ ëÖäíéêéÇ êÄáÑÖãÄ
+		LD A,(IX+13)
+		LD (BYTSSEC),A
+		CALL BCDE_A
+;êÄáÑÖãàãà çÄ ä-Çé ëÖäíéêéÇ Ç äãÄëíÖêÖ
+		LD (CLS_DSC),DE
+		LD (CLS_DSC+2),BC
+;èéãéÜàãà äéã-Çé äãÄëíÖêéÇ çÄ êÄáÑÖãÖ
+
+		LD A,(CAL_FAT)
+		CP 0XFF
+		JR NZ,RDFAT04
+		LD HL,(CLS_DSC)
+		LD DE,(CLS_DSC+2)
+		PUSH HL
+		PUSH DE
+		ADD HL,HL
+		EX DE,HL
+		ADC HL,HL
+		LD B,H
+		LD C,L
+		CALL RASCHET
+		LD A,1
+		POP DE
+		POP HL
+		JR Z,RDFAT04
+		ADD HL,HL
+		EX DE,HL
+		ADC HL,HL
+		EX DE,HL
+		ADD HL,HL
+		EX DE,HL
+		ADC HL,HL
+		LD B,H
+		LD C,L
+		CALL RASCHET
+		LD A,2
+		JR Z,RDFAT04
+		XOR A
+
+;Ñãü FAT12/16 ÇõóàëãüÖå ÄÑêÖë èÖêÇéÉé
+;ëÖäíéêÄ ÑàêÖäíéêàà
+;Ñãü FAT32 ÅÖêÖå èé ëåÖôÖåàû +44
+;çÄ ÇõïéÑÖ BCDE-ëÖäíéê ROOTDIR
+RDFAT04		LD (CAL_FAT),A
+		PUSH AF
+		AND A
+		LD DE,0
+		LD B,D
+		LD C,E
+		JR Z,FSRROO2;FAT12-NONE
+		DEC A
+		JR Z,FSRROO2;FAT16
+		LD E,(IX+44)
+		LD D,(IX+45)
+		LD C,(IX+46)
+		LD B,(IX+47);FAT32
+FSRROO2		LD (ROOTCLS),DE
+		LD (ROOTCLS+2),BC
+;ëÖäíéê ROOT ÑàêÖäíéêàà
+		LD (TEK_DIR),DE
+		LD (TEK_DIR+2),BC
+FSRR121		PUSH DE
+		PUSH BC
+		LD DE,(RSVDSEC)
+		LD BC,0
+		LD HL,STARTRZ
+		CALL BCDEHLP
+		LD (FATSTR0),DE
+		LD (FATSTR0+2),BC
+		LD HL,SEC_FAT
+		CALL BCDEHLP
+		LD (FATSTR1),DE
+		LD (FATSTR1+2),BC
+		XOR A
+		LD (TEK_LEV),A
+		POP BC
+		POP DE
+		POP AF
+		JP INIRTSC
+
+RASCHET		CALL BCDE200
+		LD HL,SEC_FAT
+		CALL BCDEHLM
+		LD A,E
+		AND 0XF0
+		OR D
+		OR C
+		OR B
+		RET
+
+FINDDIR		LD IY,0
+		LD A,PG4DIR
+		OUT (0),A
+		LD HL,FORFILE
+		LD (PAGEDIR),HL
+FNDDIR7		LD BC,0
+		CALL RDDIRSC
+		LD DE,0X20
+		PUSH HL
+		POP IX
+		LD A,(HL)
+		CP 0X2E
+		JR NZ,FNDDIR3
+FNDDIR4		LD A,(IX+1)
+		CP 0X2E
+		JR Z,FNDDIR1
+		INC BC
+		ADD IX,DE
+FNDDIR1		INC BC
+		ADD IX,DE
+FNDDIR3		LD A,IXH
+		CP HIGH (BUF_512)+2
+		JR NZ,FNDDIR2
+		CALL RDDIRSC
+		JR NZ,FNDDIR5
+		LD DE,0X20
+		PUSH HL
+		POP IX
+FNDDIR2		LD A,(IX+0X0B)
+		CP 0X0F
+		JR Z,FNDDIR1
+		CP 8
+		JR Z,FNDDIR1
+		LD A,(IX)
+		CP 0XE5
+		JR Z,FNDDIR1
+		AND A
+		JR Z,FNDDIR5
+		BIT 4,(IX+0X0B)
+		JR Z,FNDDIR1
+FNDDIR6		LD HL,(PAGEDIR)
+		LD A,(IX+0X1A)
+		LD (HL),A
+		INC HL
+		LD A,(IX+0X1B)
+		LD (HL),A
+		INC HL
+		LD A,(IX+0X14)
+		LD (HL),A
+		INC HL
+		LD A,(IX+0X15)
+		LD (HL),A
+		INC HL
+		LD (PAGEDIR),HL
+		DEC IY
+		DEC IY
+		LD (IY),C
+		LD (IY+1),B
+		LD (TEK_ZAP),BC
+		CALL ENT_DIR
+		JR FNDDIR7
+
+FNDDIR5		LD A,IYH
+		AND A
+		JR Z,FNDDIR0
+		LD BC,0
+		CALL RDDIRSC
+		PUSH HL
+		POP IX
+		LD DE,0X20
+		LD A,(HL)
+		CP 0X2E
+		JR NZ,FNDDI52
+		INC HL
+		LD A,(HL)
+		CP 0X2E
+		JR Z,FNDDI52
+		INC BC
+		ADD IX,DE
+FNDDI52		LD (TEK_ZAP),BC
+		CALL ENT_DIR
+		LD C,(IY)
+		LD B,(IY+1)
+		INC IY
+		INC IY
+		CALL RDDIRSC
+		LD A,C
+		AND 0X0F
+		LD E,A
+		LD D,0
+		EX DE,HL
+		REPT 5
+		ADD HL,HL
+		ENDM
+		ADD HL,DE
+		PUSH HL
+		POP IX
+		LD DE,0X20
+		JP FNDDIR1
+
+FNDDIR0		LD HL,ROOTCLS
+		LD DE,(PAGEDIR)
+		LDI
+		LDI
+		LDI
+		LDI
+		LD H,D
+		LD L,E
+		INC HL
+		INC HL
+		INC HL
+		LD (HL),0XFF
+		EX DE,HL
+		LD DE,FORFILE
+		AND A
+		SBC HL,DE
+		SRL H
+		RR L
+		SRL H
+		RR L
+		LD (KOLVDIR),HL
+		LD A,PG4MP3
+		OUT (0),A
+		RET
+
+FNDMP30		LD HL,(PAGEMP3)
+		LD DE,FORFILE
+		PUSH HL
+		POP IX
+		LD (HL),0
+		INC L
+		LD (HL),0
+		DEC L
+		AND A
+		SBC HL,DE
+		SRL H
+		RR L
+		SRL H
+		RR L
+		LD DE,2
+		LD (KOLVMP3),HL
+		LD (KOLWMP3),HL
+		AND A
+		SBC HL,DE
+		EX AF,AF'
+		ADD HL,DE
+		EX AF,AF'
+		RET C
+		PUSH HL
+		LD A,PG4MP3
+		OUT (0),A
+		LD IY,1
+		LD B,H
+		LD C,L
+		LD DE,0XFFFC
+		ADD IX,DE
+		DEC HL
+		EXX
+		LD L,(IX)
+		LD H,(IX+1)
+		EXX
+FNDM030		EXX
+		LD D,H
+		LD E,L
+		LD L,(IX)
+		LD H,(IX+1)
+		AND A
+		SBC HL,DE
+		EX AF,AF'
+		ADD HL,DE
+		EX AF,AF'
+		EXX
+		JR Z,$+4
+		INC IY
+		LD A,H
+		OR L
+		JR Z,FNDM033
+		DEC HL
+		ADD IX,DE
+		JR FNDM030
+
+FNDM033		LD (KOLVDIR),IY
+		POP HL
+		RET
+
+FINDMP3		LD A,PG4DIR
+		OUT (0),A
+		LD HL,FORFILE
+		LD (PAGEDIR),HL
+		LD (PAGEMP3),HL
+FNDMP37		LD HL,(PAGEDIR)
+		LD (TEKNUMC),HL
+		LD DE,TEK_DIR
+		LDI
+		LDI
+		LDI
+		LDI
+		LD (PAGEDIR),HL
+		DEC HL
+		BIT 7,(HL)
+		JP NZ,FNDMP30
+		LD DE,(TEK_DIR)
+		LD BC,(TEK_DIR+2)
+		CALL INIRTSC
+		LD BC,0
+		CALL RDDIRSC
+		LD DE,0X20
+		PUSH HL
+		POP IX
+		LD A,(HL)
+		CP 0X2E
+		JR NZ,FNDMP33
+FNDMP34		LD A,(IX+1)
+		CP 0X2E
+		JR Z,FNDMP31
+		INC BC
+		ADD IX,DE
+FNDMP31		INC BC
+		ADD IX,DE
+FNDMP33		LD A,IXH
+		CP HIGH (BUF_512)+2
+		JR NZ,FNDMP32
+		CALL RDDIRSC
+		JP NZ,FNDMP37
+		LD DE,0X20
+		PUSH HL
+		POP IX
+FNDMP32		LD A,(IX+0X0B)
+		CP 0X0F
+		JR Z,FNDMP31
+		CP 8
+		JR Z,FNDMP31
+		LD A,(IX)
+		CP 0XE5
+		JR Z,FNDMP31
+		AND A
+		JR Z,FNDMP37
+		BIT 4,(IX+0X0B)
+		JR NZ,FNDMP31
+		EXX
+		PUSH IX
+		POP HL
+		CALL CP_EXT
+		EXX
+		DEC A
+		JP NZ,FNDMP31
+		LD A,PG4MP3
+		OUT (0),A
+		LD DE,(TEKNUMC)
+		LD HL,(PAGEMP3)
+;ìäãÄÑäÄ éèàëÄíÖãü îÄâãÄ
+;2 ÅÄâíÄ ÄÑêÖë äãÄëíÖêÄ Ñàêõ
+;2 ÅÄâíÄ "êÖÄãúçõâ" çéåÖê îÄâãÄ
+		LD (HL),E
+		INC HL
+		LD (HL),D
+		INC HL
+		LD (HL),C
+		INC HL
+		LD (HL),B
+		INC HL
+		LD (PAGEMP3),HL
+		LD A,PG4DIR
+		OUT (0),A
+		LD DE,0X20
+		JR FNDMP31
+
+F_EXT		DB "MP3",0
+
+CP_EXT		PUSH BC
+		PUSH DE
+		PUSH HL
+		LD C,0
+		LD DE,F_EXT
+CPETR2		LD A,(DE)
+		AND A
+		JR Z,CPETR1+1
+		INC C
+		PUSH DE
+		CALL COMPARF
+		POP DE
+		JR Z,CPETR1
+		INC DE
+		INC DE
+		INC DE
+		JR CPETR2
+
+CPETR1		LD A,C
+		POP HL
+		POP DE
+		POP BC
+		RET
+
+COMPARF		PUSH DE
+		LD DE,8
+		ADD HL,DE
+		POP DE
+		LD B,3
+		LD A,(DE)
+		CP (HL)
+		RET NZ
+		INC HL
+		INC DE
+		DJNZ $-5
+		RET
+
+OPENFIL		CALL SET_MP3
+		CALL GETFZAP
+		LD DE,0X14
+		ADD HL,DE
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		LD E,5
+		ADD HL,DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		LD (TFILCLS),DE
+		LD (TFILCLS+2),BC
+		INC HL
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		INC HL
+		LD C,(HL)
+		INC HL
+		LD B,(HL)
+		LD A,D
+		AND 1
+		OR E
+		EX AF,AF'
+		CALL BCDE200
+		LD A,(BYTSSEC)
+		LD H,A
+		DEC A
+		AND E
+		LD L,A
+		EX AF,AF'
+		JR Z,$+3
+		INC L
+		LD A,L
+		LD (MPHWOST),A
+		LD A,H
+		CALL BCDE_A
+		LD (KOL_CLS),DE
+		LD (KOL_CLS+2),BC
+		XOR A
+		LD (NUMSECK),A
+		RET
+
+NEXTSEC		LD HL,KOL_CLS
+		LD A,(HL)
+		INC HL
+		OR (HL)
+		INC HL
+		OR (HL)
+		INC HL
+		OR (HL)
+		JR Z,LSTCLSF
+		LD DE,(TFILCLS)
+		LD BC,(TFILCLS+2)
+		PUSH DE
+		PUSH BC
+		CALL REALSEC
+		LD HL,(NUMSECK)
+		LD H,0
+		ADD HL,DE
+		EX DE,HL
+		LD HL,0
+		ADC HL,BC
+		LD B,H
+		LD C,L
+		LD A,9
+		CALL COM__SD
+		POP BC
+		POP DE
+		LD A,(NUMSECK)
+		INC A
+		LD H,A
+		LD (NUMSECK),A
+		LD A,(BYTSSEC)
+		CP H
+		RET NZ
+		XOR A
+		LD (NUMSECK),A
+		CALL RDFATZP
+		LD (TFILCLS),DE
+		LD (TFILCLS+2),BC
+		LD HL,KOL_CLS
+		LD DE,1
+		LD B,D
+		LD C,D
+		CALL BCDEHLM
+		LD (KOL_CLS),DE
+		LD (KOL_CLS+2),BC
+		XOR A
+		INC A
+		RET
+
+LSTCLSF		LD DE,(TFILCLS)
+		LD BC,(TFILCLS+2)
+		CALL REALSEC
+		LD HL,(NUMSECK)
+		LD H,0
+		ADD HL,DE
+		EX DE,HL
+		LD HL,0
+		ADC HL,BC
+		LD B,H
+		LD C,L
+		LD A,9
+		CALL COM__SD
+		LD A,(NUMSECK)
+		INC A
+		LD H,A
+		LD (NUMSECK),A
+		LD A,(MPHWOST)
+		AND A
+		RET Z
+		CP H
+		RET
+
+SET_MP3		LD H,B
+		LD L,C
+		LD DE,FORFILE
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,DE
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		INC HL
+		PUSH HL
+		LD A,PG4DIR
+		OUT (0),A
+		EX DE,HL
+		LD DE,TEK_DIR
+		LDI
+		LDI
+		LDI
+		LDI
+		LD DE,(TEK_DIR)
+		LD BC,(TEK_DIR+2)
+		CALL INIRTSC
+		LD A,PG4MP3
+		OUT (0),A
+		POP HL
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		LD (TEK_ZAP),DE
+		RET
+
+PRVDIR		LD HL,(KOLVDIR)
+		LD DE,2
+		AND A
+		SBC HL,DE
+		RET C
+		LD HL,(KOLVMP3)
+		AND A
+		SBC HL,DE
+		RET C
+		LD H,B
+		LD L,C
+		LD DE,FORFILE
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,DE
+		PUSH HL
+		POP IX
+		LD H,B
+		LD L,C
+		LD BC,(KOLVMP3)
+		LD DE,0XFFFC
+		EXX
+		LD L,(IX)
+		LD H,(IX+1)
+		EXX
+		CALL PRVDIR2
+		CALL PRVDIR2
+		LD DE,4
+		JR NXTDIR2
+
+PRVDIR2		EXX
+		LD D,H
+		LD E,L
+		LD L,(IX)
+		LD H,(IX+1)
+		AND A
+		SBC HL,DE
+		EX AF,AF'
+		ADD HL,DE
+		EX AF,AF'
+		EXX
+		RET NZ
+		LD A,H
+		OR L
+		JR Z,PRVDIR4
+		DEC HL
+		ADD IX,DE
+		JR PRVDIR2
+
+PRVDIR4		LD H,B
+		LD L,C
+		DEC HL
+		ADD HL,HL
+		ADD HL,HL
+		LD IX,FORFILE
+		EX DE,HL
+		ADD IX,DE
+		EX DE,HL
+		LD H,B
+		LD L,C
+		DEC HL
+		JR PRVDIR2
+
+NXTDIR		LD HL,(KOLVDIR)
+		LD DE,2
+		AND A
+		SBC HL,DE
+		RET C
+		LD HL,(KOLVMP3)
+		AND A
+		SBC HL,DE
+		RET C
+		LD H,B
+		LD L,C
+		LD DE,FORFILE
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,DE
+		PUSH HL
+		POP IX
+		LD H,B
+		LD L,C
+		LD BC,(KOLVMP3)
+		LD DE,4
+		EXX
+		LD L,(IX)
+		LD H,(IX+1)
+		EXX
+NXTDIR2		EXX
+		LD D,H
+		LD E,L
+		LD L,(IX)
+		LD H,(IX+1)
+		AND A
+		SBC HL,DE
+		EX AF,AF'
+		ADD HL,DE
+		EX AF,AF'
+		EXX
+		JR NZ,NXTDIR3
+		INC HL
+		ADD IX,DE
+		AND A
+		SBC HL,BC
+		EX AF,AF'
+		ADD HL,BC
+		EX AF,AF'
+		JR NZ,NXTDIR2
+		LD HL,0
+		LD IX,FORFILE
+		JR NXTDIR2
+
+NXTDIR3		LD B,H
+		LD C,L
+		RET

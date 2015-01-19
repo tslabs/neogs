@@ -1,0 +1,572 @@
+
+;LAST UPDATE: 24.05.2013 savelij
+;version 08.02.2009
+
+;„€‰‚… SD-CARD „‹ NGS
+;+„€‰‚… „‹ MP3-„…„…€
+
+;‚ε®¤­λ¥ ― ΰ ¬¥βΰλ ®΅ι¨¥:
+;HL- ¤ΰ¥α § £ΰγ§ª¨ Ά ― ¬οβμ
+;BCDE-32-ε ΅¨β­λ© ­®¬¥ΰ α¥ªβ®ΰ 
+;A-ª®«¨η¥αβΆ® ΅«®ª®Ά (΅«®ª=512 ΅ ©β)
+;β®«μª® ¤«ο ¬­®£®΅«®η­®© § ―¨α¨/ηβ¥­¨¨
+
+;θ¨΅ª¨ Άλ¤ Ά ¥¬λ¥ ­  Άλε®¤¥:
+;A=0-¨­¨ζ¨ «¨§ ζ¨ο ―ΰ®θ«  γα―¥θ­®
+;A=1-ª ΰβ  ­¥ ­ ©¤¥­  ¨«¨ ­¥ ®βΆ¥β¨« 
+;A=2-ª ΰβ  § ι¨ι¥­  ®β § ―¨α¨
+;A=3-―®―λβª  § ―¨α¨ Ά α¥ªβ®ΰ 0 ª ΰβλ
+
+;INCL "PORTSNGS"
+
+CMD_12		EQU 0X4C	;STOP_TRANSMISSION
+CMD_17		EQU 0X51	;READ_SINGLE_BLOCK
+CMD_18		EQU 0X52	;READ_MULTIPLE_BLOCK
+CMD_24		EQU 0X58	;WRITE_BLOCK
+CMD_25		EQU 0X59	;WRITE_MULTIPLE_BLOCK
+CMD_55		EQU 0X77	;APP_CMD
+CMD_58		EQU 0X7A	;READ_OCR
+CMD_59		EQU 0X7B	;CRC_ON_OFF
+ACMD_41		EQU 0X69	;SD_SEND_OP_COND
+
+;™€ ’—€ ‚•„€ „‹ €’› ‘
+		EXX
+		PUSH HL
+		PUSH DE
+		ADD A,A
+		LD L,A
+		LD H,0
+		LD DE,TABL_SD
+		ADD HL,DE
+		EX AF,AF'
+		LD E,(HL)
+		INC HL
+		LD D,(HL)
+		EX DE,HL
+		POP DE
+		EX (SP),HL
+		EXX
+		RET
+
+TABL_SD		DW SD_INIT	;0
+;― ΰ ¬¥βΰ®Ά ­¥ βΰ¥΅γ¥β, ­  Άλε®¤¥ A
+;α¬®βΰ¨ Άλθ¥ ―¥ΰΆλ¥ 2 §­ η¥­¨ο
+		DW SD__OFF	;1
+;―ΰ®αβ® α­οβ¨¥ Άλ΅®ΰ  SD ª ΰβλ
+		DW RDSINGL	;2 —’€’ 1 ‘…’
+		DW EMPTY	;3 —’€’ "A" ‘…’‚
+		DW EMPTY	;4 ‘€’ 1 ‘…’
+		DW EMPTY	;5 ‘€’ "A" ‘…’‚
+		DW AVTODET	;6-€‚’„…’…’
+		DW FREQNC	;7-‡€„€—€ —€‘’’›
+		DW HARDMP3	;8 INIT MP3-„…„…€
+		DW LDI_MP3	;9 ƒ ‘ SD € MP3
+		DW COM_MP3	;0XA RD&WR ‚ MP3-„…„
+		DW SOFTMP3	;0XB SOFT RESET MP3CHIP
+		DW DAT2MP3	;0XC ƒ ‘ GSDAT2MP3
+		DW ZER2MP3	;0XD 2048 “‹…‰ € MP3
+
+EMPTY		RET
+
+ZAW003		CALL SD__OFF
+		LD A,1
+		RET
+
+SD_INIT		CALL CS_HIGH
+		LD BC,SD_SEND
+		LD DE,0X20FF
+		OUT (C),E
+		DEC D
+		JR NZ,$-3
+		LD BC,SD_RSTR
+		XOR A
+		EX AF,AF'
+ZAW001		LD HL,CMD00
+		CALL OUTCOM
+		CALL IN_OOUT
+		EX AF,AF'
+		DEC A
+		JR Z,ZAW003
+		EX AF,AF'
+		DEC A
+		JR NZ,ZAW001
+		LD HL,CMD08
+		CALL OUTCOM
+		CALL IN_OOUT
+		IN H,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		LD HL,0
+		BIT 2,A
+		JR NZ,ZAW006
+		LD H,0X40
+ZAW006		LD A,CMD_55
+		CALL OUT_COM
+		CALL IN_OOUT
+		LD BC,SD_SEND
+		LD A,ACMD_41
+		OUT (C),A
+		NOP
+		OUT (C),H
+		NOP
+		OUT (C),L
+		NOP
+		OUT (C),L
+		NOP
+		OUT (C),L
+		LD A,0XFF
+		OUT (C),A
+		CALL IN_OOUT
+		AND A
+		JR NZ,ZAW006
+ZAW004		LD A,CMD_59
+		CALL OUT_COM
+		CALL IN_OOUT
+		AND A
+		JR NZ,ZAW004
+ZAW005		LD HL,CMD16
+		CALL OUTCOM
+		CALL IN_OOUT
+		AND A
+		JR NZ,ZAW005
+
+CS_HIGH		PUSH DE
+		PUSH BC
+		LD E,M_SDNCS+M_SETNCLR;0X81
+		LD BC,SCTRL
+		OUT (C),E
+		POP BC
+		POP DE
+		RET
+
+SD__OFF		LD A,M_SDNCS+M_SETNCLR;0X81
+		OUT (SCTRL),A
+		RET
+
+CS__LOW		PUSH DE
+		PUSH BC
+		LD E,M_SDNCS;1
+		LD BC,SCTRL
+		OUT (C),E
+		POP BC
+		POP DE
+		RET
+
+OUTCOM		CALL CS__LOW
+		PUSH BC
+		LD BC,SD_SEND
+		OUTI
+		NOP
+		OUTI
+		NOP
+		OUTI
+		NOP
+		OUTI
+		NOP
+		OUTI
+		NOP
+		OUTI
+		POP BC
+		RET
+
+OUT_COM		PUSH BC
+		CALL CS__LOW
+		LD BC,SD_SEND
+		OUT (C),A
+		XOR A
+		OUT (C),A
+		NOP
+		OUT (C),A
+		NOP
+		OUT (C),A
+		NOP
+		OUT (C),A
+		DEC A
+		OUT (C),A
+		POP BC
+		RET
+
+SECM200		PUSH HL
+		PUSH DE
+		PUSH BC
+		PUSH AF
+		PUSH BC
+		LD A,CMD_58
+		LD BC,SD_RSTR
+		CALL OUT_COM
+		CALL IN_OOUT
+		IN A,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		NOP
+		IN H,(C)
+		BIT 6,A
+		POP HL
+		JR NZ,SECN200
+		EX DE,HL
+		ADD HL,HL
+		EX DE,HL
+		ADC HL,HL
+		LD H,L
+		LD L,D
+		LD D,E
+		LD E,0
+SECN200		POP AF
+		LD BC,SD_SEND
+		OUT (C),A
+		NOP
+		OUT (C),H
+		NOP
+		OUT (C),L
+		NOP
+		OUT (C),D
+		NOP
+		OUT (C),E
+		LD A,0XFF
+		OUT (C),A
+		POP BC
+		POP DE
+		POP HL
+		RET
+
+IN_OOUT		PUSH BC
+		PUSH DE
+		LD DE,0X20FF
+		LD BC,SD_RSTR
+IN_WAIT		IN A,(C)
+		CP E
+		JR NZ,IN_EXIT
+		DEC D
+		JR NZ,IN_WAIT
+IN_EXIT		POP DE
+		POP BC
+		RET
+
+CMD00		DB 0X40,0X00,0X00,0X00,0X00,0X95
+;GO_IDLE_STATE
+CMD08		DB 0X48,0X00,0X00,0X01,0XAA,0X87
+;SEND_IF_COND
+CMD16		DB 0X50,0X00,0X00,0X02,0X00,0XFF
+;SET_BLOCKEN
+
+RD_SECT		PUSH BC
+		PUSH DE
+		LD BC,SD_RSTR
+		INIR
+		INIR
+		JR RDSECT3
+
+RON_MP3		PUSH BC
+		PUSH DE
+		LD BC,SD_RSTR
+		LD D,0X10
+RDSECT2		IN A,(SSTAT)
+		RRA
+		JR NC,$-3
+		LD E,0X20
+RDSECT1		IN A,(C)
+		NOP
+		OUT (MD_SEND),A
+		DEC E
+		JR NZ,RDSECT1
+		DEC D
+		JR NZ,RDSECT2
+RDSECT3		IN A,(C)
+		NOP
+		IN A,(C)
+		POP DE
+		POP BC
+		RET
+
+LDI_MP3		LD A,CMD_17
+
+;		CALL SECM200
+;		CALL IN_OOUT
+;		CP 0XFE
+;		JR NZ,$-5
+;		CALL RON_MP3
+
+		;prepare SD DMA
+		ld	a,C_DMA_SD
+		out	(DMA_MOD),a
+		;set DMA address to 1Mb
+		ld	a,0x10
+		out	(DMA_HAD),a
+		xor	a
+		out	(DMA_MAD),a
+		out	(DMA_LAD),a
+		;start DMA
+		ld	a,0x80
+		out	(DMA_CST),a
+		;wait for DMA finish
+		in	a,(DMA_CST)
+		and	0x80
+		jr	nz,$-4
+
+		;prepare MP3 DMA
+		ld	a,C_DMA_MP3
+		out	(DMA_MOD),a
+		;set DMA address to 1Mb
+		ld	a,0x10
+		out	(DMA_HAD),a
+		xor	a
+		out	(DMA_MAD),a
+		out	(DMA_LAD),a
+		;start DMA
+		ld	a,0x80
+		out	(DMA_CST),a
+		;wait for DMA finish
+		in	a,(DMA_CST)
+		and	0x80
+		jr	nz,$-4
+
+		CALL IN_OOUT
+		INC A
+		JR NZ,$-4
+		JP CS_HIGH
+
+RDSINGL		LD A,CMD_17
+		CALL SECM200
+		CALL IN_OOUT
+		CP 0XFE
+		JR NZ,$-5
+		CALL RD_SECT
+		CALL IN_OOUT
+		INC A
+		JR NZ,$-4
+		JP CS_HIGH
+
+;†„€… ƒ’‚‘’ SPI MP3 —€
+NOPER		DUPL 18,0
+		RET
+
+		IN A,(SSTAT)
+		AND M_MCRDY
+		JR Z,NOPER
+		RET
+
+AVTODET		IN A,(GSCFG0)
+		AND 0XCF
+		OUT (GSCFG0),A
+		CALL NOPER
+		LD D,A
+		IN A,(GSCFG0)
+		CP D
+		LD A,0
+		RET Z
+NO_MP3		LD A,0XFF
+		RET
+
+FREQNC		LD D,C_10MHZ;0X30
+		AND 3
+		JR Z,FREQNCS
+		LD D,C_12MHZ;0X10
+		DEC A
+		JR Z,FREQNCS
+		LD D,C_20MHZ;0X20
+		DEC A
+		JR Z,FREQNCS
+		LD D,C_24MHZ;0
+FREQNCS		IN A,(GSCFG0)
+		AND 0XCF
+		OR D
+		OUT (GSCFG0),A
+		RET
+
+;‡€‘›‚€… 2048 “‹…‰ € ‡€‚………
+;…‘…
+ZER2MP3		LD D,0X40
+ZR2MP31		IN A,(SSTAT)
+		RRA
+		JR NC,$-3
+		LD E,0X20
+		XOR A
+		OUT (MD_SEND),A
+		DEC E
+		JR NZ,$-4
+		DEC D
+		JR NZ,ZR2MP31
+		RET
+
+;‹›‰ ‘‘
+HARDMP3		XOR A
+		CALL VOL_MOD
+;‡€ƒ‹“‹ ƒ‘’ ’‚ GS
+		LD BC,MC_SEND
+		LD A,%10011100;0X9C
+		OUT (SCTRL),A
+		XOR A
+		CALL FREQNC
+;‚›‘’€‚‹ —€‘’’“ € NGS 10 ƒζ
+		LD HL,0X0301
+		CALL COM_MP3
+		LD A,E
+		AND %01110000
+		PUSH AF
+		LD A,M_MPXRS
+		OUT (SCTRL),A
+		CALL NOPER
+		LD A,M_MPXRS+M_SETNCLR;0X84
+		OUT (SCTRL),A
+;‚›„€‹ ‘‘ € „…„…
+		IN A,(SSTAT)
+		RRA
+		JR NC,$-3
+;„†„€‹‘ ƒ’‚‘’ „…„…€
+		LD HL,0X0203
+		LD DE,0X9B58
+		CALL COM_MP3
+;‚›‘’€‚‹ € „…„…… —€‘’’“ 14 ƒζ
+		POP AF
+;‡„…‘ ‹€ –€‹‡€– „‹ VS1001
+		LD HL,0X0202
+		LD DE,0X8008
+		CALL Z,COM_MP3
+;‡€‘ …„“…’‚€ƒ € ‚
+;…„“…’‚€›‰ …ƒ‘’, …‘‹
+;’› 6-4 …ƒ‘’€ ‘’€’“‘€ ‚ “‹…
+		LD A,1
+		JP FREQNC
+;‚›‘’€‚‹ —€‘’’“ € NGS 12 ƒζ
+
+;ƒ€›‰ ‘‘ MP3 „…„…€
+;……„“…’‘ ‚›‡›‚€’ ……„ €†„›
+;‚› ”€‰‹, ‘€‘›‚€…’ ‘—…’— ‘…“„
+;‘‹… ƒ€ƒ ‘‘€ ‚‘…
+;“‘’€‚‹…›… …†› „…„…€
+;… ‡…’‘
+SOFTMP3		LD BC,MC_SEND
+		LD HL,0X030B
+		CALL COM_MP3
+;‘€… ’…“™…… ‡€—…… ƒ‘’
+		PUSH DE
+		LD DE,0XFEFE
+; ‘•€… …ƒ „ ‹“—• ‚……
+		LD HL,0X020B
+		CALL COM_MP3
+;“…€… ƒ‘’ „ “€
+		LD HL,0X0301
+		CALL COM_MP3
+		LD A,E
+		AND %01110000
+		PUSH AF
+		LD HL,0X0300
+		CALL COM_MP3
+;—’€… ‘‘’… MODE
+		LD A,4
+		XOR E
+		LD E,A
+		LD HL,0X0200
+		CALL COM_MP3
+		LD A,4
+		XOR E
+		LD E,A
+		LD HL,0X0200
+		CALL COM_MP3
+;„€… €„“ ‘”’-‘‘€
+		IN A,(SSTAT)
+		RRA
+		JR NC,$-3
+;†„… ‘‚†„… „…„…€
+		LD HL,0X0203
+		LD DE,0X9B58
+		CALL COM_MP3
+;‚›‘’€‚‹… —€‘’’“ ‘‹… –€‹‡€–
+;MP3 „…„…€
+		POP AF
+		LD HL,0X0202
+		LD DE,0X8008
+		CALL Z,COM_MP3
+;…„“…’‚€›‰  MP3 „…„…€
+		POP DE
+		LD HL,0X020B
+		JR COM_MP3
+;‚‘‘’€€‚‹‚€… ƒ‘’ „ ‘‘€
+
+;ƒ‹“ ƒ‘’ MOD ’‚
+VOL_MOD		OUT (VOL1),A
+		OUT (VOL2),A
+		OUT (VOL3),A
+		OUT (VOL4),A
+		OUT (VOL5),A
+		OUT (VOL6),A
+		OUT (VOL7),A
+		OUT (VOL8),A
+		RET
+
+; –…„“€ —’…/‡€‘ €„…‘‚
+; MP3 „…„…€
+; H-€„€ „…„…“ 3-READ ‹ 2-WRITE
+; L-€„…‘ ‚ „…„……
+; D-‘’€‰ €‰’
+; E-‹€„‰ €‰’
+; DE  ‡€‘ „€’ € ‚•„
+;     —’… ‹“—’ € ‚›•„…
+COM_MP3		IN A,(SSTAT)
+		RRA
+		JR NC,$-3
+; „…„… ‘‚„…
+		LD A,M_MCNCS
+		OUT (SCTRL),A
+; ‚›€… „…„…  ‘… …“
+; —’ ’ …ƒ ’…“…’‘
+		CALL NOPER
+		LD BC,MC_SEND
+		LD A,H
+		OUT (C),H
+		CALL NOPER
+		OUT (C),L
+		CALL NOPER
+		CP 3
+		JR Z,MP3READ
+; ……•„ € —’…… (‘’ ‚›…)
+		OUT (C),D
+		CALL NOPER
+		OUT (C),E
+; ‡€‘€‹ ‚ €„…‘ „…„…€
+MP3_END		CALL NOPER
+		LD A,M_MCNCS+M_SETNCLR;0X82
+; ‘€… ‚› „…„…€
+		OUT (SCTRL),A
+		RET
+
+MP3READ ;—’€… —’ ‡€’…‚€‹
+		LD BC,MC_READ
+		LD A,0XFF
+		OUT (MC_SEND),A
+		CALL NOPER
+		IN D,(C)
+		CALL NOPER
+		OUT (MC_SEND),A
+		CALL NOPER
+		IN E,(C)
+		JR MP3_END
+
+; –…„“€ ……‘›‹ €‰’‚ ‘ ‘…€
+; —……‡ ’› ƒ‘ € MP3 „…„…
+; ……‘›‹€…’‘ 512 €‰’
+DAT2MP3		LD D,0X10
+; ……ƒ€’ € „…„… 16 –‰
+DAT2M03		IN A,(SSTAT)
+		RRA
+		JR NC,$-3
+; „…„… ‘‚„…
+		LD B,0X20
+; „€ – 32 €‰’€
+DAT2M13		IN A,(ZXSTAT)
+		RLA
+		JR NC,$-3
+; „†„€‹‘ „€— ’ ‘…€
+		IN A,(ZXDATRD); ‡€€‹ €‰’
+		OUT (MD_SEND),A; ’„€‹ „…„…“
+		NOP;‚›„…†€‹ €“‡“  ’€’€
+		DJNZ DAT2M13; – —‹€‘
+		DEC D
+		JR NZ,DAT2M03
+		RET;512 €‰’ ……„€!!!

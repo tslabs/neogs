@@ -1,0 +1,3 @@
+#!/bin/bash
+
+vsim -novopt -gui -do 'wave.do' work.tb
