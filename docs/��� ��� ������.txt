@@ -1,6 +1,0 @@
-
-Где какие файлы искать:
-
-флешер лежит в папке z80\flasher ввиде файлов flasher.$C или flasher.scl
-файл самого обновления лежит в папке z80\create_update ввиде файла ngs_rom.upd
-новый плеер лежит в папке zx\Neo Player Light ввиде файлов npl.$C или npl.scl
