@@ -42,26 +42,6 @@
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 6.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "02:20:34  MARCH 02, 2008"
 set_global_assignment -name LAST_QUARTUS_VERSION 9.0
-set_global_assignment -name VERILOG_FILE ../hus/ram16a.v
-set_global_assignment -name VERILOG_FILE ../hus/hus_top.v
-set_global_assignment -name VERILOG_FILE ../dma/dma_sequencer.v
-set_global_assignment -name VERILOG_FILE ../dma/dma_fifo_oneshot.v
-set_global_assignment -name VERILOG_FILE ../dma/dma_mp3.v
-set_global_assignment -name VERILOG_FILE ../dma/dma_sd.v
-set_global_assignment -name VERILOG_FILE ../dma/dma_zx.v
-set_global_assignment -name VERILOG_FILE ../dma/dma_access.v
-set_global_assignment -name VERILOG_FILE ../common/spi.v
-set_global_assignment -name VERILOG_FILE ../sound/sound_main.v
-set_global_assignment -name VERILOG_FILE ../sound/sound_dac.v
-set_global_assignment -name VERILOG_FILE ../common/resetter.v
-set_global_assignment -name VERILOG_FILE ../zxbus/zxbus.v
-set_global_assignment -name VERILOG_FILE ../sound/sound_mulacc.v
-set_global_assignment -name VERILOG_FILE ../ports/ports.v
-set_global_assignment -name VERILOG_FILE ../memmap/memmap.v
-set_global_assignment -name VERILOG_FILE ../interrupts/interrupts.v
-set_global_assignment -name VERILOG_FILE ../interrupts/timer.v
-set_global_assignment -name VERILOG_FILE ../common/mem512b.v
-set_global_assignment -name VERILOG_FILE ../top.v
 
 # Pin & Location Assignments
 # ==========================
@@ -235,11 +215,13 @@ set_global_assignment -name INCREMENTAL_COMPILATION OFF
 	# Fitter Assignments
 	# ==================
 	set_instance_assignment -name GLOBAL_SIGNAL ON -to internal_reset_n
-	set_instance_assignment -name GLOBAL_SIGNAL OFF -to "zxbus:my_zxbus|zxiowr_n"
-	set_instance_assignment -name GLOBAL_SIGNAL OFF -to "resetter:my_rst|resets_n~0"
 	set_instance_assignment -name SLOW_SLEW_RATE ON -to dac_bitck
 	set_instance_assignment -name SLOW_SLEW_RATE ON -to dac_dat
 	set_instance_assignment -name SLOW_SLEW_RATE ON -to dac_lrck
 
 # end ENTITY(top)
 # ---------------
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY obj
+set_global_assignment -name RTLV_REMOVE_FANOUT_FREE_REGISTERS OFF
+set_global_assignment -name RTLV_SIMPLIFIED_LOGIC OFF
+set_global_assignment -name SYSTEMVERILOG_FILE ../top.sv

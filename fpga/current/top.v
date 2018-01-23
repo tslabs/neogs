@@ -255,16 +255,20 @@ module top(
 	wire [7:0] dma_dout_zx;
 	wire [7:0] dma_dout_sd;
 	wire [7:0] dma_dout_mp3;
-	
+
 	wire       dma_select_zx;
 	wire       dma_select_sd;
 	wire       dma_select_mp3;
-	
+
 	wire [7:0] dma_din_modules;
 
 	wire [1:0] dma_regsel;
 	wire       dma_wrstb;
 
+  wire       dma_busrq_n;
+  wire       hus_busrq_n;
+
+  assign busrq_n = dma_busrq_n && hus_busrq_n;
 
 // ports-memmap interconnection
 	wire mode_ramro,mode_norom;
@@ -286,7 +290,7 @@ module top(
 
 	wire [7:0] md_din;
 	wire [7:0] dma_md_din;
-	
+
 	wire [7:0] mc_din;
 	wire [7:0] mc_dout;
 	wire [7:0] sd_din;
@@ -470,13 +474,13 @@ module top(
 // DMA modules
 
 	dma_access dma_access
-	( 
+	(
 		.clk(clk_fpga),
 		.rst_n(internal_reset_n),
-        
-		.busrq_n(busrq_n),
+
+		.busrq_n(dma_busrq_n),
 		.busak_n(busak_n),
-        
+
 		.mem_dma_addr(mem_dma_addr),
 		.mem_dma_wd(mem_dma_wd),
 		.mem_dma_rd(d),
@@ -484,7 +488,7 @@ module top(
 		.mem_dma_rnw(mem_dma_rnw),
 		.mem_dma_oe(mem_dma_oe),
 		.mem_dma_we(mem_dma_we),
-        
+
 		.dma_busynready(),
 		.dma_req(dma_req),
 		.dma_ack(dma_ack),
@@ -501,37 +505,37 @@ module top(
 	(
 		.clk  (clk_fpga        ),
 		.rst_n(internal_reset_n),
-        
+
 		.req0(dma_req_zx ),
 		.req1(dma_req_sd ),
 		.req2(dma_req_mp3),
 		.req3(1'b0       ),
-        
+
 		.addr0(dma_addr_zx ),
 		.addr1(dma_addr_sd ),
 		.addr2(dma_addr_mp3),
 		.addr3(22'd0       ),
-        
+
 		.rnw0(dma_rnw_zx ),
 		.rnw1(dma_rnw_sd ),
 		.rnw2(dma_rnw_mp3),
 		.rnw3(1'b1       ),
-        
+
 		.wd0(dma_wd_zx ),
 		.wd1(dma_wd_sd ),
 		.wd2(8'd0      ),
 		.wd3(8'd0      ),
-        
+
 		.ack0(dma_ack_zx ),
 		.ack1(dma_ack_sd ),
 		.ack2(dma_ack_mp3),
 		.ack3(           ),
-        
+
 		.end0(dma_end_zx ),
 		.end1(dma_end_sd ),
 		.end2(dma_end_mp3),
 		.end3(           ),
-        
+
 		.dma_req (dma_req ),
 		.dma_addr(dma_addr),
 		.dma_rnw (dma_rnw ),
@@ -549,21 +553,21 @@ module top(
 	(
 		.clk(clk_fpga),
 		.rst_n(internal_reset_n),
-        
+
 		.module_select(dma_select_zx),
 		.write_strobe(dma_wrstb),
 		.regsel(dma_regsel),
-        
+
 		.din(dma_din_modules),
 		.dout(dma_dout_zx),
-        
+
 		.wait_ena(zx_wait_ena),
 		.dma_on(dma_on_zx),
 		.zxdmaread(zx_dmaread),
 		.zxdmawrite(zx_dmawrite),
 		.dma_wr_data(dma_zxwr_data),
 		.dma_rd_data(dma_zxrd_data),
-        
+
 		.dma_req (dma_req_zx ),
 		.dma_ack (dma_ack_zx ),
 		.dma_end (dma_end_zx ),
@@ -578,24 +582,24 @@ module top(
 	(
 		.clk  (clk_fpga        ),
 		.rst_n(internal_reset_n),
-        
+
 		.sd_start   (dma_sd_start),
 		.sd_rdy     (sd_rdy      ),
 		.sd_recvdata(sd_dout     ),
-        
+
 		.din          (dma_din_modules),
 		.dout         (dma_dout_sd    ),
 		.module_select(dma_select_sd  ),
 		.write_strobe (dma_wrstb      ),
 		.regsel       (dma_regsel     ),
-        
+
 		.dma_addr(dma_addr_sd),
 		.dma_wd  (dma_wd_sd  ),
 		.dma_rnw (dma_rnw_sd ),
 		.dma_req (dma_req_sd ),
 		.dma_ack (dma_ack_sd ),
 		.dma_end (dma_end_sd ),
-        
+
 		.int_req(sd_int_req)
 	);
 
@@ -615,7 +619,7 @@ module top(
 		.module_select(dma_select_mp3 ),
 		.write_strobe (dma_wrstb      ),
 		.regsel       (dma_regsel     ),
-	
+
 		.dma_addr(dma_addr_mp3),
 		.dma_rd  (dma_rd      ),
 		.dma_rnw (dma_rnw_mp3 ),
@@ -633,7 +637,7 @@ module top(
 // MEMMAP module
 
 	memmap my_memmap
-	( 
+	(
 		.a14(a[14]),
 		.a15(a[15]),
 		.mreq_n(mreq_n),
@@ -645,7 +649,7 @@ module top(
 		.mema17(memmap_a[17]),
 		.mema18(memmap_a[18]),
 		.mema21(memmap_a[21]),
-        
+
 		.ram0cs_n(memmap_ramcs_n[0]),
 		.ram1cs_n(memmap_ramcs_n[1]),
 		.ram2cs_n(memmap_ramcs_n[2]),
@@ -653,7 +657,7 @@ module top(
 		.romcs_n(memmap_romcs_n),
 		.memoe_n(memmap_memoe_n),
 		.memwe_n(memmap_memwe_n),
-        
+
 		.mode_ramro(mode_ramro),
 		.mode_norom(mode_norom),
 		.mode_pg0(mode_pg0),
@@ -679,10 +683,10 @@ module top(
 
 		.rst_n(internal_reset_n),
 		.cpu_clock(clk_fpga),
-        	
+
 		.clksel0(clksel0),
 		.clksel1(clksel1),
-        	
+
 		.snd_wrtoggle(snd_wrtoggle),
 		.snd_datnvol(snd_datnvol),
 		.snd_addr(snd_addr),
@@ -690,7 +694,7 @@ module top(
 		.mode_8chans(mode_8chans),
 		.mode_pan4ch(mode_pan4ch),
 		.mode_inv7b(mode_inv7b),
-        	
+
 		.command_port_input(command_zx2gs),
 		.command_bit_input(command_bit_2gs),
 		.command_bit_output(command_bit_2zx),
@@ -700,19 +704,19 @@ module top(
 		.data_bit_input(data_bit_2gs),
 		.data_bit_output(data_bit_2zx),
 		.data_bit_wr(data_bit_wr),
-        	
+
 		.mode_ramro(mode_ramro),
 		.mode_norom(mode_norom),
 		.mode_pg0(mode_pg0),
 		.mode_pg1(mode_pg1),
 		.mode_pg2(mode_pg2),
 		.mode_pg3(mode_pg3),
-        	
+
 		.md_din(md_din),
 		.md_start(md_start),
 		.md_dreq(mp3_req),
 		.md_halfspeed(md_halfspeed),
-        	
+
 		.mc_ncs(ma_cs),
 		.mc_xrst(mp3_xreset),
 		.mc_dout(mc_dout),
@@ -720,7 +724,7 @@ module top(
 		.mc_start(mc_start),
 		.mc_speed(mc_speed),
 		.mc_rdy(mc_rdy),
-        	
+
 		.sd_ncs(sd_cs),
 		.sd_wp(sd_wp),
 		.sd_det(sd_det),
@@ -741,8 +745,8 @@ module top(
 		.dma_select_zx (dma_select_zx ),
 		.dma_select_sd (dma_select_sd ),
 		.dma_select_mp3(dma_select_mp3),
-        	
-		.led(led_diag),
+
+		// .led(led_diag),
 		.led_toggle(led_toggle),
 
 		.timer_rate(timer_rate),
@@ -855,7 +859,20 @@ module top(
 		.rdy(sd_rdy)
 	);
 
-
+  hus hus
+  (
+    .clk      (clk_fpga),
+    .reset    (!internal_reset_n),
+    .busrq_n  (hus_busrq_n),
+    .busak    (!busak_n),
+    .zxd      (zxid),
+    .zxa      (zxa),
+    .zxa14    (zxa14),
+    .zxa15    (zxa15),
+    .zxiorq   (!zxiorq_n),
+    .zxwr     (!zxwr_n),
+    .led      (led_diag)
+  );
 
 
 endmodule

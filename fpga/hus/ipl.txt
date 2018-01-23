@@ -1,0 +1,22 @@
+
+Samples are signed 127..-128
+Multiplier S8 * U8
+
+???
+- how to cast in SV?
+- how to multiply S16 * U8 signed using S8 * U8?
+
+Interpolator FSM steps
+----------------------
+
+1. Sample old left * (128 - midpoint)     +
+2. Sample new left * midpoint                  ->  sample left
+3. Sample old right * (128 - midpoint)    +    
+4. Sample new right * midpoint                 ->  sample right
+5. Sample left * volume left                   -> adder register left
+6. Sample right * volume right                 -> adder register right
+7. Adder register left * samples volume left   -> FIFO
+8. Adder register right * samples volume right -> FIFO
+
+* Steps 3, 4 are for Stereo mode only. In Mono left is copied to the right
+* Steps 7, 8 are exexuted at the end of channels iteration

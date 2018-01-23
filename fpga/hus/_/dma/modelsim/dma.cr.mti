@@ -1,0 +1,86 @@
+C:/D/newGS/develop/fpgaD/dma/modelsim/T80_Reg.vhd {1 {vcom -work work -2002 -explicit -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/T80_Reg.vhd
+Model Technology ModelSim SE vcom 6.2k Compiler 2007.12 Dec 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Compiling entity t80_reg
+-- Compiling architecture rtl of t80_reg
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/T80_ALU.vhd {1 {vcom -work work -2002 -explicit -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/T80_ALU.vhd
+Model Technology ModelSim SE vcom 6.2k Compiler 2007.12 Dec 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Compiling entity t80_alu
+-- Compiling architecture rtl of t80_alu
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/T80a.vhd {1 {vcom -work work -2002 -explicit -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/T80a.vhd
+Model Technology ModelSim SE vcom 6.2k Compiler 2007.12 Dec 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package t80_pack
+-- Compiling entity t80a
+-- Compiling architecture rtl of t80a
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/tb_dma2.v {1 {vlog -work work -vopt -sv C:/D/newGS/develop/fpgaD/dma/modelsim/tb_dma2.v
+Model Technology ModelSim SE vlog 6.2k Compiler 2007.12 Dec 13 2007
+-- Compiling module tb_dma2
+-- Compiling module dmaer
+
+Top level modules:
+	tb_dma2
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/T80_Pack.vhd {1 {vcom -work work -2002 -explicit -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/T80_Pack.vhd
+Model Technology ModelSim SE vcom 6.2k Compiler 2007.12 Dec 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Compiling package t80_pack
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/rom.v {1 {vlog -work work -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/rom.v
+Model Technology ModelSim SE vlog 6.2k Compiler 2007.12 Dec 13 2007
+-- Compiling module rom
+
+Top level modules:
+	rom
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/dma_access.v {1 {vlog -work work -vopt C:/D/newGS/develop/fpgaD/dma/dma_access.v
+Model Technology ModelSim SE vlog 6.2k Compiler 2007.12 Dec 13 2007
+-- Compiling module dma_access
+
+Top level modules:
+	dma_access
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/dma_sequencer.v {1 {vlog -work work -vopt -sv C:/D/newGS/develop/fpgaD/dma/dma_sequencer.v
+Model Technology ModelSim SE vlog 6.2k Compiler 2007.12 Dec 13 2007
+-- Compiling module dma_sequencer
+
+Top level modules:
+	dma_sequencer
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/T80_MCode.vhd {1 {vcom -work work -2002 -explicit -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/T80_MCode.vhd
+Model Technology ModelSim SE vcom 6.2k Compiler 2007.12 Dec 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package t80_pack
+-- Compiling entity t80_mcode
+-- Compiling architecture rtl of t80_mcode
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/T80.vhd {1 {vcom -work work -2002 -explicit -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/T80.vhd
+Model Technology ModelSim SE vcom 6.2k Compiler 2007.12 Dec 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package t80_pack
+-- Compiling entity t80
+-- Compiling architecture rtl of t80
+
+} {} {}} C:/D/newGS/develop/fpgaD/dma/modelsim/ram.v {1 {vlog -work work -vopt C:/D/newGS/develop/fpgaD/dma/modelsim/ram.v
+Model Technology ModelSim SE vlog 6.2k Compiler 2007.12 Dec 13 2007
+-- Compiling module ram
+
+Top level modules:
+	ram
+
+} {} {}}

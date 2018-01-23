@@ -1,0 +1,14 @@
+[Version]
+Version=8.2
+[Designs]
+ngs=ngs.adf
+[Settings]
+Active=ngs
+[Expand]
+ngs=1
+[Browser]
+sort=order
+mode=none
+[Order]
+order=1
+macro=

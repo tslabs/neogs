@@ -1,0 +1,95 @@
+timestamp=1427163147884
+
+[$root]
+A/$root=22|""|0|1*16430250
+B/$root=3*28348669
+C=8.2.1986.3485  (Windows)
+
+[altdpram]
+A/altdpram=22|./../tb.sv|21|1*417083
+B/altdpram=3*573751
+C=8.2.1986.3485  (Windows)
+P/~emb=592,846,1104,1315
+R=./../tb.sv|21
+
+[fifo256x16]
+A/fifo256x16=22|./../../top.sv|779|1*8610554
+B/fifo256x16=3*13648366
+C=8.2.1986.3485  (Windows)
+P/~emb=300,563,847,1134
+R=./../../top.sv|779
+
+[ram256x16]
+A/ram256x16=22|./../../top.sv|757|1*8608645
+B/ram256x16=3*13646109
+C=8.2.1986.3485  (Windows)
+P/~emb=292,493,706,887
+R=./../../top.sv|757
+
+[rom256x16]
+A/rom256x16=22|./../tb.sv|240|1*16428584
+B/rom256x16=3*28346748
+C=8.2.1986.3485  (Windows)
+P/~emb=292,563,736,899
+R=./../tb.sv|240
+
+[scfifo]
+A/scfifo=22|./../tb.sv|21|1*455730
+B/scfifo=3*632186
+C=8.2.1986.3485  (Windows)
+P/~emb=280,452,595,738
+R=./../tb.sv|21
+
+[sram_simple]
+A/sram_simple=22|./../tb.sv|230|1*16427476
+B/sram_simple=3*28346218
+C=8.2.1986.3485  (Windows)
+P/~emb=130,279,428,553
+R=./../tb.sv|230
+
+[tb]
+A/tb=22|./../tb.sv|4|1*16415397
+B/tb=3*28334326
+C=8.2.1986.3485  (Windows)
+P/~emb=50,691,1291,2241
+R=./../tb.sv|4
+
+[top]
+A/top=22|./../../top.sv|6|1*16430640
+B/top=3*28348817
+C=8.2.1986.3485  (Windows)
+P/~emb=2452,4475,7065,7951
+R=./../../top.sv|6
+
+[z80_simple]
+A/z80_simple=22|./../tb.sv|193|1*16424947
+B/z80_simple=3*28342268
+C=8.2.1986.3485  (Windows)
+P/~emb=232,451,730,900
+R=./../tb.sv|193
+
+[~A]
+LastVerilogToplevel=rom256x16
+ModifyID=31580
+Version=73
+d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/tb/tb.sv=0*9477159*9479550
+d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/tb/tb.v=0*0*277
+d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv=0*9493149*9499890
+
+[~MFT]
+0=5559|0ngs.mgf|9499890|3171293
+1=4983|1ngs.mgf|16430640|16407112
+3=4983|3ngs.mgf|28348817|28326834
+
+[~U]
+$root=12|0*9480029|
+altdpram=12|0*270770||0x80
+fifo256x16=12|0*4987049||0x80
+ram256x16=12|0*4985945||0x80
+rom256x16=12|0*9475986||0x90
+scfifo=12|0*292292||0x80
+sram_simple=12|0*9475276||0x80
+tb=12|0*9471272||0x90
+top=12|0*9480227||0x80
+z80_simple=12|0*9473988||0x80
+

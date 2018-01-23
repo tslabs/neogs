@@ -1,0 +1,1 @@
+ -u "c:\Tools\HDL\Active-HDL 8.2\bin/systf.dll" "d:\ZX\Hardware\NGS\TSL.NeoGS.new\fpga\top.sv"  -cs  -g 5  -r -li "d:\ZX\Hardware\NGS\TSL.NeoGS.new\fpga\tb\adhl\compile\ngs.epr" -p "d:\ZX\Hardware\NGS\TSL.NeoGS.new\fpga\tb\adhl" 

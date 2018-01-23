@@ -49,7 +49,7 @@ parameter RST_CNT_SIZE = 3;
 
 		if( rst2_n && !rst_cnt[RST_CNT_SIZE] )
 		begin
-			rst_cnt <= rst_cnt + 1'b1;
+			rst_cnt <= rst_cnt + 1;
 		end
 
 		rst_out_n <= rst_cnt[RST_CNT_SIZE];

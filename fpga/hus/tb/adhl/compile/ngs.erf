@@ -1,0 +1,28 @@
+MESSAGE "Pass 1. Scanning modules hierarchy."
+MESSAGE "Module \$root found in current working library."
+BEGINPROGRESS Compiling...
+UPDATEPROGRESS 35
+MESSAGE "Pass 2. Processing instantiations."
+UPDATEPROGRESS 45
+MESSAGE "Pass 3. Processing behavioral statements."
+UPDATEPROGRESS 56
+UPDATEPROGRESS 68
+UPDATEPROGRESS 80
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+WARNING VCP2875 "Writing to a variable that is also driven by an always_comb/always_latch/always_ff procedural block (d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv, ln 411)." "d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/top.sv" 313 1
+MESSAGE "ELB/DAG code generating."
+MESSAGE "Module \$root found in current working library."
+UPDATEPROGRESS 85
+UPDATEPROGRESS 90
+UPDATEPROGRESS 95
+UPDATEPROGRESS 100
+MESSAGE "$root top modules: tb rom256x16."
+ENDPROGRESS Compiling...
+SUCCESS "Compile success 0 Errors 8 Warnings  Analysis time: 0[s]."
+MESSAGE "done"

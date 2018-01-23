@@ -1,0 +1,1 @@
+ -erf "d:\ZX\Hardware\NGS\TSL.NeoGS.new\fpga\tb\adhl\compile\ngs.erf" -work ngs -lc d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/tb/adhl/library.cfg -fl d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/tb/adhl/projlib.cfg -o d:/ZX/Hardware/NGS/TSL.NeoGS.new/fpga/tb/adhl/compile -l "ngs"

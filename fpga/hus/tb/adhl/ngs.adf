@@ -1,0 +1,87 @@
+[Project]
+Current Flow=Generic
+VCS=0
+version=2
+Current Config=compile
+
+[Configurations]
+compile=ngs
+
+[Library]
+ngs=.\ngs.LIB
+
+[Settings]
+AccessRead=0
+AccessReadWrite=0
+AccessACCB=0
+AccessACCR=0
+AccessReadWriteSLP=0
+AccessReadTopLevel=1
+DisableC=1
+ENABLE_ADV_DATAFLOW=0
+EnableCC=0
+EnableEXC=0
+FLOW_TYPE=HDL
+LANGUAGE=VERILOG
+FLOWTOOLS=NONE
+REFRESH_FLOW=1
+FAMILY=Altera ACEX1K
+IMPL_TOOL=
+SYNTH_TOOL=
+VerilogDirsChanged=1
+
+[LocalVerilogSets]
+EnableSLP=1
+EnableDebug=0
+EnableExpressionCoverage=0
+
+[LocalVhdlSets]
+EnableExpressionCoverage=0
+CompileWithDebug=0
+
+[$LibMap$]
+ngs=.
+Active_lib=
+xilinxun=
+UnlinkedDesignLibrary=
+DESIGNS=
+
+[Verilog Library]
+ovi_FLEX10KE=
+ovi_lpm=
+
+[Folders]
+Name3=Makefiles
+Directory3=c:\@\A-HDL\ws1\des1\ngs\
+Extension3=mak
+Name4=Memory
+Directory4=c:\@\A-HDL\ws1\des1\ngs\
+Extension4=mem;mif;hex
+Name5=Dll Libraries
+Directory5=c:\@\A-HDL\ws1\des1\ngs\
+Extension5=dll
+Name6=PDF
+Directory6=c:\@\A-HDL\ws1\des1\ngs\
+Extension6=pdf
+Name7=HTML
+Directory7=c:\@\A-HDL\ws1\des1\ngs\
+Extension7=
+
+[HierarchyViewer]
+SortInfo=u
+HierarchyInformation=
+ShowHide=ShowTopLevel
+Selected=
+
+[Files]
+/..\..\run.do=-1
+/..\..\tb.sv=-1
+/wave.asdb=-1
+/..\..\..\top.sv=-1
+
+[Files.Data]
+.\..\run.do=Macro
+.\..\tb.sv=SystemVerilog Source Code
+.\src\wave.asdb=Accelerated Waveform File
+.\..\..\top.sv=SystemVerilog Source Code
+
